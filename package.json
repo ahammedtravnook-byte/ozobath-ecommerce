@@ -1,0 +1,25 @@
+{
+  "name": "ozobath-ecommerce",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OZOBATH - Premium Shower Enclosures & Bathroom Fittings E-Commerce Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace=apps/server",
+    "dev:client": "npm run dev --workspace=apps/client",
+    "dev:admin": "npm run dev --workspace=apps/admin",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:admin\"",
+    "build:client": "npm run build --workspace=apps/client",
+    "build:admin": "npm run build --workspace=apps/admin",
+    "seed": "npm run seed --workspace=apps/server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

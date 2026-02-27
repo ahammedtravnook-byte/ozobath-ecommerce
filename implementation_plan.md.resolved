@@ -1,0 +1,676 @@
+# OZOBATH E-Commerce Platform — Expert Architecture Plan
+
+## 1. Executive Summary
+
+OZOBATH is a premium e-commerce platform for **shower enclosures & bathroom fittings**, targeting homeowners, interior designers, architects, B2B dealers, and builders. The platform features a **fully dynamic content management system** — every element from banners to text to images is admin-controlled.
+
+> [!IMPORTANT]
+> **Fully Dynamic Architecture**: Every piece of content on every page (banners, images, text, product sections, testimonials, FAQ, blog highlights) is stored in the database and editable from the admin panel. No content is hardcoded.
+
+---
+
+## 2. Technology Decisions
+
+### Database: **MongoDB Atlas (Free Tier → M10)**
+
+| Factor | MongoDB | PostgreSQL |
+|--------|---------|------------|
+| Schema flexibility | ✅ Dynamic content needs flexible schemas | ❌ Rigid schemas |
+| Product variations | ✅ Embedded arrays/objects natively | ⚠️ Requires JSON columns |
+| CMS-style content | ✅ Perfect for dynamic page blocks | ❌ Needs complex joins |
+| Free tier | ✅ 512MB free on Atlas | ❌ Requires paid hosting |
+| Full-text search | ✅ Atlas Search built-in | ✅ Good with extensions |
+
+**Verdict**: MongoDB is ideal for this e-commerce + CMS hybrid. Dynamic page sections, product variants, and flexible schemas align perfectly.
+
+### Image/File Storage: **Cloudinary (Free Tier)**
+
+| Feature | Cloudinary | AWS S3 | Firebase Storage |
+|---------|-----------|--------|-----------------|
+| Free quota | ✅ 25GB + 25K transforms/mo | ⚠️ 5GB (12mo only) | ✅ 5GB |
+| Auto optimization | ✅ WebP, resize, crop built-in | ❌ Manual | ❌ Manual |
+| CDN built-in | ✅ Global CDN | ❌ Needs CloudFront | ✅ |
+| Video support | ✅ Video transforms | ✅ Storage only | ✅ Storage only |
+| Cost at scale | Affordable | Cheapest at scale | Moderate |
+
+**Verdict**: Cloudinary — auto image optimization, CDN, free tier, and transformations built-in. Perfect for product images and dynamic banners.
+
+### Full Stack
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| **Client** | React 18 + Vite + TailwindCSS | Fast, component-driven, large ecosystem |
+| **Admin** | Vue 3 + Vite + TailwindCSS | Separate SPA, cleaner admin UX, Vue's reactivity ideal for forms |
+| **Backend** | Node.js + Express.js | JavaScript full-stack, async I/O, huge npm ecosystem |
+| **Database** | MongoDB Atlas + Mongoose | Flexible schemas, free tier, great for CMS |
+| **File Storage** | Cloudinary | Auto-optimized images, CDN, free tier |
+| **Auth** | JWT + bcrypt + refresh tokens | Stateless, scalable |
+| **Payment** | Razorpay | All Indian payment methods (UPI, cards, wallets, netbanking) |
+| **Email** | Nodemailer + Gmail/SendGrid | OTP, order confirmations, notifications |
+| **Real-time** | Socket.io | Video call notifications, live chat |
+| **AI Chatbot** | Google Gemini API (free tier) | FAQ auto-response, product recommendations |
+
+---
+
+## 3. Project Architecture — Monorepo Structure
+
+```
+ozobath-ecommerce/
+├── apps/
+│   ├── server/                    # Node.js + Express Backend
+│   │   ├── src/
+│   │   │   ├── config/            # DB, cloudinary, env configs
+│   │   │   │   ├── db.js
+│   │   │   │   ├── cloudinary.js
+│   │   │   │   ├── razorpay.js
+│   │   │   │   └── env.js
+│   │   │   ├── middleware/        # Auth, error handling, validation
+│   │   │   │   ├── auth.js
+│   │   │   │   ├── roleGuard.js
+│   │   │   │   ├── errorHandler.js
+│   │   │   │   ├── rateLimiter.js
+│   │   │   │   └── validate.js
+│   │   │   ├── models/            # Mongoose schemas
+│   │   │   │   ├── User.js
+│   │   │   │   ├── Product.js
+│   │   │   │   ├── Category.js
+│   │   │   │   ├── Order.js
+│   │   │   │   ├── Cart.js
+│   │   │   │   ├── Wishlist.js
+│   │   │   │   ├── Coupon.js
+│   │   │   │   ├── Review.js
+│   │   │   │   ├── Blog.js
+│   │   │   │   ├── DynamicContent.js     # ★ Core: all page sections
+│   │   │   │   ├── Banner.js
+│   │   │   │   ├── FAQ.js
+│   │   │   │   ├── Testimonial.js
+│   │   │   │   ├── ExperienceCentre.js
+│   │   │   │   ├── B2BEnquiry.js
+│   │   │   │   ├── ServiceRequest.js
+│   │   │   │   ├── VideoCallSlot.js
+│   │   │   │   ├── SiteVisitBooking.js
+│   │   │   │   ├── Newsletter.js
+│   │   │   │   ├── Partner.js
+│   │   │   │   ├── SeoMeta.js
+│   │   │   │   └── AdminActivityLog.js
+│   │   │   ├── routes/            # Express route handlers
+│   │   │   │   ├── auth.routes.js
+│   │   │   │   ├── user.routes.js
+│   │   │   │   ├── product.routes.js
+│   │   │   │   ├── category.routes.js
+│   │   │   │   ├── order.routes.js
+│   │   │   │   ├── cart.routes.js
+│   │   │   │   ├── wishlist.routes.js
+│   │   │   │   ├── coupon.routes.js
+│   │   │   │   ├── review.routes.js
+│   │   │   │   ├── blog.routes.js
+│   │   │   │   ├── content.routes.js     # ★ Dynamic content API
+│   │   │   │   ├── banner.routes.js
+│   │   │   │   ├── faq.routes.js
+│   │   │   │   ├── testimonial.routes.js
+│   │   │   │   ├── enquiry.routes.js
+│   │   │   │   ├── service.routes.js
+│   │   │   │   ├── booking.routes.js
+│   │   │   │   ├── newsletter.routes.js
+│   │   │   │   ├── upload.routes.js
+│   │   │   │   ├── payment.routes.js
+│   │   │   │   ├── analytics.routes.js
+│   │   │   │   └── admin.routes.js
+│   │   │   ├── controllers/       # Business logic
+│   │   │   │   └── (mirrors routes structure)
+│   │   │   ├── services/          # Reusable service layer
+│   │   │   │   ├── emailService.js
+│   │   │   │   ├── smsService.js
+│   │   │   │   ├── paymentService.js
+│   │   │   │   ├── uploadService.js
+│   │   │   │   ├── chatbotService.js
+│   │   │   │   └── analyticsService.js
+│   │   │   ├── utils/
+│   │   │   │   ├── apiResponse.js
+│   │   │   │   ├── apiError.js
+│   │   │   │   ├── asyncHandler.js
+│   │   │   │   ├── generateToken.js
+│   │   │   │   ├── slugify.js
+│   │   │   │   └── validators.js
+│   │   │   ├── seeds/             # Initial data seeders
+│   │   │   │   ├── superAdmin.seed.js
+│   │   │   │   └── defaultContent.seed.js
+│   │   │   └── app.js             # Express app setup
+│   │   ├── server.js              # Entry point
+│   │   ├── package.json
+│   │   └── .env.example
+│   │
+│   ├── client/                    # React 18 + Vite (Customer)
+│   │   ├── src/
+│   │   │   ├── api/               # Axios API layer
+│   │   │   │   ├── axiosInstance.js
+│   │   │   │   ├── auth.api.js
+│   │   │   │   ├── product.api.js
+│   │   │   │   ├── order.api.js
+│   │   │   │   ├── content.api.js
+│   │   │   │   └── ...
+│   │   │   ├── assets/            # Static assets (fonts, icons)
+│   │   │   ├── components/
+│   │   │   │   ├── layout/
+│   │   │   │   │   ├── Navbar.jsx
+│   │   │   │   │   ├── Footer.jsx
+│   │   │   │   │   ├── AnnouncementBar.jsx
+│   │   │   │   │   ├── MobileMenu.jsx
+│   │   │   │   │   └── Layout.jsx
+│   │   │   │   ├── home/
+│   │   │   │   │   ├── HeroBanner.jsx
+│   │   │   │   │   ├── CategoryTiles.jsx
+│   │   │   │   │   ├── BestSellers.jsx
+│   │   │   │   │   ├── NewArrivals.jsx
+│   │   │   │   │   ├── TrustBadges.jsx
+│   │   │   │   │   ├── VideoSection.jsx
+│   │   │   │   │   ├── Testimonials.jsx
+│   │   │   │   │   ├── GoogleReviews.jsx
+│   │   │   │   │   ├── InstagramFeed.jsx
+│   │   │   │   │   ├── BlogHighlights.jsx
+│   │   │   │   │   ├── NewsletterSignup.jsx
+│   │   │   │   │   ├── PartnerLogos.jsx
+│   │   │   │   │   └── FAQSection.jsx
+│   │   │   │   ├── product/
+│   │   │   │   │   ├── ProductCard.jsx
+│   │   │   │   │   ├── ProductGrid.jsx
+│   │   │   │   │   ├── ProductFilters.jsx
+│   │   │   │   │   ├── ProductGallery.jsx
+│   │   │   │   │   ├── ProductDetails.jsx
+│   │   │   │   │   ├── QuickViewModal.jsx
+│   │   │   │   │   ├── ReviewList.jsx
+│   │   │   │   │   └── ReviewForm.jsx
+│   │   │   │   ├── cart/
+│   │   │   │   │   ├── CartDrawer.jsx
+│   │   │   │   │   ├── CartItem.jsx
+│   │   │   │   │   └── CartSummary.jsx
+│   │   │   │   ├── checkout/
+│   │   │   │   │   ├── AddressStep.jsx
+│   │   │   │   │   ├── ShippingStep.jsx
+│   │   │   │   │   ├── PaymentStep.jsx
+│   │   │   │   │   └── OrderConfirmation.jsx
+│   │   │   │   ├── auth/
+│   │   │   │   │   ├── LoginForm.jsx
+│   │   │   │   │   ├── RegisterForm.jsx
+│   │   │   │   │   └── ForgotPassword.jsx
+│   │   │   │   ├── user/
+│   │   │   │   │   ├── ProfileForm.jsx
+│   │   │   │   │   ├── OrderHistory.jsx
+│   │   │   │   │   ├── AddressBook.jsx
+│   │   │   │   │   └── WishlistGrid.jsx
+│   │   │   │   ├── shared/
+│   │   │   │   │   ├── Button.jsx
+│   │   │   │   │   ├── Input.jsx
+│   │   │   │   │   ├── Modal.jsx
+│   │   │   │   │   ├── Loader.jsx
+│   │   │   │   │   ├── Toast.jsx
+│   │   │   │   │   ├── Breadcrumb.jsx
+│   │   │   │   │   ├── Pagination.jsx
+│   │   │   │   │   ├── StarRating.jsx
+│   │   │   │   │   └── SEOHead.jsx
+│   │   │   │   └── widgets/
+│   │   │   │       ├── WhatsAppButton.jsx
+│   │   │   │       └── ChatBot.jsx
+│   │   │   ├── context/
+│   │   │   │   ├── AuthContext.jsx
+│   │   │   │   ├── CartContext.jsx
+│   │   │   │   └── WishlistContext.jsx
+│   │   │   ├── hooks/
+│   │   │   │   ├── useAuth.js
+│   │   │   │   ├── useCart.js
+│   │   │   │   ├── useDynamicContent.js
+│   │   │   │   └── useProducts.js
+│   │   │   ├── pages/
+│   │   │   │   ├── HomePage.jsx
+│   │   │   │   ├── ShopPage.jsx
+│   │   │   │   ├── ProductPage.jsx
+│   │   │   │   ├── CartPage.jsx
+│   │   │   │   ├── CheckoutPage.jsx
+│   │   │   │   ├── OrderConfirmationPage.jsx
+│   │   │   │   ├── OrderTrackingPage.jsx
+│   │   │   │   ├── LoginPage.jsx
+│   │   │   │   ├── RegisterPage.jsx
+│   │   │   │   ├── ProfilePage.jsx
+│   │   │   │   ├── OrdersPage.jsx
+│   │   │   │   ├── WishlistPage.jsx
+│   │   │   │   ├── AboutPage.jsx
+│   │   │   │   ├── ContactPage.jsx
+│   │   │   │   ├── BlogListPage.jsx
+│   │   │   │   ├── BlogPostPage.jsx
+│   │   │   │   ├── FAQPage.jsx
+│   │   │   │   ├── ExperienceCentrePage.jsx
+│   │   │   │   ├── B2BEnquiryPage.jsx
+│   │   │   │   ├── ServiceRequestPage.jsx
+│   │   │   │   ├── ShopLivePage.jsx         # Video call booking
+│   │   │   │   ├── SiteVisitPage.jsx        # Site visit booking
+│   │   │   │   ├── TermsPage.jsx
+│   │   │   │   ├── PrivacyPage.jsx
+│   │   │   │   ├── ShippingPolicyPage.jsx
+│   │   │   │   ├── WarrantyPage.jsx
+│   │   │   │   └── NotFoundPage.jsx
+│   │   │   ├── router/
+│   │   │   │   └── index.jsx
+│   │   │   ├── styles/
+│   │   │   │   └── index.css          # TailwindCSS + custom tokens
+│   │   │   ├── App.jsx
+│   │   │   └── main.jsx
+│   │   ├── index.html
+│   │   ├── tailwind.config.js
+│   │   ├── vite.config.js
+│   │   └── package.json
+│   │
+│   └── admin/                     # Vue 3 + Vite (Admin Panel)
+│       ├── src/
+│       │   ├── api/
+│       │   │   ├── axiosInstance.js
+│       │   │   ├── auth.api.js
+│       │   │   ├── product.api.js
+│       │   │   ├── content.api.js
+│       │   │   └── ...
+│       │   ├── assets/
+│       │   ├── components/
+│       │   │   ├── layout/
+│       │   │   │   ├── Sidebar.vue
+│       │   │   │   ├── TopBar.vue
+│       │   │   │   ├── AdminLayout.vue
+│       │   │   │   └── Breadcrumb.vue
+│       │   │   ├── dashboard/
+│       │   │   │   ├── SalesChart.vue
+│       │   │   │   ├── RevenueCard.vue
+│       │   │   │   ├── TopProductsTable.vue
+│       │   │   │   └── StatsOverview.vue
+│       │   │   ├── content/           # ★ Dynamic content editors
+│       │   │   │   ├── BannerEditor.vue
+│       │   │   │   ├── SectionEditor.vue
+│       │   │   │   ├── PageContentEditor.vue
+│       │   │   │   ├── TestimonialEditor.vue
+│       │   │   │   ├── FAQEditor.vue
+│       │   │   │   ├── PartnerEditor.vue
+│       │   │   │   └── ImageUploader.vue
+│       │   │   ├── products/
+│       │   │   │   ├── ProductForm.vue
+│       │   │   │   ├── ProductTable.vue
+│       │   │   │   ├── VariantEditor.vue
+│       │   │   │   └── BulkUpload.vue
+│       │   │   ├── orders/
+│       │   │   │   ├── OrderTable.vue
+│       │   │   │   ├── OrderDetail.vue
+│       │   │   │   └── StatusUpdater.vue
+│       │   │   ├── shared/
+│       │   │   │   ├── DataTable.vue
+│       │   │   │   ├── Modal.vue
+│       │   │   │   ├── RichTextEditor.vue
+│       │   │   │   ├── FileUpload.vue
+│       │   │   │   ├── ConfirmDialog.vue
+│       │   │   │   └── StatCard.vue
+│       │   │   └── users/
+│       │   │       ├── AdminForm.vue
+│       │   │       ├── AdminTable.vue
+│       │   │       └── CustomerTable.vue
+│       │   ├── composables/
+│       │   │   ├── useAuth.js
+│       │   │   ├── useApi.js
+│       │   │   └── useToast.js
+│       │   ├── views/
+│       │   │   ├── DashboardView.vue
+│       │   │   ├── LoginView.vue
+│       │   │   ├── ProductsView.vue
+│       │   │   ├── ProductFormView.vue
+│       │   │   ├── CategoriesView.vue
+│       │   │   ├── OrdersView.vue
+│       │   │   ├── OrderDetailView.vue
+│       │   │   ├── CustomersView.vue
+│       │   │   ├── CouponsView.vue
+│       │   │   ├── BannersView.vue
+│       │   │   ├── ContentManagerView.vue   # ★ Dynamic content
+│       │   │   ├── BlogsView.vue
+│       │   │   ├── BlogFormView.vue
+│       │   │   ├── ReviewsView.vue
+│       │   │   ├── FAQsView.vue
+│       │   │   ├── TestimonialsView.vue
+│       │   │   ├── ExperienceCentresView.vue
+│       │   │   ├── BookingsView.vue
+│       │   │   ├── EnquiriesView.vue
+│       │   │   ├── ServiceRequestsView.vue
+│       │   │   ├── NewsletterView.vue
+│       │   │   ├── InventoryView.vue
+│       │   │   ├── ReportsView.vue
+│       │   │   ├── AdminUsersView.vue       # SuperAdmin only
+│       │   │   └── SettingsView.vue
+│       │   ├── stores/
+│       │   │   ├── auth.store.js
+│       │   │   └── ui.store.js
+│       │   ├── router/
+│       │   │   └── index.js
+│       │   ├── styles/
+│       │   │   └── index.css
+│       │   ├── App.vue
+│       │   └── main.js
+│       ├── index.html
+│       ├── tailwind.config.js
+│       ├── vite.config.js
+│       └── package.json
+│
+├── packages/
+│   └── shared/                    # Shared utilities
+│       ├── constants.js           # Roles, status enums
+│       ├── validators.js          # Shared validation rules
+│       └── package.json
+│
+├── .gitignore
+├── package.json                   # Root workspace config
+└── README.md
+```
+
+---
+
+## 4. Database Schema Design (MongoDB Collections)
+
+### 4.1 Core Collections
+
+#### `users`
+```js
+{
+  name, email, phone, password (hashed),
+  role: "customer" | "admin" | "superadmin",
+  avatar, addresses: [{ label, line1, line2, city, state, zip, isDefault }],
+  isActive, emailVerified, createdBy (for admin accounts),
+  createdAt, updatedAt
+}
+```
+
+#### `products`
+```js
+{
+  name, slug, description, shortDescription,
+  sku, price, compareAtPrice, costPrice,
+  category (ref), subCategory,
+  images: [{ url, publicId, alt, order }],
+  variants: [{ name, options: [{ label, value, priceModifier }] }],
+  specifications: [{ key, value }],
+  badges: ["best-seller", "new", "featured"],
+  stock, lowStockThreshold, isActive,
+  seoTitle, seoDescription, seoKeywords,
+  avgRating, reviewCount,
+  createdAt, updatedAt
+}
+```
+
+#### `categories`
+```js
+{
+  name, slug, description,
+  image: { url, publicId },
+  parent (self-ref), order, isActive,
+  seoTitle, seoDescription
+}
+```
+
+#### `orders`
+```js
+{
+  orderNumber (auto), user (ref),
+  items: [{ product, name, image, price, quantity, variant }],
+  shippingAddress, billingAddress,
+  subtotal, shippingCost, discount, tax, total,
+  coupon (ref), paymentMethod, paymentStatus,
+  razorpayOrderId, razorpayPaymentId,
+  status: "pending"|"confirmed"|"processing"|"shipped"|"delivered"|"cancelled"|"returned",
+  trackingNumber, trackingUrl,
+  notes, statusHistory: [{ status, date, note }],
+  createdAt, updatedAt
+}
+```
+
+### 4.2 Dynamic Content Collections
+
+#### `dynamic_contents` — ★ The Heart of the CMS
+```js
+{
+  page: "home" | "about" | "contact" | ...,
+  section: "hero_banner" | "category_tiles" | "trust_badges" | ...,
+  order: Number,
+  isActive: Boolean,
+  content: {
+    title, subtitle, description,    // Text content
+    buttonText, buttonLink,          // CTA
+    image: { url, publicId, alt },   // Media
+    video: { url, type },
+    items: [{ ... }],                // For repeatable items
+    backgroundColor, textColor,      // Styling
+    customCSS
+  },
+  createdAt, updatedAt
+}
+```
+
+#### `banners`
+```js
+{
+  title, subtitle, description,
+  image: { url, publicId, alt },
+  mobileImage: { url, publicId },
+  link, buttonText,
+  page: "home" | "shop" | ...,
+  position: "hero" | "promo" | "category",
+  order, isActive, startDate, endDate
+}
+```
+
+#### Other collections: `testimonials`, `faqs`, `blogs`, `reviews`, `coupons`, `experience_centres`, `b2b_enquiries`, `service_requests`, `video_call_slots`, `site_visit_bookings`, `newsletters`, `partners`, `carts`, `wishlists`, `seo_meta`, `admin_activity_logs`
+
+---
+
+## 5. Authentication & Authorization
+
+```mermaid
+graph LR
+    A[Super Admin] -->|Creates| B[Admin]
+    B -->|Manages| C[Products/Orders/Content]
+    D[Customer] -->|Registers| E[Self-Signup]
+    D -->|Actions| F[Shop/Cart/Orders/Reviews]
+```
+
+| Role | Permissions |
+|------|------------|
+| **Super Admin** | Everything + Create/manage admin accounts |
+| **Admin** | Product/Order/Content/Blog/Coupon management |
+| **Customer** | Browse, cart, order, review, wishlist, profile |
+
+- **JWT Access Token** (15min) + **Refresh Token** (7 days) stored in httpOnly cookie
+- Passwords hashed with bcrypt (12 rounds)
+- Route guards with middleware: `auth()`, `roleGuard('admin', 'superadmin')`
+
+---
+
+## 6. Dynamic Content System — How It Works
+
+> [!TIP]
+> The key innovation is the **section-based content architecture**. Each page is composed of ordered sections, each independently editable from admin.
+
+### Home Page Sections (all dynamic)
+1. **Announcement Bar** — Promo text, link, background color
+2. **Hero Banner Slider** — Multiple slides with image, title, subtitle, CTA
+3. **Category Tiles** — Grid of categories with images, links
+4. **Best Sellers** — Dynamically pulled from products with "best-seller" badge
+5. **New Arrivals** — Latest products by date
+6. **Trust Badges/USPs** — Icon + text pairs (Premium Quality, Warranty, etc.)
+7. **Video Section** — YouTube/Vimeo embed URL + title + description
+8. **Customer Testimonials** — Carousel of reviews with star ratings
+9. **Google Reviews** — Embedded Google Place reviews
+10. **Instagram Feed** — Instagram API or embed widget
+11. **Blog Highlights** — Latest 3 blog posts
+12. **Newsletter Signup** — Email form + success message
+13. **Partner Logos** — "Trusted By" section with logo images
+14. **FAQ Section** — Accordion Q&A
+
+### Admin Content Editor Flow
+```mermaid
+graph TD
+    A[Admin Opens Content Manager] --> B[Select Page]
+    B --> C[View Sections for Page]
+    C --> D[Edit Section Content]
+    D --> E[Upload Images/Videos]
+    E --> F[Preview Changes]
+    F --> G[Publish / Save Draft]
+    G --> H[Client Fetches Updated Content]
+```
+
+---
+
+## 7. API Architecture
+
+### Base URL: `/api/v1`
+
+| Module | Endpoints | Auth |
+|--------|----------|------|
+| **Auth** | POST `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password` | Public |
+| **Users** | GET/PUT `/users/me`, GET `/users` (admin) | Protected |
+| **Products** | GET `/products`, GET `/products/:slug`, POST/PUT/DELETE (admin) | Mixed |
+| **Categories** | GET `/categories`, POST/PUT/DELETE (admin) | Mixed |
+| **Cart** | GET/POST/PUT/DELETE `/cart` | Customer |
+| **Orders** | POST `/orders`, GET `/orders/my-orders`, PUT `/orders/:id/status` (admin) | Protected |
+| **Wishlist** | GET/POST/DELETE `/wishlist` | Customer |
+| **Reviews** | GET/POST `/reviews`, PUT `/reviews/:id/approve` (admin) | Mixed |
+| **Coupons** | POST `/coupons/validate`, CRUD (admin) | Mixed |
+| **Content** | GET `/content/:page`, POST/PUT/DELETE (admin) | Mixed |
+| **Banners** | GET `/banners`, CRUD (admin) | Mixed |
+| **Blog** | GET `/blogs`, GET `/blogs/:slug`, CRUD (admin) | Mixed |
+| **FAQ** | GET `/faqs`, CRUD (admin) | Mixed |
+| **Testimonials** | GET `/testimonials`, CRUD (admin) | Mixed |
+| **Upload** | POST `/upload/image`, POST `/upload/images` | Admin |
+| **Payment** | POST `/payment/create-order`, POST `/payment/verify` | Customer |
+| **Booking** | POST `/bookings/video-call`, POST `/bookings/site-visit`, GET (admin) | Mixed |
+| **Enquiry** | POST `/enquiries/b2b`, POST `/enquiries/service`, GET (admin) | Mixed |
+| **Newsletter** | POST `/newsletter/subscribe` | Public |
+| **Analytics** | GET `/analytics/dashboard` (admin) | Admin |
+| **Admin Users** | CRUD `/admin/users` | SuperAdmin |
+
+---
+
+## 8. Payment Flow (Razorpay)
+
+```mermaid
+sequenceDiagram
+    Client->>Server: POST /payment/create-order {amount, orderId}
+    Server->>Razorpay: razorpay.orders.create()
+    Razorpay-->>Server: {razorpay_order_id}
+    Server-->>Client: {orderId, razorpayOrderId, key}
+    Client->>Razorpay: Open checkout modal
+    Razorpay-->>Client: {payment_id, signature}
+    Client->>Server: POST /payment/verify {payment_id, order_id, signature}
+    Server->>Server: Verify HMAC signature
+    Server->>Server: Update order status → "confirmed"
+    Server-->>Client: {success, order}
+```
+
+---
+
+## 9. Video Call Shopping (Shop Live)
+
+| Component | Implementation |
+|-----------|---------------|
+| **Slot Management** | Admin creates available time slots in admin panel |
+| **Booking** | Customer picks a slot, fills name/phone, books |
+| **Notifications** | Email/SMS sent to customer + admin on booking |
+| **Video Call** | Admin joins via Google Meet/Zoom link (auto-generated or manual) |
+| **Status** | pending → confirmed → completed → cancelled |
+
+---
+
+## 10. AI Chatbot Architecture
+
+- **Engine**: Google Gemini API (free tier: 15 RPM)
+- **Knowledge Base**: FAQs, product info, policies loaded as context
+- **Fallback**: If AI can't answer → "Connect with an agent" → WhatsApp redirect
+- **Implementation**: Floating widget on all pages, stores conversation history
+
+---
+
+## 11. Key Design Principles
+
+1. **Mobile-First**: TailwindCSS responsive design, 60%+ traffic will be mobile
+2. **Performance**: Lazy loading images, code splitting, Cloudinary auto-optimization
+3. **SEO**: Server-rendered meta tags, structured data (JSON-LD), sitemap
+4. **Security**: Helmet.js, CORS, rate limiting, input sanitization, CSRF protection
+5. **Scalability**: Stateless backend, MongoDB indexing, CDN for assets
+
+---
+
+## 12. Deployment Architecture
+
+```mermaid
+graph TB
+    subgraph "Production (Hostinger VPS)"
+        A[Nginx Reverse Proxy] --> B[Client :3000]
+        A --> C[Admin :3001]
+        A --> D[Server :5000]
+        D --> E[MongoDB Atlas]
+        D --> F[Cloudinary CDN]
+        D --> G[Razorpay API]
+    end
+```
+
+| Component | Deployment |
+|-----------|-----------|
+| **Client (React)** | Vite build → Nginx serve static |
+| **Admin (Vue)** | Vite build → Nginx serve static |
+| **Server (Express)** | PM2 process manager |
+| **Database** | MongoDB Atlas (cloud) |
+| **Files** | Cloudinary (cloud CDN) |
+| **SSL** | Let's Encrypt (free) |
+| **Domain** | ozobath.co.in |
+
+---
+
+## Proposed Changes
+
+### Backend Server
+
+#### [NEW] [apps/server/](file:///c:/Users/Tariq/OneDrive/Desktop/Ahammed/ozobath-ecommerce/apps/server/)
+Complete Express.js backend with all models, routes, controllers, services, middleware. Key files: `app.js`, `server.js`, all Mongoose models, all route handlers, Cloudinary upload service, Razorpay payment service, JWT authentication.
+
+---
+
+### Client Frontend (React)
+
+#### [NEW] [apps/client/](file:///c:/Users/Tariq/OneDrive/Desktop/Ahammed/ozobath-ecommerce/apps/client/)
+React 18 + Vite application with TailwindCSS. All 26+ customer-facing pages, reusable components, context providers for auth/cart/wishlist, API layer, responsive design.
+
+---
+
+### Admin Panel (Vue)
+
+#### [NEW] [apps/admin/](file:///c:/Users/Tariq/OneDrive/Desktop/Ahammed/ozobath-ecommerce/apps/admin/)
+Vue 3 + Vite application with TailwindCSS. Dashboard, dynamic content manager, product/order/customer/coupon/blog management, super admin user management, analytics.
+
+---
+
+### Shared Packages
+
+#### [NEW] [packages/shared/](file:///c:/Users/Tariq/OneDrive/Desktop/Ahammed/ozobath-ecommerce/packages/shared/)
+Shared constants (roles, statuses), validation rules.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- `npm run test` — Run server-side unit tests (Jest for API endpoints, controllers)
+- `npm run test:api` — API integration tests with supertest
+- Check each Vite dev server starts without errors:
+  - `cd apps/client && npm run dev`
+  - `cd apps/admin && npm run dev`
+  - `cd apps/server && npm run dev`
+
+### Manual Verification
+- Verify MongoDB connection on server startup
+- Test all API routes via Postman/browser
+- Verify admin can log in and see dashboard
+- Verify client homepage renders with dynamic content from API
+- Verify image upload to Cloudinary works
+- Verify Razorpay checkout flow
+- Browser testing for responsive design
+
+> [!IMPORTANT]
+> **Next Steps After Approval**: We will set up the complete project structure, install all dependencies, configure all three applications, set up the database models, and create the authentication system as the first implementation milestone.

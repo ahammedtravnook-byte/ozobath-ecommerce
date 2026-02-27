@@ -1,0 +1,1 @@
+const FAQPage = () => { return (<div className='section-wrapper'><h1 className='section-title'>FAQPage</h1><p className='section-subtitle'>This page will be built with dynamic content from the admin panel.</p></div>); }; export default FAQPage;
