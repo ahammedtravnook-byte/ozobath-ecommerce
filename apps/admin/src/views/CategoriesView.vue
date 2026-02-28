@@ -34,7 +34,14 @@
         <form @submit.prevent="saveCat" class="space-y-4">
           <div><label class="admin-label">Name</label><input v-model="form.name" class="admin-input" required /></div>
           <div><label class="admin-label">Description</label><textarea v-model="form.description" class="admin-input h-20"></textarea></div>
-          <div><label class="admin-label">Image URL</label><input v-model="form.image" class="admin-input" /></div>
+          <div>
+            <label class="admin-label">Upload Image</label>
+            <div class="flex items-center gap-3">
+              <input type="file" accept="image/*" @change="handleFileUpload" class="admin-input flex-1 p-1.5" :disabled="uploadingImage" />
+              <span v-if="uploadingImage" class="text-sm text-blue-600 animate-pulse">Uploading...</span>
+            </div>
+            <p v-if="form.image" class="text-xs text-green-600 mt-1 truncate">Current: {{ form.image }}</p>
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div><label class="admin-label">Order</label><input v-model.number="form.order" type="number" class="admin-input" /></div>
             <div><label class="admin-label">Status</label><select v-model="form.isActive" class="admin-input"><option :value="true">Active</option><option :value="false">Inactive</option></select></div>
@@ -51,7 +58,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { categoryAPI } from '@/api/services';
+import { categoryAPI, uploadAPI } from '@/api/services';
 import { useToast } from 'vue-toastification';
 
 const toast = useToast();
@@ -59,6 +66,22 @@ const categories = ref([]);
 const showModal = ref(false);
 const editing = ref(null);
 const form = ref({ name: '', description: '', image: '', order: 0, isActive: true });
+const uploadingImage = ref(false);
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    uploadingImage.value = true;
+    const res = await uploadAPI.uploadImage(file);
+    form.value.image = res.data.url;
+    toast.success('Image uploaded!');
+  } catch (error) {
+    toast.error('Image upload failed');
+  } finally {
+    uploadingImage.value = false;
+  }
+};
 
 const fetchCats = async () => {
   try { const res = await categoryAPI.getAll(); categories.value = res.data || []; }

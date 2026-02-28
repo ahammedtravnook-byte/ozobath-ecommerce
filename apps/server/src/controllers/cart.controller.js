@@ -77,4 +77,45 @@ const clearCart = asyncHandler(async (req, res) => {
   sendResponse(res, 200, null, 'Cart cleared');
 });
 
-module.exports = { getCart, addToCart, updateCartItem, removeFromCart, clearCart };
+// ─── Merge Guest Cart ────────────────────────────
+// Called after login when user had items in localStorage
+const mergeGuestCart = asyncHandler(async (req, res) => {
+  const { items } = req.body; // [{ productId, quantity, variant }]
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return sendResponse(res, 200, null, 'No items to merge');
+  }
+
+  let cart = await Cart.findOne({ user: req.user._id });
+  if (!cart) cart = new Cart({ user: req.user._id, items: [] });
+
+  for (const guestItem of items) {
+    const product = await Product.findById(guestItem.productId);
+    if (!product || !product.isActive) continue;
+
+    const existingIndex = cart.items.findIndex(
+      (item) => item.product.toString() === guestItem.productId && item.variant === guestItem.variant
+    );
+
+    const qty = Math.min(guestItem.quantity || 1, product.stock);
+    if (qty < 1) continue;
+
+    if (existingIndex > -1) {
+      cart.items[existingIndex].quantity = Math.min(
+        cart.items[existingIndex].quantity + qty,
+        product.stock
+      );
+      cart.items[existingIndex].price = product.price;
+    } else {
+      cart.items.push({ product: guestItem.productId, quantity: qty, variant: guestItem.variant, price: product.price });
+    }
+  }
+
+  cart.totalAmount = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  await cart.save();
+
+  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price images stock');
+  sendResponse(res, 200, cart, 'Guest cart merged');
+});
+
+module.exports = { getCart, addToCart, updateCartItem, removeFromCart, clearCart, mergeGuestCart };
+

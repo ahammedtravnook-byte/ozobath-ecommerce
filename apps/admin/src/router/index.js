@@ -30,6 +30,7 @@ const InventoryView = () => import('@/views/InventoryView.vue');
 const ReportsView = () => import('@/views/ReportsView.vue');
 const AdminUsersView = () => import('@/views/AdminUsersView.vue');
 const SettingsView = () => import('@/views/SettingsView.vue');
+const ReelsView = () => import('@/views/ReelsView.vue');
 
 const routes = [
   {
@@ -69,6 +70,7 @@ const routes = [
       { path: 'reports', name: 'Reports', component: ReportsView },
       { path: 'admin-users', name: 'AdminUsers', component: AdminUsersView, meta: { requiresSuperAdmin: true } },
       { path: 'settings', name: 'Settings', component: SettingsView },
+      { path: 'reels', name: 'Reels', component: ReelsView },
     ],
   },
 ];

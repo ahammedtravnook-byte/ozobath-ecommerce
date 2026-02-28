@@ -471,18 +471,46 @@ const verifyPayment = asyncHandler(async (req, res) => {
 
 // ─── ANALYTICS (Dashboard) ──────────────────────
 const getDashboard = asyncHandler(async (req, res) => {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+
   const [
     totalOrders, totalRevenue, totalProducts, totalCustomers,
     recentOrders, pendingOrders, topProducts,
+    orderStatusCounts, customerGrowth, lowStockProducts,
+    pendingReviews, newEnquiries,
   ] = await Promise.all([
     Order.countDocuments(),
-    Order.aggregate([{ $match: { paymentStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$total' } } }]),
+    Order.aggregate([{ $match: { paymentStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$totalAmount' } } }]),
     Product.countDocuments({ isActive: true }),
     User.countDocuments({ role: 'customer' }),
-    Order.find().sort('-createdAt').limit(5).populate('user', 'name email').lean(),
-    Order.countDocuments({ status: 'pending' }),
-    Product.find({ isActive: true }).sort('-salesCount').limit(5).select('name images price salesCount stock').lean(),
+    Order.find().sort('-createdAt').limit(10).populate('user', 'name email').lean(),
+    Order.countDocuments({ orderStatus: 'pending' }),
+    Product.find({ isActive: true }).sort('-salesCount').limit(10).select('name images price salesCount stock').lean(),
+    // Order status distribution (for pie chart)
+    Order.aggregate([
+      { $group: { _id: '$orderStatus', count: { $sum: 1 } } },
+    ]),
+    // Customer growth last 30 days (for line chart)
+    User.aggregate([
+      { $match: { role: 'customer', createdAt: { $gte: thirtyDaysAgo } } },
+      { $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        count: { $sum: 1 },
+      }},
+      { $sort: { _id: 1 } },
+    ]),
+    // Low stock products (stock < 10)
+    Product.find({ isActive: true, stock: { $lt: 10 } })
+      .select('name stock images sku').sort('stock').limit(10).lean(),
+    // Pending reviews count
+    Review.countDocuments({ isApproved: false }),
+    // New B2B enquiries
+    B2BEnquiry.countDocuments({ status: 'new' }),
   ]);
+
+  // Format order status distribution
+  const orderStatusDistribution = {};
+  orderStatusCounts.forEach(s => { orderStatusDistribution[s._id] = s.count; });
 
   sendResponse(res, 200, {
     stats: {
@@ -491,9 +519,14 @@ const getDashboard = asyncHandler(async (req, res) => {
       totalProducts,
       totalCustomers,
       pendingOrders,
+      pendingReviews,
+      newEnquiries,
     },
     recentOrders,
     topProducts,
+    orderStatusDistribution,
+    customerGrowth,
+    lowStockProducts,
   }, 'Dashboard data fetched');
 });
 

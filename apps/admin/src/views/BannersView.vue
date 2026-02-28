@@ -41,8 +41,12 @@
             <input v-model="form.title" class="admin-input" required />
           </div>
           <div>
-            <label class="admin-label">Image URL</label>
-            <input v-model="form.imageUrl" class="admin-input" required />
+            <label class="admin-label">Upload Image</label>
+            <div class="flex items-center gap-3">
+              <input type="file" accept="image/*" @change="handleFileUpload" class="admin-input flex-1 p-1.5" :disabled="uploadingImage" />
+              <span v-if="uploadingImage" class="text-sm text-blue-600 animate-pulse">Uploading...</span>
+            </div>
+            <p v-if="form.imageUrl" class="text-xs text-green-600 mt-1 truncate">Current: {{ form.imageUrl }}</p>
           </div>
           <div>
             <label class="admin-label">Link URL</label>
@@ -78,7 +82,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { bannerAPI } from '@/api/services';
+import { bannerAPI, uploadAPI } from '@/api/services';
 import { useToast } from 'vue-toastification';
 
 const toast = useToast();
@@ -87,6 +91,22 @@ const banners = ref([]);
 const showModal = ref(false);
 const editing = ref(null);
 const form = ref({ title: '', imageUrl: '', linkUrl: '', page: 'home', position: 'hero', isActive: true });
+const uploadingImage = ref(false);
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    uploadingImage.value = true;
+    const res = await uploadAPI.uploadImage(file);
+    form.value.imageUrl = res.data.url;
+    toast.success('Image uploaded!');
+  } catch (error) {
+    toast.error('Image upload failed');
+  } finally {
+    uploadingImage.value = false;
+  }
+};
 
 const fetchBanners = async () => {
   try { const res = await bannerAPI.getAll(); banners.value = res.data || []; }

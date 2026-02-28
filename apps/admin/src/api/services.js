@@ -19,10 +19,56 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor
+// Response interceptor with auto-refresh
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(p => error ? p.reject(error) : p.resolve(token));
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (res) => res.data,
-  (error) => Promise.reject(error.response?.data || error)
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const { data } = await axios.post(`${API_URL}/auth/refresh`, {}, {
+          withCredentials: true,
+        });
+
+        const newToken = data.data.accessToken;
+        localStorage.setItem('adminAccessToken', newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        processQueue(null, newToken);
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        localStorage.removeItem('adminAccessToken');
+        localStorage.removeItem('adminUser');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error.response?.data || error);
+  }
 );
 
 // ─── Auth ────────────────────────────────────────

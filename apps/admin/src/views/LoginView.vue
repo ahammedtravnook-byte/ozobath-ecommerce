@@ -73,7 +73,11 @@ const handleLogin = async () => {
     await authStore.login(form.value.email, form.value.password);
     router.push('/');
   } catch (err) {
-    error.value = err.message || 'Login failed. Check your credentials.';
+    if (err.message?.includes('Too many') || err.status === 429) {
+      error.value = err.message || 'Too many login attempts. Please try again in 2 minutes.';
+    } else {
+      error.value = err.message || 'Login failed. Check your credentials.';
+    }
   } finally {
     loading.value = false;
   }

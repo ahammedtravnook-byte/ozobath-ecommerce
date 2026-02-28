@@ -2,6 +2,8 @@
 // OZOBATH - Product Controller (Full CRUD)
 // ============================================
 const Product = require('../models/Product');
+const Category = require('../models/Category');
+const mongoose = require('mongoose');
 const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
@@ -17,7 +19,16 @@ const getProducts = asyncHandler(async (req, res) => {
 
   const filter = { isActive: true };
 
-  if (category) filter.category = category;
+  if (category) {
+    // Support both ObjectId and slug
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      filter.category = category;
+    } else {
+      const cat = await Category.findOne({ slug: category });
+      if (cat) filter.category = cat._id;
+      else filter.category = null; // No match → return empty
+    }
+  }
   if (badge) filter.badges = badge;
   if (featured === 'true') filter.isFeatured = true;
   if (minPrice || maxPrice) {
@@ -28,12 +39,22 @@ const getProducts = asyncHandler(async (req, res) => {
   if (rating) filter.avgRating = { $gte: Number(rating) };
   if (search) filter.$text = { $search: search };
 
+  // Map client-friendly sort to MongoDB fields
+  const sortMap = {
+    newest: '-createdAt',
+    price_asc: 'price',
+    price_desc: '-price',
+    popular: '-soldCount',
+    rating: '-avgRating',
+  };
+  const sortField = sortMap[sort] || sort;
+
   const skip = (Number(page) - 1) * Number(limit);
 
   const [products, total] = await Promise.all([
     Product.find(filter)
       .populate('category', 'name slug')
-      .sort(sort)
+      .sort(sortField)
       .skip(skip)
       .limit(Number(limit))
       .lean(),

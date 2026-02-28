@@ -113,3 +113,14 @@ export const paymentAPI = {
   createOrder: (data) => api.post('/payment/create-order', data),
   verify: (data) => api.post('/payment/verify', data),
 };
+
+// ─── Reels API (Instagram) ──────────────────────
+export const reelAPI = {
+  getActive: () => api.get('/reels'),
+};
+
+// ─── Shipping API ────────────────────────────────
+export const shippingAPI = {
+  getRates: (data) => api.post('/shipping/rates', data),
+  track: (orderId) => api.get(`/shipping/track/${orderId}`),
+};
