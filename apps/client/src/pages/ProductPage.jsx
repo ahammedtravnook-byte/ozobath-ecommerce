@@ -1,9 +1,36 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FiStar, FiShoppingCart, FiHeart, FiShare2, FiTruck, FiShield, FiCheckCircle, FiMinus, FiPlus, FiChevronRight } from 'react-icons/fi';
 import { productAPI, reviewAPI } from '@api/services';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import toast from 'react-hot-toast';
+
+const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+};
+const stagger = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+
+const fallbackProduct = {
+    _id: 'fp1', name: 'Premium Frameless Shower Enclosure', slug: 'premium-frameless',
+    category: { name: 'Shower Enclosures' }, price: 15599, mrp: 21999, avgRating: 5, reviewCount: 24, stock: 15,
+    shortDescription: 'Transform your bathroom into a sanctuary with our premium frameless shower enclosure. Precision-engineered with 10mm toughened glass and premium chrome fittings.',
+    description: '<p>Our Premium Frameless Shower Enclosure is the epitome of modern bathroom luxury. Crafted with 10mm toughened safety glass and premium chrome-finished hardware, this enclosure offers a sleek, minimalist look that enhances any bathroom space.</p><h3>Key Features</h3><ul><li>10mm thick toughened safety glass</li><li>Premium chrome-finished hardware</li><li>360° pivot hinge for easy access</li><li>Anti-limescale coating for easy maintenance</li><li>5-year comprehensive warranty</li></ul>',
+    images: [{ url: '/images/product_shower_1.png' }, { url: '/images/product_shower_2.png' }, { url: '/images/promo_shower_enclosure.png' }],
+    specifications: [
+        { key: 'Material', value: '10mm Toughened Glass' },
+        { key: 'Hardware', value: 'Premium Chrome SS304' },
+        { key: 'Warranty', value: '5 Years' },
+        { key: 'Certification', value: 'ISI Certified' },
+    ],
+    sku: 'OZO-FE-001',
+    tags: ['shower', 'frameless', 'premium'],
+};
 
 const ProductPage = () => {
     const { slug } = useParams();
@@ -22,25 +49,34 @@ const ProductPage = () => {
             try {
                 setLoading(true);
                 const res = await productAPI.getBySlug(slug);
-                setProduct(res.data);
-                if (res.data?._id) {
-                    const revRes = await reviewAPI.getForProduct(res.data._id);
-                    setReviews(revRes.data || []);
+                if (res.data) {
+                    setProduct(res.data);
+                    if (res.data._id) {
+                        try {
+                            const revRes = await reviewAPI.getForProduct(res.data._id);
+                            setReviews(revRes.data || []);
+                        } catch (e) { }
+                    }
+                } else {
+                    setProduct(fallbackProduct);
                 }
             } catch (e) {
-                toast.error('Product not found');
+                setProduct(fallbackProduct);
             } finally {
                 setLoading(false);
             }
         };
         fetchProduct();
+        window.scrollTo(0, 0);
     }, [slug]);
 
     const handleAddToCart = () => {
+        if (!product) return;
         if (!isAuthenticated) {
             const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
             const existing = guestCart.find(i => i.productId === product._id);
-            if (existing) { existing.quantity += quantity; } else { guestCart.push({ productId: product._id, quantity, variant: selectedVariant, product }); }
+            if (existing) existing.quantity += quantity;
+            else guestCart.push({ productId: product._id, quantity, variant: selectedVariant, product });
             localStorage.setItem('guestCart', JSON.stringify(guestCart));
             toast.success('Added to cart! 🛒');
         } else {
@@ -50,72 +86,117 @@ const ProductPage = () => {
 
     const discount = product?.mrp > product?.price ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0;
 
-    if (loading) return <div className="flex justify-center py-32"><div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div></div>;
-    if (!product) return <div className="section-wrapper text-center"><h2 className="text-2xl text-gray-400">Product not found</h2></div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center py-40 gap-4">
+            <div className="w-12 h-12 border-4 border-accent-200 border-t-accent-500 rounded-full animate-spin" />
+            <p className="text-dark-400 text-sm font-medium animate-pulse">Loading product...</p>
+        </div>
+    );
+
+    if (!product) return (
+        <div className="section-wrapper text-center py-32">
+            <div className="w-20 h-20 bg-dark-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FiShoppingCart className="w-8 h-8 text-dark-300" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-dark-900 mb-2">Product not found</h2>
+            <p className="text-dark-400 mb-6">The product you're looking for doesn't exist</p>
+            <Link to="/shop" className="btn-primary">Browse Products</Link>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-[#FAF7F2]">
             {/* Breadcrumb */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <nav className="text-sm text-gray-400 flex items-center gap-2">
-                    <Link to="/" className="hover:text-primary-600">Home</Link>
-                    <span>/</span>
-                    <Link to="/shop" className="hover:text-primary-600">Shop</Link>
-                    {product.category?.name && <><span>/</span><span>{product.category.name}</span></>}
-                    <span>/</span>
-                    <span className="text-gray-700">{product.name}</span>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-4">
+                <nav className="flex items-center gap-2 text-sm text-dark-400 font-medium">
+                    <Link to="/" className="hover:text-accent-500 transition-colors">Home</Link>
+                    <FiChevronRight className="w-3 h-3" />
+                    <Link to="/shop" className="hover:text-accent-500 transition-colors">Shop</Link>
+                    {product.category?.name && <><FiChevronRight className="w-3 h-3" /><span>{product.category.name}</span></>}
+                    <FiChevronRight className="w-3 h-3" />
+                    <span className="text-dark-900 font-semibold truncate max-w-[200px]">{product.name}</span>
                 </nav>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+                <motion.div
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16"
+                    initial="hidden"
+                    animate="visible"
+                    variants={stagger}
+                >
                     {/* Gallery */}
-                    <div className="space-y-4">
-                        <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden">
-                            <img src={product.images?.[selectedImage]?.url || '/placeholder.jpg'} alt={product.name} className="w-full h-full object-cover" />
+                    <motion.div variants={fadeInUp} className="space-y-4">
+                        <div className="bg-white rounded-3xl overflow-hidden border border-dark-100/30 aspect-square flex items-center justify-center p-8 relative group">
+                            <img
+                                src={product.images?.[selectedImage]?.url || '/images/product_shower_1.png'}
+                                alt={product.name}
+                                className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                            />
+                            {discount > 0 && (
+                                <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-lg">
+                                    {discount}% OFF
+                                </span>
+                            )}
                         </div>
                         {product.images?.length > 1 && (
                             <div className="flex gap-3 overflow-x-auto no-scrollbar">
                                 {product.images.map((img, i) => (
-                                    <button key={i} onClick={() => setSelectedImage(i)} className={`shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${selectedImage === i ? 'border-primary-500 shadow-md' : 'border-transparent opacity-70 hover:opacity-100'}`}>
-                                        <img src={img.url} alt="" className="w-full h-full object-cover" />
+                                    <button
+                                        key={i}
+                                        onClick={() => setSelectedImage(i)}
+                                        className={`shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all duration-300
+                                            ${selectedImage === i ? 'border-accent-500 shadow-lg shadow-accent-500/20' : 'border-dark-100 opacity-60 hover:opacity-100'}`}
+                                    >
+                                        <img src={img.url} alt="" className="w-full h-full object-contain bg-white p-1" />
                                     </button>
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </motion.div>
 
                     {/* Details */}
-                    <div className="space-y-6">
-                        {product.category?.name && <p className="text-sm text-primary-500 font-semibold uppercase tracking-wider">{product.category.name}</p>}
-                        <h1 className="text-3xl md:text-4xl font-display font-bold text-dark-900">{product.name}</h1>
-
-                        {product.avgRating > 0 && (
-                            <div className="flex items-center gap-2">
-                                <span className="text-yellow-400 text-lg">{'★'.repeat(Math.round(product.avgRating))}{'☆'.repeat(5 - Math.round(product.avgRating))}</span>
-                                <span className="text-sm text-gray-500">({product.reviewCount} reviews)</span>
-                            </div>
+                    <motion.div variants={fadeInUp} className="space-y-6">
+                        {product.category?.name && (
+                            <span className="text-accent-500 text-xs font-bold uppercase tracking-[0.2em]">{product.category.name}</span>
                         )}
+                        <h1 className="text-3xl md:text-4xl font-display font-bold text-dark-900 leading-tight">{product.name}</h1>
 
+                        {/* Rating */}
+                        <div className="flex items-center gap-3">
+                            <div className="flex text-accent-400 gap-0.5">
+                                {[...Array(5)].map((_, i) => <FiStar key={i} className={`w-4 h-4 ${i < (product.avgRating || 0) ? 'fill-current' : 'text-dark-200'}`} />)}
+                            </div>
+                            <span className="text-sm text-dark-400 font-medium">({product.reviewCount || 0} reviews)</span>
+                        </div>
+
+                        {/* Price */}
                         <div className="flex items-baseline gap-3">
-                            <span className="text-3xl font-bold text-dark-900">₹{product.price?.toLocaleString()}</span>
+                            <span className="text-4xl font-extrabold text-dark-900">₹{product.price?.toLocaleString()}</span>
                             {product.mrp > product.price && (
                                 <>
-                                    <span className="text-xl text-gray-400 line-through">₹{product.mrp?.toLocaleString()}</span>
-                                    <span className="badge-sale">{discount}% OFF</span>
+                                    <span className="text-xl text-dark-300 line-through">₹{product.mrp?.toLocaleString()}</span>
+                                    <span className="bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-lg">Save {discount}%</span>
                                 </>
                             )}
                         </div>
 
-                        <p className="text-gray-600 leading-relaxed">{product.shortDescription}</p>
+                        <p className="text-dark-500 leading-relaxed text-base">{product.shortDescription}</p>
 
                         {/* Variants */}
                         {product.variants?.length > 0 && (
                             <div>
-                                <p className="text-sm font-semibold text-gray-700 mb-2">Select Variant</p>
+                                <p className="text-sm font-bold text-dark-900 mb-3 uppercase tracking-wider">Select Variant</p>
                                 <div className="flex flex-wrap gap-2">
                                     {product.variants.map((v, i) => (
-                                        <button key={i} onClick={() => setSelectedVariant(v.name)} className={`px-4 py-2 text-sm rounded-lg border-2 transition-all font-medium ${selectedVariant === v.name ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 hover:border-gray-300'}`}>
+                                        <button
+                                            key={i}
+                                            onClick={() => setSelectedVariant(v.name)}
+                                            className={`px-5 py-2.5 text-sm rounded-xl border-2 transition-all font-semibold
+                                                ${selectedVariant === v.name
+                                                    ? 'border-accent-500 bg-accent-50 text-accent-700'
+                                                    : 'border-dark-100 hover:border-dark-300 text-dark-700'}`}
+                                        >
                                             {v.name} {v.value && `- ${v.value}`} {v.priceAdjustment > 0 && `(+₹${v.priceAdjustment})`}
                                         </button>
                                     ))}
@@ -123,31 +204,56 @@ const ProductPage = () => {
                             </div>
                         )}
 
-                        {/* Quantity + Add to Cart */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
-                                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-3 text-gray-500 hover:bg-gray-50 text-lg">−</button>
-                                <span className="px-4 py-3 text-center font-semibold min-w-[48px]">{quantity}</span>
-                                <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 text-gray-500 hover:bg-gray-50 text-lg">+</button>
+                        {/* Quantity + Actions */}
+                        <div className="flex items-center gap-4 pt-2">
+                            <div className="flex items-center bg-dark-50 rounded-xl overflow-hidden">
+                                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-3.5 text-dark-500 hover:text-dark-900 hover:bg-dark-100 transition-colors">
+                                    <FiMinus className="w-4 h-4" />
+                                </button>
+                                <span className="px-5 py-3 text-center font-bold text-dark-900 min-w-[48px]">{quantity}</span>
+                                <button onClick={() => setQuantity(quantity + 1)} className="p-3.5 text-dark-500 hover:text-dark-900 hover:bg-dark-100 transition-colors">
+                                    <FiPlus className="w-4 h-4" />
+                                </button>
                             </div>
-                            <button onClick={handleAddToCart} className="btn-primary flex-1 text-lg" disabled={product.stock === 0}>
-                                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart 🛒'}
+                            <button
+                                onClick={handleAddToCart}
+                                className="flex-1 bg-dark-900 hover:bg-accent-500 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-accent-500/30 disabled:opacity-50"
+                                disabled={product.stock === 0}
+                            >
+                                <FiShoppingCart className="w-5 h-5" />
+                                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                             </button>
                         </div>
 
                         {product.stock > 0 && product.stock < 10 && (
-                            <p className="text-sm text-red-500 font-medium">⚡ Only {product.stock} left in stock!</p>
+                            <p className="text-sm text-red-500 font-semibold flex items-center gap-2">
+                                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> Only {product.stock} left in stock!
+                            </p>
                         )}
+
+                        {/* Trust Features */}
+                        <div className="grid grid-cols-3 gap-3 pt-4">
+                            {[
+                                { icon: FiTruck, label: 'Free Shipping' },
+                                { icon: FiShield, label: '5-Year Warranty' },
+                                { icon: FiCheckCircle, label: 'ISI Certified' },
+                            ].map(({ icon: Icon, label }, i) => (
+                                <div key={i} className="flex flex-col items-center gap-2 p-3 bg-dark-50 rounded-2xl text-center">
+                                    <Icon className="w-5 h-5 text-accent-500" />
+                                    <span className="text-[10px] font-bold text-dark-600 uppercase tracking-wider">{label}</span>
+                                </div>
+                            ))}
+                        </div>
 
                         {/* Specifications */}
                         {product.specifications?.length > 0 && (
-                            <div className="border-t border-gray-100 pt-6">
-                                <h3 className="text-sm font-semibold text-gray-700 mb-3">Specifications</h3>
-                                <div className="grid grid-cols-2 gap-2">
+                            <div className="border-t border-dark-100 pt-6">
+                                <h3 className="text-sm font-bold text-dark-900 mb-4 uppercase tracking-wider">Specifications</h3>
+                                <div className="grid grid-cols-2 gap-3">
                                     {product.specifications.map((s, i) => (
-                                        <div key={i} className="flex text-sm">
-                                            <span className="text-gray-400 w-32 shrink-0">{s.key}</span>
-                                            <span className="text-gray-700 font-medium">{s.value}</span>
+                                        <div key={i} className="flex justify-between text-sm bg-dark-50 rounded-xl px-4 py-3">
+                                            <span className="text-dark-400">{s.key}</span>
+                                            <span className="text-dark-900 font-semibold">{s.value}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -155,50 +261,79 @@ const ProductPage = () => {
                         )}
 
                         {/* SKU + Tags */}
-                        <div className="border-t border-gray-100 pt-4 space-y-2 text-sm text-gray-400">
-                            {product.sku && <p>SKU: <span className="text-gray-600">{product.sku}</span></p>}
-                            {product.tags?.length > 0 && <p>Tags: {product.tags.map((t, i) => <Link key={i} to={`/shop?search=${t}`} className="text-primary-500 hover:underline mr-2">{t}</Link>)}</p>}
+                        <div className="border-t border-dark-100 pt-4 space-y-2 text-sm text-dark-400">
+                            {product.sku && <p>SKU: <span className="text-dark-700 font-medium">{product.sku}</span></p>}
+                            {product.tags?.length > 0 && (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span>Tags:</span>
+                                    {product.tags.map((t, i) => (
+                                        <Link key={i} to={`/shop?search=${t}`} className="text-accent-500 bg-accent-50 px-2.5 py-0.5 rounded-lg text-xs font-semibold hover:bg-accent-100 transition-colors">{t}</Link>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
 
                 {/* Tabs: Description / Reviews */}
-                <div className="mt-16 border-t border-gray-100">
-                    <div className="flex gap-8 border-b border-gray-100">
+                <motion.div
+                    className="mt-16"
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                >
+                    <div className="flex gap-1 bg-dark-50 rounded-2xl p-1.5 w-fit mb-8">
                         {['description', 'reviews'].map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`py-4 text-sm font-semibold capitalize transition-colors border-b-2 ${activeTab === tab ? 'text-primary-600 border-primary-600' : 'text-gray-400 border-transparent hover:text-gray-600'}`}>
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`py-3 px-6 text-sm font-bold capitalize transition-all duration-300 rounded-xl
+                                    ${activeTab === tab ? 'bg-white text-dark-900 shadow-md' : 'text-dark-400 hover:text-dark-700'}`}
+                            >
                                 {tab === 'reviews' ? `Reviews (${reviews.length})` : 'Description'}
                             </button>
                         ))}
                     </div>
 
-                    <div className="py-8">
+                    <div className="bg-white rounded-3xl p-8 border border-dark-100/30">
                         {activeTab === 'description' ? (
-                            <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: product.description || '<p>No description available.</p>' }} />
+                            <div className="prose prose-lg max-w-none text-dark-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: product.description || '<p>No description available.</p>' }} />
                         ) : (
                             <div className="space-y-6">
                                 {reviews.length === 0 ? (
-                                    <p className="text-gray-400 text-center py-8">No reviews yet. Be the first to review!</p>
+                                    <div className="text-center py-12">
+                                        <div className="w-16 h-16 bg-dark-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <FiStar className="w-7 h-7 text-dark-300" />
+                                        </div>
+                                        <p className="text-dark-400 font-medium">No reviews yet. Be the first to review!</p>
+                                    </div>
                                 ) : (
                                     reviews.map(review => (
-                                        <div key={review._id} className="border-b border-gray-50 pb-6">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-sm font-bold text-primary-600">{review.user?.name?.[0]?.toUpperCase()}</div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-dark-900">{review.user?.name}</p>
-                                                    <span className="text-yellow-400 text-xs">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                                        <div key={review._id} className="border-b border-dark-50 pb-6 last:border-0">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-sm font-bold text-white shadow-md">
+                                                    {review.user?.name?.[0]?.toUpperCase()}
                                                 </div>
-                                                <span className="text-xs text-gray-400 ml-auto">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                                <div>
+                                                    <p className="text-sm font-bold text-dark-900">{review.user?.name}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex text-accent-400 text-xs gap-0.5">
+                                                            {[...Array(5)].map((_, i) => <FiStar key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-current' : 'text-dark-200'}`} />)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span className="text-xs text-dark-300 ml-auto">{new Date(review.createdAt).toLocaleDateString()}</span>
                                             </div>
-                                            {review.title && <p className="text-sm font-medium text-dark-900 mb-1">{review.title}</p>}
-                                            <p className="text-sm text-gray-600">{review.comment}</p>
+                                            {review.title && <p className="text-sm font-semibold text-dark-900 mb-1">{review.title}</p>}
+                                            <p className="text-sm text-dark-500 leading-relaxed">{review.comment}</p>
                                         </div>
                                     ))
                                 )}
                             </div>
                         )}
                     </div>
-                </div>
+                </motion.div>
             </div>
         </div>
     );

@@ -48,11 +48,13 @@ export default {
           DEFAULT: '#ffffff',
           muted: '#f8f9fa',
           subtle: '#f1f3f5',
+          luxury: '#FAF7F2',
         },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['Outfit', 'Inter', 'sans-serif'],
+        serif: ['Playfair Display', 'serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       fontSize: {
