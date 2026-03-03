@@ -6,11 +6,7 @@ const ApiError = require('../utils/apiError');
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
-
-  // Log for dev
-  if (process.env.NODE_ENV === 'development') {
-    console.error('❌ Error:', err);
-  }
+  error.statusCode = err.statusCode || 500;
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
@@ -37,7 +33,14 @@ const errorHandler = (err, req, res, next) => {
     error = new ApiError(401, 'Token has expired.');
   }
 
-  res.status(error.statusCode || 500).json({
+  const statusCode = error.statusCode || 500;
+
+  // Log for dev: Only log 500+ errors to reduce console noise for 4xx (Not Found, Unauthorized, etc.)
+  if (process.env.NODE_ENV === 'development' && statusCode >= 500) {
+    console.error('❌ Server Error:', err);
+  }
+
+  res.status(statusCode).json({
     success: false,
     statusCode: error.statusCode || 500,
     message: error.message || 'Internal Server Error',

@@ -6,16 +6,14 @@ import Footer from './Footer';
 import AnnouncementBar from './AnnouncementBar';
 
 const pageVariants = {
-    initial: { opacity: 0, y: 30 },
+    initial: { opacity: 0 },
     enter: {
         opacity: 1,
-        y: 0,
-        transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+        transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
     },
     exit: {
         opacity: 0,
-        y: -20,
-        transition: { duration: 0.3, ease: 'easeInOut' }
+        transition: { duration: 0.25, ease: 'easeInOut' }
     },
 };
 
@@ -35,7 +33,7 @@ const Layout = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-[#FAF7F2]">
-            {/* Scroll Progress Bar */}
+            {/* Animated Gradient Scroll Progress Bar */}
             <div
                 className="scroll-progress"
                 style={{ width: `${scrollProgress}%` }}

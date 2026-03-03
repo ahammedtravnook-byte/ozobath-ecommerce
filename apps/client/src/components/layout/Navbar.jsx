@@ -38,6 +38,7 @@ const Navbar = () => {
 
     useEffect(() => {
         document.body.style.overflow = isMobileMenuOpen ? 'hidden' : 'unset';
+        return () => { document.body.style.overflow = 'unset'; };
     }, [isMobileMenuOpen]);
 
     return (
@@ -60,7 +61,7 @@ const Navbar = () => {
                     >
                         {/* Logo */}
                         <Link to="/" className="flex-shrink-0 flex items-center gap-2.5 group">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/25 group-hover:shadow-accent-500/40 transition-shadow group-hover:scale-105 transition-transform duration-300">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/25 group-hover:shadow-accent-500/40 transition-all duration-300 group-hover:scale-105">
                                 <span className="text-white font-bold text-sm">O</span>
                             </div>
                             <h1 className="text-xl font-display font-extrabold tracking-tight text-dark-900">
@@ -230,34 +231,64 @@ const Navbar = () => {
                 )}
             </AnimatePresence>
 
-            {/* Mobile Menu Overlay */}
+            {/* Mobile Menu Overlay — Fixed z-index above header */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
-                        className="fixed inset-0 z-40 lg:hidden"
+                        className="fixed inset-0 z-[55] lg:hidden"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
                     >
-                        <div className="absolute inset-0 bg-dark-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+                        {/* Backdrop */}
+                        <motion.div
+                            className="absolute inset-0 bg-dark-900/60 backdrop-blur-sm"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        />
+
+                        {/* Slide-in Panel */}
                         <motion.nav
-                            className="absolute right-0 top-0 w-[85%] max-w-sm h-full bg-white shadow-2xl flex flex-col pt-24 pb-8 px-6 overflow-y-auto"
+                            className="absolute right-0 top-0 w-[85%] max-w-sm h-full bg-white shadow-2xl flex flex-col overflow-y-auto"
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 250 }}
                         >
-                            <div className="flex flex-col gap-2 flex-1">
+                            {/* Mobile Menu Header */}
+                            <div className="flex items-center justify-between px-6 py-5 border-b border-dark-50">
+                                <Link to="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center">
+                                        <span className="text-white font-bold text-xs">O</span>
+                                    </div>
+                                    <span className="text-lg font-display font-extrabold text-dark-900">
+                                        OZO<span className="text-accent-500">BATH</span>
+                                    </span>
+                                </Link>
+                                <button
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="p-2 hover:bg-dark-50 rounded-xl transition-colors"
+                                    aria-label="Close menu"
+                                >
+                                    <FiX className="w-5 h-5 text-dark-500" />
+                                </button>
+                            </div>
+
+                            {/* Navigation Links */}
+                            <div className="flex flex-col gap-1 flex-1 px-4 pt-4">
                                 {navLinks.map((link, i) => (
                                     <motion.div
                                         key={link.path}
                                         initial={{ opacity: 0, x: 30 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: i * 0.08, duration: 0.4 }}
+                                        transition={{ delay: i * 0.06 + 0.1, duration: 0.4 }}
                                     >
                                         <Link
                                             to={link.path}
-                                            className={`flex items-center text-lg font-display font-semibold py-3 px-4 rounded-xl transition-all duration-300
+                                            className={`flex items-center text-base font-display font-semibold py-3.5 px-4 rounded-2xl transition-all duration-300
                                                 ${location.pathname === link.path
                                                     ? 'text-accent-500 bg-accent-50'
                                                     : 'text-dark-900 hover:bg-dark-50 hover:text-accent-500'
@@ -265,30 +296,53 @@ const Navbar = () => {
                                             onClick={() => setIsMobileMenuOpen(false)}
                                         >
                                             {link.label}
+                                            {location.pathname === link.path && (
+                                                <motion.div
+                                                    className="ml-auto w-1.5 h-1.5 bg-accent-500 rounded-full"
+                                                    layoutId="mobile-nav-dot"
+                                                />
+                                            )}
                                         </Link>
                                     </motion.div>
                                 ))}
 
-                                <hr className="border-dark-100 my-4" />
+                                <motion.hr
+                                    className="border-dark-100 my-3"
+                                    initial={{ opacity: 0, scaleX: 0 }}
+                                    animate={{ opacity: 1, scaleX: 1 }}
+                                    transition={{ delay: 0.4 }}
+                                />
 
-                                <div className="flex items-center gap-4 px-4 mb-4">
-                                    <Link to="/wishlist" className="flex items-center gap-3 text-dark-500 font-medium text-sm hover:text-accent-500 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                                        <div className="relative p-2 bg-pink-50 rounded-xl">
+                                {/* Quick Action Links */}
+                                <motion.div
+                                    className="flex items-center gap-3 px-2 mb-4"
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.45 }}
+                                >
+                                    <Link to="/wishlist" className="flex-1 flex items-center gap-3 p-3 bg-pink-50/80 rounded-2xl hover:bg-pink-50 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <div className="relative">
                                             <FiHeart className="w-5 h-5 text-pink-500" />
-                                            {wishlistCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{wishlistCount}</span>}
+                                            {wishlistCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">{wishlistCount}</span>}
                                         </div>
-                                        Wishlist
+                                        <span className="text-dark-600 font-medium text-sm">Wishlist</span>
                                     </Link>
-                                    <Link to="/cart" className="flex items-center gap-3 text-dark-500 font-medium text-sm hover:text-accent-500 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                                        <div className="relative p-2 bg-blue-50 rounded-xl">
+                                    <Link to="/cart" className="flex-1 flex items-center gap-3 p-3 bg-blue-50/80 rounded-2xl hover:bg-blue-50 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <div className="relative">
                                             <FiShoppingBag className="w-5 h-5 text-blue-500" />
-                                            {itemCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{itemCount}</span>}
+                                            {itemCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-accent-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">{itemCount}</span>}
                                         </div>
-                                        Cart
+                                        <span className="text-dark-600 font-medium text-sm">Cart</span>
                                     </Link>
-                                </div>
+                                </motion.div>
 
-                                <div className="mt-auto space-y-3">
+                                {/* User Section */}
+                                <motion.div
+                                    className="mt-auto pb-6 space-y-3"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                >
                                     {isAuthenticated ? (
                                         <>
                                             <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-accent-50 to-orange-50 rounded-2xl">
@@ -306,7 +360,7 @@ const Navbar = () => {
                                     ) : (
                                         <Link to="/login" className="w-full py-3.5 bg-gradient-to-r from-accent-500 to-orange-500 text-white rounded-2xl flex justify-center font-bold text-sm tracking-wider uppercase shadow-lg shadow-accent-500/20 hover:shadow-accent-500/40 transition-all" onClick={() => setIsMobileMenuOpen(false)}>Sign In / Register</Link>
                                     )}
-                                </div>
+                                </motion.div>
                             </div>
                         </motion.nav>
                     </motion.div>

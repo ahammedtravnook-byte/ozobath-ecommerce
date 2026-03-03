@@ -88,10 +88,34 @@ const CartPage = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between mb-10"
+                    className="flex items-center justify-between mb-6"
                 >
                     <h1 className="text-3xl md:text-4xl font-display font-bold text-dark-900">Shopping Cart</h1>
                     {items.length > 0 && <span className="text-sm text-dark-400 font-medium">{items.length} item{items.length > 1 ? 's' : ''}</span>}
+                </motion.div>
+
+                {/* Step Progress Indicator */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="flex items-center justify-center gap-2 md:gap-4 mb-10"
+                >
+                    {[
+                        { step: 1, label: 'Cart', active: true },
+                        { step: 2, label: 'Checkout', active: false },
+                        { step: 3, label: 'Confirmation', active: false },
+                    ].map((s, i) => (
+                        <div key={s.step} className="flex items-center gap-2 md:gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${s.active ? 'bg-accent-500 text-white shadow-lg shadow-accent-500/20' : 'bg-dark-100 text-dark-400'}`}>
+                                    {s.step}
+                                </div>
+                                <span className={`text-xs font-bold uppercase tracking-wider hidden sm:block ${s.active ? 'text-dark-900' : 'text-dark-300'}`}>{s.label}</span>
+                            </div>
+                            {i < 2 && <div className={`w-8 md:w-16 h-0.5 rounded-full ${i === 0 ? 'bg-dark-200' : 'bg-dark-100'}`} />}
+                        </div>
+                    ))}
                 </motion.div>
 
                 {items.length === 0 ? (
