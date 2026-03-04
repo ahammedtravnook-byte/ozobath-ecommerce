@@ -44,8 +44,8 @@ const Navbar = () => {
     return (
         <>
             <motion.header
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
-                    ${isScrolled ? 'py-2' : 'py-4'}
+                className={`sticky top-0 z-50 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
+                    ${isScrolled ? 'pt-4 pb-2' : 'bg-white/90 backdrop-blur-md shadow-sm border-b border-dark-100/10'}
                 `}
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
@@ -53,10 +53,10 @@ const Navbar = () => {
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div
-                        className={`flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-full
+                        className={`flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
                             ${isScrolled
-                                ? 'bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] px-6 py-2 border border-white/50'
-                                : 'bg-white/70 backdrop-blur-md px-6 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-white/30'
+                                ? 'bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] px-6 py-2 border border-white/50 rounded-full'
+                                : 'py-4 bg-transparent rounded-none'
                             }`}
                     >
                         {/* Logo */}
