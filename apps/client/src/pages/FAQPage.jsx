@@ -53,6 +53,7 @@ const FAQPage = () => {
                 title="Frequently Asked Questions"
                 subtitle="Everything you need to know about OZOBATH products, installation, warranty, and more."
                 breadcrumbs={[{ label: 'FAQ' }]}
+                illustration="/images/illus_faq.png"
             />
 
             <section className="section-wrapper">

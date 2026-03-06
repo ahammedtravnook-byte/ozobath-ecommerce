@@ -334,6 +334,81 @@ const ProductPage = () => {
                         )}
                     </div>
                 </motion.div>
+
+                {/* Related Products — You May Also Like */}
+                {product.relatedProducts?.length > 0 && (
+                    <motion.div
+                        className="mt-16"
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h2 className="text-2xl md:text-3xl font-display font-bold text-dark-900">You May Also Like</h2>
+                                <p className="text-dark-400 text-sm mt-1 font-medium">Handpicked products that complement your selection</p>
+                            </div>
+                            <Link to="/shop" className="text-sm text-accent-500 hover:text-accent-600 font-bold hidden sm:flex items-center gap-1 transition-colors">
+                                View All <FiChevronRight className="w-4 h-4" />
+                            </Link>
+                        </div>
+                        <div className="flex gap-5 overflow-x-auto no-scrollbar pb-4">
+                            {product.relatedProducts.map((rp, i) => {
+                                const rpDiscount = rp.compareAtPrice > rp.price ? Math.round(((rp.compareAtPrice - rp.price) / rp.compareAtPrice) * 100) : 0;
+                                return (
+                                    <motion.div
+                                        key={rp._id || i}
+                                        className="shrink-0 w-[260px]"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.1, duration: 0.5 }}
+                                    >
+                                        <Link to={`/product/${rp.slug}`} className="group block">
+                                            <div className="bg-white rounded-3xl border border-dark-100/30 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-dark-900/5 hover:-translate-y-1">
+                                                {/* Image */}
+                                                <div className="aspect-square p-4 bg-white relative overflow-hidden">
+                                                    <img
+                                                        src={rp.images?.[0]?.url || '/images/product_shower_1.png'}
+                                                        alt={rp.name}
+                                                        className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                                                    />
+                                                    {rpDiscount > 0 && (
+                                                        <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg shadow">
+                                                            {rpDiscount}% OFF
+                                                        </span>
+                                                    )}
+                                                    {rp.badges?.includes('new') && (
+                                                        <span className="absolute top-3 right-3 bg-accent-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg shadow">
+                                                            New
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {/* Info */}
+                                                <div className="p-4 pt-0">
+                                                    <h3 className="text-sm font-bold text-dark-900 mb-1.5 line-clamp-2 group-hover:text-accent-500 transition-colors">{rp.name}</h3>
+                                                    <div className="flex items-center gap-1 mb-2">
+                                                        <div className="flex text-accent-400 gap-0.5">
+                                                            {[...Array(5)].map((_, j) => <FiStar key={j} className={`w-3 h-3 ${j < (rp.avgRating || 0) ? 'fill-current' : 'text-dark-200'}`} />)}
+                                                        </div>
+                                                        <span className="text-[10px] text-dark-400 font-medium">({rp.reviewCount || 0})</span>
+                                                    </div>
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span className="text-lg font-extrabold text-dark-900">₹{rp.price?.toLocaleString()}</span>
+                                                        {rp.compareAtPrice > rp.price && (
+                                                            <span className="text-xs text-dark-300 line-through">₹{rp.compareAtPrice?.toLocaleString()}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                )}
             </div>
         </div>
     );

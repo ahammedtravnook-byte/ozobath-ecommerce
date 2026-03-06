@@ -50,6 +50,7 @@ const BlogListPage = () => {
                 title="Blog & Tips"
                 subtitle="Expert advice on bathroom design, maintenance, and premium solutions"
                 breadcrumbs={[{ label: 'Blog' }]}
+                illustration="/images/illus_blog.png"
             />
 
             <section className="section-wrapper">

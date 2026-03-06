@@ -77,6 +77,10 @@ const AppRouter = () => {
     return (
         <Suspense fallback={<PageLoader />}>
             <Routes>
+                {/* Auth Pages — No Layout (no navbar/footer) */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+
                 <Route element={<Layout />}>
                     {/* Public Pages */}
                     <Route path="/" element={<HomePage />} />
@@ -87,10 +91,6 @@ const AppRouter = () => {
                     <Route path="/checkout" element={<CheckoutPage />} />
                     <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
                     <Route path="/track-order" element={<OrderTrackingPage />} />
-
-                    {/* Auth Pages */}
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
 
                     {/* User Pages */}
                     <Route path="/profile" element={<ProfilePage />} />

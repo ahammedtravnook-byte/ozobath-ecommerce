@@ -23,29 +23,51 @@ const WishlistPage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!isAuthenticated) { navigate('/login'); return; }
         const fetchWishlist = async () => {
-            try {
-                const { wishlistAPI } = await import('@api/services');
-                const res = await wishlistAPI.get();
-                setWishlist(res.data?.products || []);
-            } catch (e) { toast.error('Failed to load wishlist'); }
-            finally { setLoading(false); }
+            if (isAuthenticated) {
+                // Logged in — fetch from API
+                try {
+                    const { wishlistAPI } = await import('@api/services');
+                    const res = await wishlistAPI.get();
+                    setWishlist(res.data?.products || []);
+                } catch (e) { toast.error('Failed to load wishlist'); }
+            } else {
+                // Guest — load from localStorage
+                const guestWishlist = JSON.parse(localStorage.getItem('guestWishlist') || '[]');
+                setWishlist(guestWishlist);
+            }
+            setLoading(false);
         };
         fetchWishlist();
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated]);
 
     const removeFromWishlist = async (productId) => {
-        try {
-            const { wishlistAPI } = await import('@api/services');
-            await wishlistAPI.remove(productId);
-            setWishlist(prev => prev.filter(p => p._id !== productId));
+        if (isAuthenticated) {
+            try {
+                const { wishlistAPI } = await import('@api/services');
+                await wishlistAPI.remove(productId);
+                setWishlist(prev => prev.filter(p => p._id !== productId));
+                toast.success('Removed from wishlist');
+            } catch (e) { toast.error('Failed'); }
+        } else {
+            const updated = wishlist.filter(p => p._id !== productId);
+            setWishlist(updated);
+            localStorage.setItem('guestWishlist', JSON.stringify(updated));
             toast.success('Removed from wishlist');
-        } catch (e) { toast.error('Failed'); }
+        }
     };
 
     const moveToCart = async (product) => {
-        await addToCart(product._id, 1);
+        if (isAuthenticated) {
+            await addToCart(product._id, 1);
+        } else {
+            const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+            const existing = guestCart.find(i => i.productId === product._id);
+            if (existing) existing.quantity += 1;
+            else guestCart.push({ productId: product._id, quantity: 1, product });
+            localStorage.setItem('guestCart', JSON.stringify(guestCart));
+            toast.success('Added to cart! 🛒');
+        }
         removeFromWishlist(product._id);
     };
 
@@ -63,7 +85,14 @@ const WishlistPage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-center justify-between mb-10"
                 >
-                    <h1 className="text-3xl md:text-4xl font-display font-bold text-dark-900">My Wishlist</h1>
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-display font-bold text-dark-900">My Wishlist</h1>
+                        {!isAuthenticated && (
+                            <p className="text-dark-400 text-sm mt-1">
+                                <Link to="/login" className="text-accent-500 font-semibold hover:underline">Sign in</Link> to sync your wishlist across devices
+                            </p>
+                        )}
+                    </div>
                     {wishlist.length > 0 && <span className="text-sm text-dark-400 font-medium">{wishlist.length} item{wishlist.length > 1 ? 's' : ''}</span>}
                 </motion.div>
 

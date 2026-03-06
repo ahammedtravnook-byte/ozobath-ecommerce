@@ -62,6 +62,8 @@ const productSchema = new mongoose.Schema({
   seoDescription: String,
   seoKeywords: [String],
 
+  relatedProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+
   avgRating: { type: Number, default: 0, min: 0, max: 5 },
   reviewCount: { type: Number, default: 0 },
   salesCount: { type: Number, default: 0 },

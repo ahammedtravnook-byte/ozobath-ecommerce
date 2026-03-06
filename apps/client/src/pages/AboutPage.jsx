@@ -67,6 +67,7 @@ const AboutPage = () => {
                 title="About OZOBATH"
                 subtitle="Crafting premium bathroom experiences since 2020. We believe every bathroom deserves to be a sanctuary."
                 breadcrumbs={[{ label: 'About Us' }]}
+                illustration="/images/illus_about.png"
             />
 
             {/* ── Mission + Stats ─────────────────────── */}

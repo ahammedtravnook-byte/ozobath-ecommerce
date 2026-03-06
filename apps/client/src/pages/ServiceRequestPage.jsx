@@ -24,6 +24,7 @@ const ServiceRequestPage = () => {
                 title="Service & Support"
                 subtitle="Need help with an OZOBATH product? Submit a service request and our team will assist you promptly."
                 breadcrumbs={[{ label: 'Service Request' }]}
+                illustration="/images/illus_service.png"
             />
 
             <section className="section-wrapper">

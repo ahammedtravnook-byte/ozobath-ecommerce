@@ -108,6 +108,22 @@
         </div>
       </div>
 
+      <!-- Related Products -->
+      <div class="admin-card p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Related Products</h2>
+        <div v-if="form.relatedProducts.length" class="flex flex-wrap gap-2 mb-4">
+          <div v-for="rp in form.relatedProducts" :key="rp" class="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-sm">
+            <span class="font-medium">{{ getProductName(rp) }}</span>
+            <button @click="removeRelated(rp)" class="text-blue-400 hover:text-red-500 text-xs font-bold">×</button>
+          </div>
+        </div>
+        <select @change="addRelated($event)" class="admin-input w-full">
+          <option value="">Select a product to add...</option>
+          <option v-for="p in availableProducts" :key="p._id" :value="p._id">{{ p.name }}</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Select products that will appear as "You May Also Like" on this product's page.</p>
+      </div>
+
       <!-- Status -->
       <div class="admin-card p-6 flex items-center gap-6">
         <label class="flex items-center gap-2 text-sm"><input v-model="form.isActive" type="checkbox" class="w-4 h-4 rounded" /><span>Active</span></label>
@@ -132,12 +148,36 @@ import { useToast } from 'vue-toastification';
 const route = useRoute(); const router = useRouter(); const toast = useToast();
 const isEdit = computed(() => route.params.id && route.params.id !== 'new');
 const saving = ref(false); const categories = ref([]); const newImageUrl = ref('');
+const allProducts = ref([]);
 const form = ref({
   name: '', sku: '', brand: 'OZOBATH', shortDescription: '', description: '',
   price: 0, mrp: 0, costPrice: 0, stock: 0, category: '', tagsStr: '',
-  images: [], variants: [], specifications: [],
+  images: [], variants: [], specifications: [], relatedProducts: [],
   metaTitle: '', metaDescription: '', isActive: true, isFeatured: false, isNewArrival: false,
 });
+
+const availableProducts = computed(() => {
+  const currentId = route.params.id;
+  const selectedIds = form.value.relatedProducts;
+  return allProducts.value.filter(p => p._id !== currentId && !selectedIds.includes(p._id));
+});
+
+const getProductName = (id) => {
+  const p = allProducts.value.find(p => p._id === id);
+  return p ? p.name : id;
+};
+
+const addRelated = (event) => {
+  const id = event.target.value;
+  if (id && !form.value.relatedProducts.includes(id)) {
+    form.value.relatedProducts.push(id);
+  }
+  event.target.value = '';
+};
+
+const removeRelated = (id) => {
+  form.value.relatedProducts = form.value.relatedProducts.filter(rp => rp !== id);
+};
 
 const addImage = () => { if (newImageUrl.value) { form.value.images.push({ url: newImageUrl.value }); newImageUrl.value = ''; } };
 
@@ -174,11 +214,12 @@ const saveProduct = async () => {
 
 onMounted(async () => {
   try { const catRes = await categoryAPI.getAll(); categories.value = catRes.data || []; } catch (e) {}
+  try { const prodRes = await productAPI.getAll(); allProducts.value = (prodRes.data?.products || prodRes.data || []); } catch (e) {}
   if (isEdit.value) {
     try {
       const res = await productAPI.getById(route.params.id);
       const p = res.data;
-      form.value = { ...p, tagsStr: (p.tags || []).join(', '), category: p.category?._id || p.category || '' };
+      form.value = { ...p, tagsStr: (p.tags || []).join(', '), category: p.category?._id || p.category || '', relatedProducts: (p.relatedProducts || []).map(rp => rp._id || rp) };
     } catch (e) { toast.error('Failed to load product'); }
   }
 });

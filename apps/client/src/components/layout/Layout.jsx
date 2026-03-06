@@ -1,23 +1,27 @@
-import { Outlet } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Outlet, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import AnnouncementBar from './AnnouncementBar';
+import ChatBot from '@components/ChatBot';
 
 const pageVariants = {
-    initial: { opacity: 0 },
+    initial: { opacity: 0, y: 12 },
     enter: {
         opacity: 1,
-        transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+        y: 0,
+        transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] }
     },
     exit: {
         opacity: 0,
-        transition: { duration: 0.25, ease: 'easeInOut' }
+        y: -8,
+        transition: { duration: 0.2, ease: 'easeInOut' }
     },
 };
 
 const Layout = () => {
+    const location = useLocation();
     const [scrollProgress, setScrollProgress] = useState(0);
 
     useEffect(() => {
@@ -41,16 +45,20 @@ const Layout = () => {
 
             <AnnouncementBar />
             <Navbar />
-            <motion.main
-                className="flex-grow"
-                variants={pageVariants}
-                initial="initial"
-                animate="enter"
-                exit="exit"
-            >
-                <Outlet />
-            </motion.main>
+            <AnimatePresence mode="wait">
+                <motion.main
+                    key={location.pathname}
+                    className="flex-grow"
+                    variants={pageVariants}
+                    initial="initial"
+                    animate="enter"
+                    exit="exit"
+                >
+                    <Outlet />
+                </motion.main>
+            </AnimatePresence>
             <Footer />
+            <ChatBot />
         </div>
     );
 };

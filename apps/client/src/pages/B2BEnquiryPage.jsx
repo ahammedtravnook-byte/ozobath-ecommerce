@@ -31,6 +31,7 @@ const B2BEnquiryPage = () => {
                 title="B2B / Bulk Orders"
                 subtitle="Partner with OZOBATH for premium bathroom solutions at scale. Special pricing for architects, builders, and interior designers."
                 breadcrumbs={[{ label: 'B2B Enquiry' }]}
+                illustration="/images/illus_b2b.png"
             />
 
             <section className="section-wrapper">

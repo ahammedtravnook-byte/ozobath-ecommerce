@@ -47,6 +47,33 @@
     box-sizing: border-box;
   }
 
+  /* Remove default blue outline from ALL elements */
+  *:focus,
+  input:focus,
+  select:focus,
+  textarea:focus,
+  button:focus,
+  a:focus {
+    outline: none !important;
+    outline-width: 0 !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-accent) !important;
+    outline-offset: 2px;
+    border-color: var(--color-accent) !important;
+  }
+
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none !important;
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 0 0 3px rgba(232, 138, 45, 0.15) !important;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
@@ -513,4 +540,81 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ─── Glassmorphism Card ────────────────── */
+.glass-morph {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.glass-morph:hover {
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Skeleton Shimmer ──────────────────── */
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+      rgba(0, 0, 0, 0.04) 25%,
+      rgba(0, 0, 0, 0.08) 50%,
+      rgba(0, 0, 0, 0.04) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ─── Gradient Text ─────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #f59e0b 50%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Footer Wave Animation ─────────────── */
+@keyframes wave-flow {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-wave-flow {
+  animation: wave-flow 15s linear infinite;
+}
+
+/* ─── Premium Form Input ────────────────── */
+.form-input-premium {
+  width: 100%;
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.06);
+  color: var(--color-dark);
+  font-size: 0.875rem;
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-input-premium:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(232, 138, 45, 0.1);
 }

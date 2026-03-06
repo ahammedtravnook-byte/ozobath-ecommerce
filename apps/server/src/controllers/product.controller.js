@@ -73,7 +73,8 @@ const getProducts = asyncHandler(async (req, res) => {
 // GET /products/:slug
 const getProductBySlug = asyncHandler(async (req, res) => {
   const product = await Product.findOne({ slug: req.params.slug, isActive: true })
-    .populate('category', 'name slug');
+    .populate('category', 'name slug')
+    .populate('relatedProducts', 'name slug price compareAtPrice images badges avgRating reviewCount');
   if (!product) throw new ApiError(404, 'Product not found.');
   sendResponse(res, 200, product, 'Product fetched');
 });

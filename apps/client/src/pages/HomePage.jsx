@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { FiArrowRight, FiPlay, FiShoppingCart, FiStar, FiArrowUpRight, FiCheckCircle, FiTruck, FiShield, FiAward } from 'react-icons/fi';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { FiArrowRight, FiPlay, FiShoppingCart, FiStar, FiArrowUpRight, FiCheckCircle, FiTruck, FiShield, FiAward, FiChevronDown } from 'react-icons/fi';
 import { productAPI, categoryAPI } from '@api/services';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -9,6 +9,109 @@ import { useAuth } from '@context/AuthContext';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+
+// ─── FAQ DATA ──────────────────────────────
+const homeFAQs = [
+    { question: 'What types of shower enclosures does OZOBATH offer?', answer: 'We offer frameless, semi-frameless, sliding door, corner/neo-angle, and walk-in shower enclosures. All use premium tempered safety glass (8mm, 10mm, 12mm) with optional anti-limescale nano coating.' },
+    { question: 'Do you provide free shipping?', answer: 'Yes! Free shipping on all orders above ₹999 across India. Metro cities receive delivery in 3-5 business days, while other cities take 5-7 business days.' },
+    { question: 'What warranty coverage do you provide?', answer: 'Shower enclosures come with a 5-year comprehensive warranty. Faucets and basin mixers have 3 years, and accessories have 2 years coverage against manufacturing defects.' },
+    { question: 'Can I visit your showroom to see products?', answer: 'Absolutely! Visit our Experience Centre in Bangalore, Karnataka. Open Monday to Saturday, 10 AM to 7 PM. Our design consultants are available for personalized recommendations.' },
+    { question: 'Do you offer professional installation?', answer: 'Yes, we offer professional installation services in Bangalore within 3 days of delivery. For other metro cities, installation is available on request. All products include detailed DIY installation guides.' },
+    { question: 'What payment methods do you accept?', answer: 'We accept UPI (Google Pay, PhonePe, Paytm), credit/debit cards (Visa, Mastercard, RuPay), net banking, EMI, and wallet payments via Razorpay. No-cost EMI available on orders above ₹10,000.' },
+];
+
+// ─── FAQ Accordion Item ────────────────────
+const FAQItem = ({ item, isOpen, onToggle, index }) => (
+    <motion.div
+        className="border border-dark-100/40 rounded-2xl overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+    >
+        <button
+            onClick={onToggle}
+            className="w-full flex items-center justify-between p-5 md:p-6 text-left group"
+        >
+            <div className="flex items-center gap-4 flex-1">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-300 ${isOpen ? 'bg-accent-500 text-white shadow-lg shadow-accent-500/25' : 'bg-accent-50 text-accent-500'}`}>
+                    {String(index + 1).padStart(2, '0')}
+                </div>
+                <h3 className={`font-semibold text-sm md:text-base transition-colors duration-300 ${isOpen ? 'text-accent-500' : 'text-dark-900 group-hover:text-accent-500'}`}>
+                    {item.question}
+                </h3>
+            </div>
+            <motion.div
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+                className={`shrink-0 ml-4 p-1 rounded-lg ${isOpen ? 'text-accent-500' : 'text-dark-300'}`}
+            >
+                <FiChevronDown className="w-5 h-5" />
+            </motion.div>
+        </button>
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                >
+                    <div className="px-5 md:px-6 pb-5 md:pb-6 pt-0">
+                        <div className="pl-12">
+                            <div className="w-10 h-0.5 bg-gradient-to-r from-accent-400 to-orange-400 rounded-full mb-3" />
+                            <p className="text-dark-500 text-sm leading-relaxed">{item.answer}</p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    </motion.div>
+);
+
+// ─── FAQ Section ───────────────────────────
+const FAQAccordionSection = () => {
+    const [openIndex, setOpenIndex] = useState(0);
+    return (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <motion.div
+                className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16"
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={stagger}
+            >
+                {/* Left — Title */}
+                <motion.div variants={fadeInUp} className="lg:col-span-2">
+                    <span className="text-accent-500 font-bold uppercase tracking-[0.2em] text-xs mb-3 block">Got Questions?</span>
+                    <h2 className="text-4xl md:text-5xl font-display font-bold text-dark-900 mb-4">Frequently Asked Questions</h2>
+                    <p className="text-dark-400 text-base mb-8 leading-relaxed">
+                        Find quick answers to common questions about our products, shipping, warranty, and more.
+                    </p>
+                    <Link
+                        to="/faq"
+                        className="inline-flex items-center gap-3 bg-dark-900 hover:bg-accent-500 text-white px-8 py-4 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 shadow-lg hover:shadow-accent-500/30"
+                    >
+                        View All FAQs <FiArrowRight />
+                    </Link>
+                </motion.div>
+
+                {/* Right — Accordion */}
+                <div className="lg:col-span-3 space-y-3">
+                    {homeFAQs.map((item, i) => (
+                        <FAQItem
+                            key={i}
+                            item={item}
+                            index={i}
+                            isOpen={openIndex === i}
+                            onToggle={() => setOpenIndex(openIndex === i ? -1 : i)}
+                        />
+                    ))}
+                </div>
+            </motion.div>
+        </section>
+    );
+};
 
 // ─── FALLBACK DATA ────────────────────────
 const fallbackProducts = [
@@ -730,7 +833,12 @@ const HomePage = () => {
             </section>
 
             {/* ═══════════════════════════════════════════
-                9. NEWSLETTER CTA
+                9. FAQ ACCORDION
+            ═══════════════════════════════════════════ */}
+            <FAQAccordionSection />
+
+            {/* ═══════════════════════════════════════════
+                10. NEWSLETTER CTA
             ═══════════════════════════════════════════ */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                 <motion.div

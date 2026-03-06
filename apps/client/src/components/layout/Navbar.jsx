@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FiSearch, FiHeart, FiShoppingBag, FiMenu, FiX, FiUser, FiChevronDown, FiPhone } from 'react-icons/fi';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FiSearch, FiHeart, FiShoppingBag, FiMenu, FiX, FiUser, FiArrowRight } from 'react-icons/fi';
 import { useAuth } from '@context/AuthContext';
 import { useCart } from '@context/CartContext';
 import { useWishlist } from '@context/WishlistContext';
+import { productAPI } from '@api/services';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
@@ -14,10 +15,152 @@ const navLinks = [
     { label: 'Contact', path: '/contact' },
 ];
 
+/* Mini SVG wave for active indicator */
+const WaveIndicator = () => (
+    <svg className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-[6px]" viewBox="0 0 32 6" fill="none">
+        <path d="M0 3 C4 0, 8 6, 12 3 C16 0, 20 6, 24 3 C28 0, 32 6, 32 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="text-accent-500" />
+    </svg>
+);
+
+/* ─── Search Overlay Component ────────────── */
+const SearchOverlay = ({ onClose }) => {
+    const navigate = useNavigate();
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const inputRef = useRef(null);
+    const debounceTimerRef = useRef(null);
+
+    useEffect(() => { inputRef.current?.focus(); }, []);
+
+    useEffect(() => {
+        const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onClose]);
+
+    const handleSearch = useCallback((value) => {
+        setQuery(value);
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        if (value.trim().length < 2) { setResults([]); setLoading(false); return; }
+
+        setLoading(true);
+        debounceTimerRef.current = setTimeout(async () => {
+            try {
+                const res = await productAPI.getAll({ search: value.trim(), limit: 8 });
+                setResults(res.data?.products || []);
+            } catch (e) {
+                setResults([]);
+            }
+            setLoading(false);
+        }, 400);
+    }, []);
+
+    const handleSelect = (slug) => {
+        onClose();
+        navigate(`/product/${slug}`);
+    };
+
+    return (
+        <motion.div
+            className="fixed inset-0 z-[60] flex items-start justify-center pt-24 sm:pt-32"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+        >
+            <div className="absolute inset-0 bg-dark-900/50 backdrop-blur-md" onClick={onClose} />
+            <motion.div
+                className="relative w-full max-w-2xl mx-4"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -15, opacity: 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+                {/* Search Input */}
+                <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                    <div className="p-2 flex items-center border-b border-dark-50">
+                        <FiSearch className="w-5 h-5 text-dark-400 ml-4" />
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={query}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            placeholder="Search products..."
+                            className="w-full py-4 px-4 text-base text-dark-900 placeholder:text-dark-300 bg-transparent"
+                        />
+                        {query && (
+                            <button onClick={() => handleSearch('')} className="p-2 hover:bg-dark-50 rounded-lg mr-1">
+                                <FiX className="w-4 h-4 text-dark-400" />
+                            </button>
+                        )}
+                        <button onClick={onClose} className="p-2.5 hover:bg-dark-50 rounded-xl transition-colors mr-1">
+                            <FiX className="w-5 h-5 text-dark-400" />
+                        </button>
+                    </div>
+
+                    {/* Results */}
+                    {query.length >= 2 && (
+                        <div className="max-h-[50vh] overflow-y-auto p-3">
+                            {loading ? (
+                                <div className="flex items-center justify-center py-10">
+                                    <div className="w-8 h-8 border-3 border-accent-200 border-t-accent-500 rounded-full animate-spin" />
+                                </div>
+                            ) : results.length > 0 ? (
+                                <div className="space-y-1">
+                                    {results.map((product) => (
+                                        <button
+                                            key={product._id}
+                                            onClick={() => handleSelect(product.slug)}
+                                            className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-accent-50 transition-colors text-left group"
+                                        >
+                                            <div className="w-14 h-14 bg-dark-50 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                                                <img
+                                                    src={product.images?.[0]?.url || '/images/product_shower_1.png'}
+                                                    alt={product.name}
+                                                    className="w-10 h-10 object-contain"
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-dark-900 truncate group-hover:text-accent-500 transition-colors">{product.name}</p>
+                                                <p className="text-xs text-dark-400">{product.category?.name || 'Product'}</p>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className="text-sm font-bold text-dark-900">₹{product.price?.toLocaleString()}</p>
+                                                {product.mrp > product.price && (
+                                                    <p className="text-[10px] text-red-500 font-semibold">
+                                                        {Math.round(((product.mrp - product.price) / product.mrp) * 100)}% OFF
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <FiArrowRight className="w-4 h-4 text-dark-300 group-hover:text-accent-500 transition-colors shrink-0" />
+                                        </button>
+                                    ))}
+                                    <Link
+                                        to={`/shop?search=${encodeURIComponent(query)}`}
+                                        onClick={onClose}
+                                        className="mt-2 w-full flex items-center justify-center gap-2 py-3 text-accent-500 font-semibold text-sm hover:bg-accent-50 rounded-xl transition-colors"
+                                    >
+                                        View all results <FiArrowRight className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="text-center py-10">
+                                    <p className="text-dark-400 text-sm mb-1">No products found for "{query}"</p>
+                                    <p className="text-dark-300 text-xs">Try a different search term</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [hoveredPath, setHoveredPath] = useState(null);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const location = useLocation();
     const { user, isAuthenticated, logout } = useAuth();
@@ -43,17 +186,13 @@ const Navbar = () => {
 
     return (
         <>
-            <motion.header
-                className={`sticky top-0 z-50 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
-                    ${isScrolled ? 'pt-4 pb-2' : 'bg-white/90 backdrop-blur-md shadow-sm border-b border-dark-100/10'}
-                `}
-                initial={{ y: -100 }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            <header
+                className={`sticky top-0 z-50 transition-all duration-300 ease-out
+                    ${isScrolled ? 'pt-3 pb-1.5' : 'bg-white/90 backdrop-blur-md shadow-sm border-b border-dark-100/10'}`}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div
-                        className={`flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
+                        className={`flex items-center justify-between transition-all duration-300 ease-out
                             ${isScrolled
                                 ? 'bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] px-6 py-2 border border-white/50 rounded-full'
                                 : 'py-4 bg-transparent rounded-none'
@@ -61,7 +200,7 @@ const Navbar = () => {
                     >
                         {/* Logo */}
                         <Link to="/" className="flex-shrink-0 flex items-center gap-2.5 group">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/25 group-hover:shadow-accent-500/40 transition-all duration-300 group-hover:scale-105">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/25 group-hover:shadow-accent-500/40 transition-shadow duration-300 group-hover:scale-105">
                                 <span className="text-white font-bold text-sm">O</span>
                             </div>
                             <h1 className="text-xl font-display font-extrabold tracking-tight text-dark-900">
@@ -69,38 +208,25 @@ const Navbar = () => {
                             </h1>
                         </Link>
 
-                        {/* Desktop Navigation */}
-                        <nav className="hidden lg:flex items-center gap-0.5 relative" onMouseLeave={() => setHoveredPath(null)}>
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.path}
-                                    to={link.path}
-                                    onMouseEnter={() => setHoveredPath(link.path)}
-                                    className={`relative px-5 py-2.5 text-[13px] font-semibold transition-colors z-10
-                                        ${location.pathname === link.path
-                                            ? 'text-accent-500'
-                                            : 'text-dark-600 hover:text-dark-900'
-                                        }`}
-                                >
-                                    {link.label}
-                                    {hoveredPath === link.path && (
-                                        <motion.div
-                                            layoutId="navbar-hover-pill"
-                                            className="absolute inset-0 bg-accent-50 rounded-full -z-10"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                                        />
-                                    )}
-                                    {location.pathname === link.path && !hoveredPath && (
-                                        <motion.div
-                                            layoutId="navbar-active-indicator"
-                                            className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-accent-500 rounded-full"
-                                        />
-                                    )}
-                                </Link>
-                            ))}
+                        {/* Desktop Navigation — optimized (no layoutId) */}
+                        <nav className="hidden lg:flex items-center gap-0.5 relative">
+                            {navLinks.map((link) => {
+                                const isActive = location.pathname === link.path;
+                                return (
+                                    <Link
+                                        key={link.path}
+                                        to={link.path}
+                                        className={`relative px-5 py-2.5 text-[13px] font-semibold transition-colors duration-200 rounded-full
+                                            ${isActive
+                                                ? 'text-accent-500'
+                                                : 'text-dark-600 hover:text-dark-900 hover:bg-dark-50/60'
+                                            }`}
+                                    >
+                                        {link.label}
+                                        {isActive && <WaveIndicator />}
+                                    </Link>
+                                );
+                            })}
                         </nav>
 
                         {/* Actions */}
@@ -108,45 +234,37 @@ const Navbar = () => {
                             {/* Search */}
                             <button
                                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                                className="p-2.5 hover:bg-accent-50 rounded-full transition-all duration-300 hover:scale-105"
+                                className="p-2.5 hover:bg-accent-50 rounded-full transition-colors duration-200"
                                 aria-label="Search"
                             >
                                 <FiSearch className="w-[18px] h-[18px] text-dark-700" />
                             </button>
 
-                            {/* Desktop specific actions */}
+                            {/* Desktop actions */}
                             <div className="hidden sm:flex items-center gap-1.5">
                                 <Link
                                     to="/wishlist"
-                                    className="p-2.5 hover:bg-pink-50 rounded-full relative transition-all duration-300 hover:scale-105"
+                                    className="p-2.5 hover:bg-pink-50 rounded-full relative transition-colors duration-200"
                                     aria-label="Wishlist"
                                 >
                                     <FiHeart className="w-[18px] h-[18px] text-dark-700" />
                                     {wishlistCount > 0 && (
-                                        <motion.span
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold shadow-sm"
-                                        >
+                                        <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold shadow-sm">
                                             {wishlistCount}
-                                        </motion.span>
+                                        </span>
                                     )}
                                 </Link>
 
                                 <Link
                                     to="/cart"
-                                    className="p-2.5 hover:bg-blue-50 rounded-full relative transition-all duration-300 hover:scale-105"
+                                    className="p-2.5 hover:bg-blue-50 rounded-full relative transition-colors duration-200"
                                     aria-label="Cart"
                                 >
                                     <FiShoppingBag className="w-[18px] h-[18px] text-dark-700" />
                                     {itemCount > 0 && (
-                                        <motion.span
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-accent-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold shadow-sm"
-                                        >
+                                        <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-accent-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold shadow-sm">
                                             {itemCount}
-                                        </motion.span>
+                                        </span>
                                     )}
                                 </Link>
 
@@ -155,14 +273,14 @@ const Navbar = () => {
                                 {isAuthenticated ? (
                                     <Link
                                         to="/profile"
-                                        className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-accent-400 to-accent-600 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 hover:scale-110"
+                                        className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-accent-400 to-accent-600 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-accent-500/30 transition-shadow duration-300"
                                     >
                                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                     </Link>
                                 ) : (
                                     <Link
                                         to="/login"
-                                        className="ml-1 px-5 py-2 bg-dark-900 text-white text-[11px] font-bold rounded-full hover:bg-accent-500 transition-all duration-300 uppercase tracking-widest hover:shadow-lg hover:shadow-accent-500/20 hover:scale-105"
+                                        className="ml-1 px-5 py-2 bg-dark-900 text-white text-[11px] font-bold rounded-full hover:bg-accent-500 transition-colors duration-300 uppercase tracking-widest hover:shadow-lg hover:shadow-accent-500/20"
                                     >
                                         Sign In
                                     </Link>
@@ -171,67 +289,30 @@ const Navbar = () => {
 
                             {/* Mobile Menu Toggle */}
                             <button
-                                className="lg:hidden p-2.5 hover:bg-dark-50 rounded-full transition-all duration-300 ml-1"
+                                className="lg:hidden p-2.5 hover:bg-dark-50 rounded-full transition-colors duration-200 ml-1"
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                                 aria-label="Menu"
                             >
-                                <motion.div
-                                    animate={{ rotate: isMobileMenuOpen ? 90 : 0 }}
-                                    transition={{ duration: 0.3 }}
-                                >
-                                    {isMobileMenuOpen
-                                        ? <FiX className="w-5 h-5 text-dark-900" />
-                                        : <FiMenu className="w-5 h-5 text-dark-900" />
-                                    }
-                                </motion.div>
+                                {isMobileMenuOpen
+                                    ? <FiX className="w-5 h-5 text-dark-900" />
+                                    : <FiMenu className="w-5 h-5 text-dark-900" />
+                                }
                             </button>
                         </div>
                     </div>
                 </div>
-            </motion.header>
+            </header>
 
-            {/* Search Overlay */}
+            {/* Search Overlay — functional */}
             <AnimatePresence>
                 {isSearchOpen && (
-                    <motion.div
-                        className="fixed inset-0 z-[60] flex items-start justify-center pt-32"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        <div
-                            className="absolute inset-0 bg-dark-900/40 backdrop-blur-md"
-                            onClick={() => setIsSearchOpen(false)}
-                        />
-                        <motion.div
-                            className="relative w-full max-w-2xl mx-4"
-                            initial={{ y: -30, opacity: 0, scale: 0.95 }}
-                            animate={{ y: 0, opacity: 1, scale: 1 }}
-                            exit={{ y: -20, opacity: 0, scale: 0.95 }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        >
-                            <div className="bg-white rounded-2xl shadow-2xl p-2 flex items-center">
-                                <FiSearch className="w-5 h-5 text-dark-400 ml-4" />
-                                <input
-                                    type="text"
-                                    placeholder="Search shower enclosures, fittings, accessories..."
-                                    className="w-full py-4 px-4 text-base text-dark-900 placeholder:text-dark-300 focus:outline-none bg-transparent"
-                                    autoFocus
-                                />
-                                <button
-                                    onClick={() => setIsSearchOpen(false)}
-                                    className="p-2.5 hover:bg-dark-50 rounded-xl transition-colors mr-1"
-                                >
-                                    <FiX className="w-5 h-5 text-dark-400" />
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
+                    <SearchOverlay
+                        onClose={() => setIsSearchOpen(false)}
+                    />
                 )}
             </AnimatePresence>
 
-            {/* Mobile Menu Overlay — Fixed z-index above header */}
+            {/* Mobile Menu */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
@@ -239,15 +320,12 @@ const Navbar = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.2 }}
                     >
                         {/* Backdrop */}
-                        <motion.div
+                        <div
                             className="absolute inset-0 bg-dark-900/60 backdrop-blur-sm"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
                         />
 
                         {/* Slide-in Panel */}
@@ -256,7 +334,7 @@ const Navbar = () => {
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 30, stiffness: 250 }}
+                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                         >
                             {/* Mobile Menu Header */}
                             <div className="flex items-center justify-between px-6 py-5 border-b border-dark-50">
@@ -277,49 +355,30 @@ const Navbar = () => {
                                 </button>
                             </div>
 
-                            {/* Navigation Links */}
+                            {/* Navigation Links — CSS-only transitions (no per-item motion) */}
                             <div className="flex flex-col gap-1 flex-1 px-4 pt-4">
-                                {navLinks.map((link, i) => (
-                                    <motion.div
+                                {navLinks.map((link) => (
+                                    <Link
                                         key={link.path}
-                                        initial={{ opacity: 0, x: 30 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: i * 0.06 + 0.1, duration: 0.4 }}
+                                        to={link.path}
+                                        className={`flex items-center text-base font-display font-semibold py-3.5 px-4 rounded-2xl transition-colors duration-200
+                                            ${location.pathname === link.path
+                                                ? 'text-accent-500 bg-accent-50'
+                                                : 'text-dark-900 hover:bg-dark-50 hover:text-accent-500'
+                                            }`}
+                                        onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        <Link
-                                            to={link.path}
-                                            className={`flex items-center text-base font-display font-semibold py-3.5 px-4 rounded-2xl transition-all duration-300
-                                                ${location.pathname === link.path
-                                                    ? 'text-accent-500 bg-accent-50'
-                                                    : 'text-dark-900 hover:bg-dark-50 hover:text-accent-500'
-                                                }`}
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            {link.label}
-                                            {location.pathname === link.path && (
-                                                <motion.div
-                                                    className="ml-auto w-1.5 h-1.5 bg-accent-500 rounded-full"
-                                                    layoutId="mobile-nav-dot"
-                                                />
-                                            )}
-                                        </Link>
-                                    </motion.div>
+                                        {link.label}
+                                        {location.pathname === link.path && (
+                                            <span className="ml-auto w-1.5 h-1.5 bg-accent-500 rounded-full" />
+                                        )}
+                                    </Link>
                                 ))}
 
-                                <motion.hr
-                                    className="border-dark-100 my-3"
-                                    initial={{ opacity: 0, scaleX: 0 }}
-                                    animate={{ opacity: 1, scaleX: 1 }}
-                                    transition={{ delay: 0.4 }}
-                                />
+                                <hr className="border-dark-100 my-3" />
 
                                 {/* Quick Action Links */}
-                                <motion.div
-                                    className="flex items-center gap-3 px-2 mb-4"
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.45 }}
-                                >
+                                <div className="flex items-center gap-3 px-2 mb-4">
                                     <Link to="/wishlist" className="flex-1 flex items-center gap-3 p-3 bg-pink-50/80 rounded-2xl hover:bg-pink-50 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                                         <div className="relative">
                                             <FiHeart className="w-5 h-5 text-pink-500" />
@@ -334,15 +393,10 @@ const Navbar = () => {
                                         </div>
                                         <span className="text-dark-600 font-medium text-sm">Cart</span>
                                     </Link>
-                                </motion.div>
+                                </div>
 
                                 {/* User Section */}
-                                <motion.div
-                                    className="mt-auto pb-6 space-y-3"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
-                                >
+                                <div className="mt-auto pb-6 space-y-3">
                                     {isAuthenticated ? (
                                         <>
                                             <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-accent-50 to-orange-50 rounded-2xl">
@@ -360,7 +414,7 @@ const Navbar = () => {
                                     ) : (
                                         <Link to="/login" className="w-full py-3.5 bg-gradient-to-r from-accent-500 to-orange-500 text-white rounded-2xl flex justify-center font-bold text-sm tracking-wider uppercase shadow-lg shadow-accent-500/20 hover:shadow-accent-500/40 transition-all" onClick={() => setIsMobileMenuOpen(false)}>Sign In / Register</Link>
                                     )}
-                                </motion.div>
+                                </div>
                             </div>
                         </motion.nav>
                     </motion.div>

@@ -43,6 +43,7 @@ const ContactPage = () => {
                 title="Contact Us"
                 subtitle="Have a question or need assistance? We're here to help you create your dream bathroom."
                 breadcrumbs={[{ label: 'Contact' }]}
+                illustration="/images/illus_contact.png"
             />
 
             <section className="section-wrapper">

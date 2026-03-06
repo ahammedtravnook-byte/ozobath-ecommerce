@@ -39,6 +39,36 @@ const stagger = {
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 
+// SVG Wave Path — doubled for seamless loop
+const WaveSVG = () => (
+    <svg
+        className="absolute bottom-0 left-0 w-[200%] h-full animate-wave-flow"
+        viewBox="0 0 2400 120"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <defs>
+            <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#E88A2D" stopOpacity="0.15" />
+                <stop offset="30%" stopColor="#0084f0" stopOpacity="0.08" />
+                <stop offset="60%" stopColor="#E88A2D" stopOpacity="0.12" />
+                <stop offset="100%" stopColor="#0084f0" stopOpacity="0.06" />
+            </linearGradient>
+        </defs>
+        {/* Front wave */}
+        <path
+            d="M0,40 C150,80 350,0 600,50 C850,100 1050,20 1200,40 C1350,60 1550,100 1800,30 C2050,0 2250,70 2400,40 L2400,120 L0,120 Z"
+            fill="url(#waveGrad)"
+        />
+        {/* Back wave (subtle) */}
+        <path
+            d="M0,60 C200,20 400,90 600,40 C800,0 1000,80 1200,60 C1400,40 1600,10 1800,70 C2000,110 2200,30 2400,60 L2400,120 L0,120 Z"
+            fill="url(#waveGrad)"
+            opacity="0.5"
+        />
+    </svg>
+);
+
 const Footer = () => {
     const [email, setEmail] = useState('');
 
@@ -48,21 +78,32 @@ const Footer = () => {
 
     return (
         <footer className="bg-dark-950 text-white relative overflow-hidden">
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary-500/5 rounded-full blur-[100px] pointer-events-none" />
-
-            {/* Back to Top Button */}
-            <div className="relative z-10 flex justify-center -mt-6">
-                <button
-                    onClick={scrollToTop}
-                    className="w-12 h-12 bg-accent-500 hover:bg-accent-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-accent-500/30 hover:shadow-accent-500/50 transition-all duration-300 hover:-translate-y-1 hover:scale-110"
-                >
-                    <FiArrowUp className="w-5 h-5" />
-                </button>
+            {/* Animated Wave Curve */}
+            <div className="relative h-24 md:h-32 bg-[#FAF7F2] overflow-hidden">
+                {/* Wave container */}
+                <div className="absolute inset-0">
+                    <WaveSVG />
+                </div>
+                {/* Gradient fade to dark */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-dark-950" />
+                {/* Back-to-top button centered on wave */}
+                <div className="absolute inset-x-0 bottom-4 flex justify-center z-10">
+                    <motion.button
+                        onClick={scrollToTop}
+                        className="w-12 h-12 bg-accent-500 hover:bg-accent-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-accent-500/30 hover:shadow-accent-500/50 transition-all duration-300"
+                        whileHover={{ y: -4, scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        <FiArrowUp className="w-5 h-5" />
+                    </motion.button>
+                </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12 relative z-10">
+            {/* Decorative Background Orbs */}
+            <div className="absolute top-32 right-0 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-12 relative z-10">
                 <motion.div
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16"
                     initial="hidden"
@@ -168,17 +209,19 @@ const Footer = () => {
 
                         <div className="flex items-center gap-2">
                             {[
-                                { Icon: FiInstagram, color: 'hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500' },
-                                { Icon: FiFacebook, color: 'hover:bg-blue-600' },
-                                { Icon: FiYoutube, color: 'hover:bg-red-600' },
-                            ].map(({ Icon, color }, i) => (
-                                <a
+                                { Icon: FiInstagram, href: '#', color: 'hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500' },
+                                { Icon: FiFacebook, href: '#', color: 'hover:bg-blue-600' },
+                                { Icon: FiYoutube, href: '#', color: 'hover:bg-red-600' },
+                            ].map(({ Icon, href, color }, i) => (
+                                <motion.a
                                     key={i}
-                                    href="#"
-                                    className={`w-10 h-10 flex items-center justify-center rounded-xl bg-dark-900 border border-dark-800 ${color} hover:text-white hover:border-transparent text-dark-400 transition-all duration-300 hover:scale-110 hover:shadow-lg`}
+                                    href={href}
+                                    className={`w-10 h-10 flex items-center justify-center rounded-xl bg-dark-900 border border-dark-800 ${color} hover:text-white hover:border-transparent text-dark-400 transition-all duration-300`}
+                                    whileHover={{ scale: 1.15, y: -2 }}
+                                    whileTap={{ scale: 0.95 }}
                                 >
                                     <Icon className="w-4 h-4" />
-                                </a>
+                                </motion.a>
                             ))}
                         </div>
                     </div>
