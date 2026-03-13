@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
+import { FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '@context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -60,33 +60,40 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex bg-[#FAF7F2] relative overflow-hidden">
+        <div className="min-h-screen flex bg-[#ffffff] relative overflow-hidden">
             {/* Background decorative elements */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <motion.div
-                    className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-[120px]"
+                    className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-3xl"
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
                 />
                 <motion.div
-                    className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-[100px]"
+                    className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-3xl"
                     animate={{ scale: [1.2, 1, 1.2] }}
                     transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
                 />
             </div>
 
-            {/* Left Panel — Decorative */}
+            {/* Left Panel — Decorative Image */}
             <div className="hidden lg:flex w-1/2 relative items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800" />
+                <div className="absolute inset-0 bg-dark-950">
+                    <img 
+                        src="/images/luxury_bathroom_auth_bg_1773420543336.png" 
+                        alt="Luxury Bathroom" 
+                        className="w-full h-full object-cover opacity-60 mix-blend-overlay"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-900/80 to-transparent" />
+                </div>
 
                 {/* Decorative orbs */}
                 <motion.div
-                    className="absolute top-1/4 right-1/4 w-72 h-72 bg-accent-500/10 rounded-full blur-[80px]"
+                    className="absolute top-1/4 right-1/4 w-72 h-72 bg-accent-500/10 rounded-full blur-2xl"
                     animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
                     transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
                 />
                 <motion.div
-                    className="absolute bottom-1/3 left-1/4 w-48 h-48 bg-primary-500/10 rounded-full blur-[60px]"
+                    className="absolute bottom-1/3 left-1/4 w-48 h-48 bg-primary-500/10 rounded-full blur-2xl"
                     animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.5, 0.2] }}
                     transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
                 />
@@ -125,7 +132,7 @@ const LoginPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center mx-auto mb-8 shadow-xl shadow-accent-500/25">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary-600/25">
                             <span className="text-white font-display font-bold text-2xl">O</span>
                         </div>
                         <h2 className="text-3xl font-display font-bold text-white mb-4">
@@ -145,6 +152,10 @@ const LoginPage = () => {
 
             {/* Right Panel — Form */}
             <div className="flex-1 flex items-center justify-center px-6 py-16 relative z-10">
+                {/* Back Button */}
+                <Link to="/" className="absolute top-6 left-6 lg:top-8 lg:left-8 flex items-center gap-2 text-dark-400 hover:text-accent-500 font-bold text-sm tracking-widest uppercase transition-all duration-300 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full border border-dark-100/50 shadow-sm hover:shadow-md">
+                    <FiArrowLeft className="w-4 h-4" /> Back to Home
+                </Link>
                 <motion.div
                     className="w-full max-w-md"
                     initial={{ opacity: 0, y: 30 }}

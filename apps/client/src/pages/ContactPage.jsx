@@ -38,7 +38,7 @@ const ContactPage = () => {
     const inputClass = (field) => `w-full bg-white border-2 ${focusedField === field ? 'border-accent-500 shadow-lg shadow-accent-500/5' : 'border-dark-100'} text-dark-900 text-sm rounded-2xl py-4 px-6 focus:outline-none focus:border-accent-500 transition-all duration-300 placeholder:text-dark-300`;
 
     return (
-        <div className="bg-[#FAF7F2]">
+        <div className="bg-[#ffffff]">
             <PageHero
                 title="Contact Us"
                 subtitle="Have a question or need assistance? We're here to help you create your dream bathroom."

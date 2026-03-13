@@ -94,13 +94,13 @@ const ShopPage = () => {
     const discount = (product) => product.mrp > product.price ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0;
 
     return (
-        <div className="min-h-screen bg-[#FAF7F2]">
+        <div className="min-h-screen bg-[#ffffff]">
             {/* Hero Banner */}
             <section className="relative bg-dark-900 text-white pt-32 pb-16 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-dark-950 via-dark-900 to-dark-800" />
                 <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-10 right-20 w-72 h-72 bg-accent-500 rounded-full blur-[120px]" />
-                    <div className="absolute bottom-0 left-20 w-56 h-56 bg-primary-500 rounded-full blur-[100px]" />
+                    <div className="absolute top-10 right-20 w-72 h-72 bg-accent-500 rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 left-20 w-56 h-56 bg-primary-500 rounded-full blur-3xl" />
                 </div>
 
                 <motion.div

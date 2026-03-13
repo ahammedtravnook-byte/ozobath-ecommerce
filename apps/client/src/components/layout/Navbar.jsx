@@ -199,13 +199,12 @@ const Navbar = () => {
                             }`}
                     >
                         {/* Logo */}
-                        <Link to="/" className="flex-shrink-0 flex items-center gap-2.5 group">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/25 group-hover:shadow-accent-500/40 transition-shadow duration-300 group-hover:scale-105">
-                                <span className="text-white font-bold text-sm">O</span>
-                            </div>
-                            <h1 className="text-xl font-display font-extrabold tracking-tight text-dark-900">
-                                OZO<span className="text-accent-500">BATH</span>
-                            </h1>
+                        <Link to="/" className="flex-shrink-0 flex items-center group">
+                            <img
+                                src="/images/Ozo-bath-3-2.jpg.jpeg"
+                                alt="OzoBath"
+                                className="h-10 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
+                            />
                         </Link>
 
                         {/* Desktop Navigation — optimized (no layoutId) */}
@@ -273,14 +272,14 @@ const Navbar = () => {
                                 {isAuthenticated ? (
                                     <Link
                                         to="/profile"
-                                        className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-accent-400 to-accent-600 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-accent-500/30 transition-shadow duration-300"
+                                        className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-primary-600 to-primary-800 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-primary-600/30 transition-shadow duration-300"
                                     >
                                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                     </Link>
                                 ) : (
                                     <Link
                                         to="/login"
-                                        className="ml-1 px-5 py-2 bg-dark-900 text-white text-[11px] font-bold rounded-full hover:bg-accent-500 transition-colors duration-300 uppercase tracking-widest hover:shadow-lg hover:shadow-accent-500/20"
+                                        className="ml-1 px-5 py-2 bg-primary-600 text-white text-[11px] font-bold rounded-full hover:bg-accent-500 transition-colors duration-300 uppercase tracking-widest hover:shadow-lg hover:shadow-accent-500/20"
                                     >
                                         Sign In
                                     </Link>
@@ -339,12 +338,11 @@ const Navbar = () => {
                             {/* Mobile Menu Header */}
                             <div className="flex items-center justify-between px-6 py-5 border-b border-dark-50">
                                 <Link to="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center">
-                                        <span className="text-white font-bold text-xs">O</span>
-                                    </div>
-                                    <span className="text-lg font-display font-extrabold text-dark-900">
-                                        OZO<span className="text-accent-500">BATH</span>
-                                    </span>
+                                    <img
+                                        src="/images/Ozo-bath-3-2.jpg.jpeg"
+                                        alt="OzoBath"
+                                        className="h-8 w-auto object-contain"
+                                    />
                                 </Link>
                                 <button
                                     onClick={() => setIsMobileMenuOpen(false)}
@@ -399,8 +397,8 @@ const Navbar = () => {
                                 <div className="mt-auto pb-6 space-y-3">
                                     {isAuthenticated ? (
                                         <>
-                                            <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-accent-50 to-orange-50 rounded-2xl">
-                                                <div className="w-12 h-12 bg-gradient-to-br from-accent-400 to-accent-600 text-white rounded-2xl flex items-center justify-center text-lg font-bold shadow-lg shadow-accent-500/20">
+                                            <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-accent-50 to-primary-50 rounded-2xl">
+                                                <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-800 text-white rounded-2xl flex items-center justify-center text-lg font-bold shadow-lg shadow-primary-600/20">
                                                     {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                                 </div>
                                                 <div>
@@ -412,7 +410,7 @@ const Navbar = () => {
                                             <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="w-full py-3.5 text-dark-400 font-medium text-sm border border-dark-100 rounded-2xl hover:border-red-200 hover:text-red-500 transition-all">LOGOUT</button>
                                         </>
                                     ) : (
-                                        <Link to="/login" className="w-full py-3.5 bg-gradient-to-r from-accent-500 to-orange-500 text-white rounded-2xl flex justify-center font-bold text-sm tracking-wider uppercase shadow-lg shadow-accent-500/20 hover:shadow-accent-500/40 transition-all" onClick={() => setIsMobileMenuOpen(false)}>Sign In / Register</Link>
+                                        <Link to="/login" className="w-full py-3.5 bg-gradient-to-r from-primary-600 to-accent-500 text-white rounded-2xl flex justify-center font-bold text-sm tracking-wider uppercase shadow-lg shadow-primary-600/20 hover:shadow-accent-500/40 transition-all" onClick={() => setIsMobileMenuOpen(false)}>Sign In / Register</Link>
                                     )}
                                 </div>
                             </div>

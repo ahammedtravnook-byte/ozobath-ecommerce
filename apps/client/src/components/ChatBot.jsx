@@ -1,11 +1,11 @@
 // ============================================
-// OZOBATH — Premium AI Chatbot Widget
-// Glassmorphism design with FAQ matching
+// OZOBATH — Premium AI Chatbot Widget + Book Live Demo
+// Navy & Cyan-Aqua design with FAQ matching
 // ============================================
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMessageCircle, FiX, FiSend, FiExternalLink, FiCornerDownRight, FiChevronRight } from 'react-icons/fi';
+import { FiMessageCircle, FiX, FiSend, FiExternalLink, FiCornerDownRight, FiChevronRight, FiVideo } from 'react-icons/fi';
 import { chatbotData, quickGuideChips, greetingMessage, fallbackResponse } from '@data/chatbotData';
 
 /* ─── Keyword match engine ──────────────────── */
@@ -81,6 +81,7 @@ const ChatBot = () => {
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [hasInteracted, setHasInteracted] = useState(false);
+    const [showDemoTooltip, setShowDemoTooltip] = useState(false);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
 
@@ -94,39 +95,21 @@ const ChatBot = () => {
         }
     }, [isOpen]);
 
-    // Auto-scroll
+    // Auto-scroll to bottom
     useEffect(() => {
+        console.log('[ChatBot Debug] Messages count:', messages.length);
+        console.log('[ChatBot Debug] Container scrollHeight:', messagesEndRef.current?.parentElement?.scrollHeight);
+        console.log('[ChatBot Debug] Container clientHeight:', messagesEndRef.current?.parentElement?.clientHeight);
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isTyping]);
 
-    // Pulse notification after 5 seconds
+
     useEffect(() => {
         if (!hasInteracted) {
             const timer = setTimeout(() => setHasInteracted(false), 5000);
             return () => clearTimeout(timer);
         }
     }, [hasInteracted]);
-
-    // Lock body scroll when chatbot is open
-    useEffect(() => {
-        if (isOpen) {
-            const scrollY = window.scrollY;
-            document.body.style.position = 'fixed';
-            document.body.style.top = `-${scrollY}px`;
-            document.body.style.width = '100%';
-        } else {
-            const scrollY = document.body.style.top;
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.width = '';
-            window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
-        }
-        return () => {
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.width = '';
-        };
-    }, [isOpen]);
 
     const addBotMessage = useCallback((text, relatedQIds = [], guideLink = null, guideLinkText = null) => {
         setIsTyping(true);
@@ -193,9 +176,51 @@ const ChatBot = () => {
 
     return (
         <>
-            {/* ─── Floating Button ────────────────── */}
+            {/* ─── Book Live Demo Button ─────────── */}
+            <AnimatePresence>
+                {!isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed bottom-[92px] right-6 z-[90]"
+                    >
+                        <Link
+                            to="/shop-live"
+                            className="group relative block"
+                            onMouseEnter={() => setShowDemoTooltip(true)}
+                            onMouseLeave={() => setShowDemoTooltip(false)}
+                        >
+                            <motion.div
+                                className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 text-white rounded-full shadow-lg shadow-accent-500/30 flex items-center justify-center hover:scale-110 transition-transform duration-300"
+                                whileTap={{ scale: 0.9 }}
+                            >
+                                <FiVideo className="w-5 h-5" />
+                            </motion.div>
+                            {/* Tooltip */}
+                            <AnimatePresence>
+                                {showDemoTooltip && (
+                                    <motion.div
+                                        className="absolute right-14 top-1/2 -translate-y-1/2 bg-dark-900 text-white text-xs font-semibold px-3 py-2 rounded-xl whitespace-nowrap shadow-lg"
+                                        initial={{ opacity: 0, x: 5 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 5 }}
+                                        transition={{ duration: 0.2 }}
+                                    >
+                                        Book Live Demo
+                                        <div className="absolute right-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-dark-900 rotate-45" />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </Link>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ─── Floating Chat Button ──────────── */}
             <motion.button
-                className="fixed bottom-6 right-6 z-[100] w-14 h-14 bg-gradient-to-br from-accent-500 to-orange-500 text-white rounded-full shadow-xl shadow-accent-500/30 flex items-center justify-center hover:scale-110 transition-transform duration-300"
+                className="fixed bottom-6 right-6 z-[100] w-14 h-14 bg-gradient-to-br from-primary-600 to-accent-500 text-white rounded-full shadow-xl shadow-primary-600/30 flex items-center justify-center hover:scale-110 transition-transform duration-300"
                 onClick={() => { setIsOpen(!isOpen); setHasInteracted(true); }}
                 whileTap={{ scale: 0.9 }}
                 aria-label="Chat with us"
@@ -228,7 +253,7 @@ const ChatBot = () => {
                         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                     >
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-dark-900 via-dark-800 to-dark-900 px-5 py-4 flex items-center gap-3 shrink-0">
+                        <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 px-5 py-4 flex items-center gap-3 shrink-0">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
                                 <span className="text-white font-bold text-sm">O</span>
                             </div>
@@ -248,14 +273,14 @@ const ChatBot = () => {
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto bg-[#FAF7F2] px-4 py-4 space-y-4 no-scrollbar">
+                        <div className="flex-1 overflow-y-auto bg-[#F0F7FF] px-4 py-4 space-y-4 custom-scrollbar">
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[85%] ${msg.type === 'user' ? '' : ''}`}>
                                         <div
                                             className={`px-4 py-3 rounded-2xl text-sm leading-relaxed space-y-1
                                                 ${msg.type === 'user'
-                                                    ? 'bg-gradient-to-br from-accent-500 to-orange-500 text-white rounded-br-md shadow-md shadow-accent-500/15'
+                                                    ? 'bg-gradient-to-br from-primary-600 to-accent-500 text-white rounded-br-md shadow-md shadow-primary-600/15'
                                                     : 'bg-white border border-dark-100/30 text-dark-700 rounded-bl-md shadow-sm'
                                                 }`}
                                         >
@@ -282,7 +307,7 @@ const ChatBot = () => {
                                             <Link
                                                 to={msg.guideLink}
                                                 onClick={() => setIsOpen(false)}
-                                                className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold text-accent-500 hover:text-accent-600 transition-colors bg-accent-50 px-3 py-1.5 rounded-full"
+                                                className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold text-accent-600 hover:text-accent-700 transition-colors bg-accent-50 px-3 py-1.5 rounded-full"
                                             >
                                                 <FiExternalLink className="w-3 h-3" />
                                                 {msg.guideLinkText || 'Learn More'}
@@ -341,7 +366,7 @@ const ChatBot = () => {
                                 <button
                                     onClick={handleSend}
                                     disabled={!input.trim() || isTyping}
-                                    className="p-2.5 bg-gradient-to-br from-accent-500 to-orange-500 text-white rounded-xl shadow-md shadow-accent-500/20 hover:shadow-accent-500/40 transition-all disabled:opacity-40 disabled:shadow-none hover:scale-105"
+                                    className="p-2.5 bg-gradient-to-br from-primary-600 to-accent-500 text-white rounded-xl shadow-md shadow-primary-600/20 hover:shadow-accent-500/40 transition-all disabled:opacity-40 disabled:shadow-none hover:scale-105"
                                 >
                                     <FiSend className="w-4 h-4" />
                                 </button>

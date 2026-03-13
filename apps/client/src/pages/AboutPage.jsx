@@ -62,7 +62,7 @@ const timeline = [
 
 const AboutPage = () => {
     return (
-        <div className="bg-[#FAF7F2]">
+        <div className="bg-[#ffffff]">
             <PageHero
                 title="About OZOBATH"
                 subtitle="Crafting premium bathroom experiences since 2020. We believe every bathroom deserves to be a sanctuary."
@@ -174,8 +174,8 @@ const AboutPage = () => {
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                 <ScrollReveal>
                     <div className="relative bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 rounded-[2.5rem] p-12 md:p-20 text-center overflow-hidden">
-                        <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-[120px]" />
-                        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-[100px]" />
+                        <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl" />
+                        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl" />
 
                         <div className="relative z-10">
                             <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-4">

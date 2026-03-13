@@ -36,7 +36,7 @@ const Layout = () => {
     }, []);
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#FAF7F2]">
+        <div className="flex flex-col min-h-screen bg-white">
             {/* Animated Gradient Scroll Progress Bar */}
             <div
                 className="scroll-progress"

@@ -2,7 +2,7 @@ import PageHero from '@components/PageHero';
 import ScrollReveal from '@components/ScrollReveal';
 
 const TermsPage = () => (
-    <div className="bg-[#FAF7F2]">
+    <div className="bg-[#ffffff]">
         <PageHero
             title="Terms & Conditions"
             subtitle="Please read these terms carefully before using our website and services."

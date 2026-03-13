@@ -84,6 +84,29 @@ const ProductPage = () => {
         }
     };
 
+    const handleAddToWishlist = async () => {
+        if (!product) return;
+        if (isAuthenticated) {
+            try {
+                const { wishlistAPI } = await import('@api/services');
+                await wishlistAPI.add(product._id);
+                toast.success('Added to wishlist! ❤️');
+            } catch (e) {
+                toast.error('Failed to add to wishlist');
+            }
+        } else {
+            const guestWishlist = JSON.parse(localStorage.getItem('guestWishlist') || '[]');
+            const existing = guestWishlist.find(i => i._id === product._id);
+            if (!existing) {
+                guestWishlist.push(product);
+                localStorage.setItem('guestWishlist', JSON.stringify(guestWishlist));
+                toast.success('Added to wishlist! ❤️');
+            } else {
+                toast('Already in wishlist!', { icon: '❤️' });
+            }
+        }
+    };
+
     const discount = product?.mrp > product?.price ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0;
 
     if (loading) return (
@@ -105,7 +128,7 @@ const ProductPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#FAF7F2]">
+        <div className="min-h-screen bg-[#ffffff]">
             {/* Breadcrumb */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-4">
                 <nav className="flex items-center gap-2 text-sm text-dark-400 font-medium">
@@ -215,14 +238,23 @@ const ProductPage = () => {
                                     <FiPlus className="w-4 h-4" />
                                 </button>
                             </div>
-                            <button
-                                onClick={handleAddToCart}
-                                className="flex-1 bg-dark-900 hover:bg-accent-500 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-accent-500/30 disabled:opacity-50"
-                                disabled={product.stock === 0}
-                            >
-                                <FiShoppingCart className="w-5 h-5" />
-                                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                            </button>
+                            <div className="flex flex-1 gap-3">
+                                <button
+                                    onClick={handleAddToCart}
+                                    className="flex-1 bg-dark-900 hover:bg-accent-500 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-accent-500/30 disabled:opacity-50"
+                                    disabled={product.stock === 0}
+                                >
+                                    <FiShoppingCart className="w-5 h-5" />
+                                    {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                                </button>
+                                <button
+                                    onClick={handleAddToWishlist}
+                                    className="w-[56px] bg-dark-50 hover:bg-red-50 text-dark-400 hover:text-red-500 py-4 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md border border-dark-100"
+                                    aria-label="Add to wishlist"
+                                >
+                                    <FiHeart className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         {product.stock > 0 && product.stock < 10 && (
@@ -312,7 +344,7 @@ const ProductPage = () => {
                                     reviews.map(review => (
                                         <div key={review._id} className="border-b border-dark-50 pb-6 last:border-0">
                                             <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-sm font-bold text-white shadow-md">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center text-sm font-bold text-white shadow-md">
                                                     {review.user?.name?.[0]?.toUpperCase()}
                                                 </div>
                                                 <div>

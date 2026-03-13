@@ -48,7 +48,7 @@ const FAQPage = () => {
     });
 
     return (
-        <div className="bg-[#FAF7F2]">
+        <div className="bg-[#ffffff]">
             <PageHero
                 title="Frequently Asked Questions"
                 subtitle="Everything you need to know about OZOBATH products, installation, warranty, and more."
@@ -152,8 +152,8 @@ const FAQPage = () => {
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                 <ScrollReveal>
                     <div className="relative bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 rounded-[2.5rem] p-12 md:p-16 text-center overflow-hidden">
-                        <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-[120px]" />
-                        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-[100px]" />
+                        <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl" />
+                        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl" />
 
                         <div className="relative z-10">
                             <div className="w-16 h-16 rounded-2xl bg-accent-500/10 flex items-center justify-center mx-auto mb-6">

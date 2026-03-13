@@ -59,7 +59,7 @@ const FAQItem = ({ item, isOpen, onToggle, index }) => (
                 >
                     <div className="px-5 md:px-6 pb-5 md:pb-6 pt-0">
                         <div className="pl-12">
-                            <div className="w-10 h-0.5 bg-gradient-to-r from-accent-400 to-orange-400 rounded-full mb-3" />
+                            <div className="w-10 h-0.5 bg-gradient-to-r from-primary-600 to-accent-400 rounded-full mb-3" />
                             <p className="text-dark-500 text-sm leading-relaxed">{item.answer}</p>
                         </div>
                     </div>
@@ -241,7 +241,7 @@ const HomePage = () => {
     };
 
     return (
-        <div className="bg-[#FAF7F2] min-h-screen text-dark-900 font-sans overflow-hidden">
+        <div className="bg-white min-h-screen text-dark-900 font-sans overflow-hidden">
 
             {/* ═══════════════════════════════════════════
                 1. HERO SECTION
@@ -290,7 +290,7 @@ const HomePage = () => {
                                     >
                                         <motion.path
                                             d="M2 8 C50 2, 150 2, 198 8"
-                                            stroke="#E88A2D"
+                                            stroke="#00B4D8"
                                             strokeWidth="3"
                                             strokeLinecap="round"
                                             fill="none"
@@ -311,7 +311,7 @@ const HomePage = () => {
                             <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-4">
                                 <Link
                                     to="/shop"
-                                    className="bg-accent-500 hover:bg-accent-600 text-white px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-accent-500/30 hover:shadow-accent-500/50 hover:scale-105 transition-all duration-300"
+                                    className="bg-primary-600 hover:bg-accent-500 text-white px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-primary-600/30 hover:shadow-accent-500/50 hover:scale-105 transition-all duration-300"
                                 >
                                     Discover Now <FiArrowUpRight className="text-lg" />
                                 </Link>
@@ -438,7 +438,7 @@ const HomePage = () => {
                     {/* Promo 1 */}
                     <motion.div
                         variants={fadeInLeft}
-                        className="relative bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2rem] p-8 lg:p-10 flex items-center overflow-hidden group min-h-[280px] cursor-pointer hover:shadow-xl transition-shadow duration-500"
+                        className="relative bg-gradient-to-br from-blue-50 to-cyan-50 rounded-[2rem] p-8 lg:p-10 flex items-center overflow-hidden group min-h-[280px] cursor-pointer hover:shadow-xl transition-shadow duration-500"
                     >
                         <div className="w-1/2 relative z-10">
                             <span className="text-accent-500 text-xs font-bold uppercase tracking-widest">Featured</span>
@@ -456,7 +456,7 @@ const HomePage = () => {
                             />
                         </div>
                         {/* Decorative circle */}
-                        <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-accent-200/30 rounded-full blur-2xl" />
+                        <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-accent-200/20 rounded-full blur-2xl" />
                     </motion.div>
 
                     {/* Promo 2 */}
@@ -655,8 +655,8 @@ const HomePage = () => {
                 6. SALE BANNER
             ═══════════════════════════════════════════ */}
             <section className="py-20 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-50 to-amber-50/50" />
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-200/20 rounded-full blur-[100px]" />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-50 to-blue-50/50" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-200/20 rounded-full blur-3xl" />
 
                 {/* Decorative elements */}
                 <div className="absolute right-[25%] top-20 w-3 h-3 bg-accent-500 rotate-45 animate-pulse" />
@@ -693,8 +693,8 @@ const HomePage = () => {
                             className="hidden lg:block mt-8"
                         >
                             <svg width="120" height="60" viewBox="0 0 120 60" fill="none">
-                                <path d="M5,40 Q30,60 60,30 T110,20" stroke="#E88A2D" strokeWidth="2" fill="none" strokeDasharray="5,5" />
-                                <path d="M100,10 L115,18 L105,30" stroke="#E88A2D" strokeWidth="2" fill="none" />
+                                <path d="M5,40 Q30,60 60,30 T110,20" stroke="#00B4D8" strokeWidth="2" fill="none" strokeDasharray="5,5" />
+                                <path d="M100,10 L115,18 L105,30" stroke="#00B4D8" strokeWidth="2" fill="none" />
                             </svg>
                         </motion.div>
                     </motion.div>
@@ -756,7 +756,7 @@ const HomePage = () => {
                             </div>
                             <p className="text-dark-600 text-sm leading-relaxed mb-6 line-clamp-3">"{testimonial.text}"</p>
                             <div className="flex items-center gap-3 pt-4 border-t border-dark-50">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center text-white font-bold text-sm shadow-md">
                                     {testimonial.name.charAt(0)}
                                 </div>
                                 <div>
@@ -849,8 +849,8 @@ const HomePage = () => {
                     transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                 >
                     {/* Decorative glows */}
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-[120px]" />
-                    <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-[100px]" />
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl" />
 
                     <div className="relative z-10">
                         <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-4">

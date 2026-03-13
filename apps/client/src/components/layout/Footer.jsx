@@ -49,10 +49,10 @@ const WaveSVG = () => (
     >
         <defs>
             <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#E88A2D" stopOpacity="0.15" />
-                <stop offset="30%" stopColor="#0084f0" stopOpacity="0.08" />
-                <stop offset="60%" stopColor="#E88A2D" stopOpacity="0.12" />
-                <stop offset="100%" stopColor="#0084f0" stopOpacity="0.06" />
+                <stop offset="0%" stopColor="#00B4D8" stopOpacity="0.15" />
+                <stop offset="30%" stopColor="#0A3D6B" stopOpacity="0.08" />
+                <stop offset="60%" stopColor="#00B4D8" stopOpacity="0.12" />
+                <stop offset="100%" stopColor="#0A3D6B" stopOpacity="0.06" />
             </linearGradient>
         </defs>
         {/* Front wave */}
@@ -79,7 +79,7 @@ const Footer = () => {
     return (
         <footer className="bg-dark-950 text-white relative overflow-hidden">
             {/* Animated Wave Curve */}
-            <div className="relative h-24 md:h-32 bg-[#FAF7F2] overflow-hidden">
+            <div className="relative h-24 md:h-32 bg-white overflow-hidden">
                 {/* Wave container */}
                 <div className="absolute inset-0">
                     <WaveSVG />
@@ -100,8 +100,8 @@ const Footer = () => {
             </div>
 
             {/* Decorative Background Orbs */}
-            <div className="absolute top-32 right-0 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary-500/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-32 right-0 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary-500/5 rounded-full blur-3xl pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-12 relative z-10">
                 <motion.div
@@ -114,9 +114,11 @@ const Footer = () => {
                     {/* Brand Column */}
                     <motion.div variants={fadeInUp} className="lg:col-span-4">
                         <Link to="/" className="inline-block mb-6">
-                            <h2 className="text-3xl font-display font-extrabold tracking-tight">
-                                OZO<span className="text-accent-500">BATH</span>
-                            </h2>
+                            <img
+                                src="/images/Ozo-bath-3-2.jpg.jpeg"
+                                alt="OzoBath"
+                                className="h-12 w-auto object-contain brightness-0 invert"
+                            />
                         </Link>
                         <p className="text-dark-400 text-sm leading-relaxed mb-8 max-w-xs font-medium">
                             Premium bespoke shower enclosures & bathroom fittings. Designed for modern luxury, engineered for absolute precision.

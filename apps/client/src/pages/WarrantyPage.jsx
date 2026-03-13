@@ -11,7 +11,7 @@ const warrantyData = [
 ];
 
 const WarrantyPage = () => (
-    <div className="bg-[#FAF7F2]">
+    <div className="bg-[#ffffff]">
         <PageHero
             title="Warranty Information"
             subtitle="Your OZOBATH products are protected. Learn about our comprehensive warranty coverage."
