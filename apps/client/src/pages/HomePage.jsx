@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { FiArrowRight, FiPlay, FiShoppingCart, FiStar, FiArrowUpRight, FiCheckCircle, FiTruck, FiShield, FiAward, FiChevronDown } from 'react-icons/fi';
+import { FiArrowRight, FiPlay, FiShoppingCart, FiStar, FiArrowUpRight, FiCheckCircle, FiTruck, FiShield, FiAward, FiChevronDown, FiHeart } from 'react-icons/fi';
 import { productAPI, categoryAPI } from '@api/services';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
+import { useWishlist } from '@context/WishlistContext';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -175,6 +176,7 @@ const staggerFast = {
 const HomePage = () => {
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const heroRef = useRef(null);
 
     // State
@@ -429,57 +431,63 @@ const HomePage = () => {
             ═══════════════════════════════════════════ */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                 <motion.div
-                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    className="grid grid-cols-1 md:grid-cols-2 gap-8"
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-80px" }}
                     variants={stagger}
                 >
-                    {/* Promo 1 */}
+                    {/* Promo 1 — Enhanced Glassmorphism */}
                     <motion.div
                         variants={fadeInLeft}
-                        className="relative bg-gradient-to-br from-blue-50 to-cyan-50 rounded-[2rem] p-8 lg:p-10 flex items-center overflow-hidden group min-h-[280px] cursor-pointer hover:shadow-xl transition-shadow duration-500"
+                        className="glass-morph-premium p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer"
                     >
                         <div className="w-1/2 relative z-10">
-                            <span className="text-accent-500 text-xs font-bold uppercase tracking-widest">Featured</span>
-                            <h3 className="text-2xl lg:text-3xl font-display font-bold text-dark-900 mb-2 mt-1">Shower Enclosures</h3>
-                            <p className="text-dark-400 text-sm mb-6 leading-relaxed">Premium frameless glass for modern bathrooms</p>
-                            <Link to="/shop/shower-enclosures" className="inline-flex items-center gap-2 text-accent-500 font-bold text-sm uppercase tracking-wider group-hover:gap-3 transition-all duration-300">
+                            <span className="text-accent-500 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Featured Collection</span>
+                            <h3 className="text-3xl lg:text-4xl font-display font-bold text-dark-900 mb-3 leading-tight">Shower Enclosures</h3>
+                            <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-[200px]">Premium frameless glass for modern bathrooms.</p>
+                            <Link to="/shop/shower-enclosures" className="inline-flex items-center gap-2 bg-dark-900 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider group-hover:bg-accent-500 transition-all duration-300 shadow-lg">
                                 SHOP NOW <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
-                        <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-4">
-                            <img
-                                src="/images/promo_shower_enclosure.png"
-                                alt="Shower Enclosure"
-                                className="w-full h-full object-contain group-hover:scale-110 group-hover:-rotate-2 transition-transform duration-700 ease-out"
-                            />
+                        <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-6">
+                            <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700">
+                                <img
+                                    src="/images/promo_shower_enclosure.png"
+                                    alt="Shower Enclosure"
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-accent-500/10 to-transparent" />
+                            </div>
                         </div>
-                        {/* Decorative circle */}
-                        <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-accent-200/20 rounded-full blur-2xl" />
+                        {/* Decorative Blur */}
+                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-accent-400/20 rounded-full blur-3xl" />
                     </motion.div>
 
-                    {/* Promo 2 */}
+                    {/* Promo 2 — Enhanced Glassmorphism */}
                     <motion.div
                         variants={fadeInRight}
-                        className="relative bg-gradient-to-br from-blue-50 to-cyan-50 rounded-[2rem] p-8 lg:p-10 flex items-center overflow-hidden group min-h-[280px] cursor-pointer hover:shadow-xl transition-shadow duration-500"
+                        className="glass-morph-premium p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer"
                     >
                         <div className="w-1/2 relative z-10">
-                            <span className="text-primary-500 text-xs font-bold uppercase tracking-widest">Popular</span>
-                            <h3 className="text-2xl lg:text-3xl font-display font-bold text-dark-900 mb-2 mt-1">Bathroom Fittings</h3>
-                            <p className="text-dark-400 text-sm mb-6 leading-relaxed">Precision engineered hardware & accessories</p>
-                            <Link to="/shop/fittings" className="inline-flex items-center gap-2 text-primary-500 font-bold text-sm uppercase tracking-wider group-hover:gap-3 transition-all duration-300">
+                            <span className="text-primary-600 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Popular Choice</span>
+                            <h3 className="text-3xl lg:text-4xl font-display font-bold text-dark-900 mb-3 leading-tight">Bathroom Fittings</h3>
+                            <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-[200px]">Precision engineered hardware & accessories.</p>
+                            <Link to="/shop/fittings" className="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider hover:bg-dark-900 transition-all duration-300 shadow-lg">
                                 SHOP NOW <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
-                        <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-4">
-                            <img
-                                src="/images/promo_sliding_door.png"
-                                alt="Bathroom Fittings"
-                                className="w-full h-full object-contain group-hover:scale-110 group-hover:rotate-2 transition-transform duration-700 ease-out"
-                            />
+                        <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-6">
+                            <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700 [animation-delay:1s]">
+                                <img
+                                    src="/images/promo_sliding_door.png"
+                                    alt="Bathroom Fittings"
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/10 to-transparent" />
+                            </div>
                         </div>
-                        <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-blue-200/30 rounded-full blur-2xl" />
+                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary-400/20 rounded-full blur-3xl" />
                     </motion.div>
                 </motion.div>
             </section>
@@ -516,40 +524,58 @@ const HomePage = () => {
                 >
                     {trending.map((item, i) => (
                         <motion.div key={item._id || i} variants={fadeInUp} className="group cursor-pointer flex flex-col h-full">
-                            <div className="bg-white rounded-3xl p-5 mb-4 aspect-[4/5] flex items-center justify-center relative overflow-hidden transition-all duration-500 group-hover:shadow-xl group-hover:shadow-dark-900/8 border border-dark-100/50 group-hover:border-accent-200">
+                            <div className="bg-white rounded-[2.5rem] mb-5 relative overflow-hidden transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-dark-900/10 border border-dark-100/50 group-hover:border-accent-200 group-hover:-translate-y-2">
                                 <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
-                                <img src={item.images?.[0]?.url || '/images/product_shower_1.png'} alt={item.name} className="w-[85%] h-[85%] object-contain transition-transform duration-700 group-hover:scale-110" />
 
-                                {/* Quick Add Button */}
-                                <div className="absolute bottom-4 left-4 right-4 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-400 z-20">
+                                {/* Image Container with "Curve Feel" */}
+                                <div className="image-fit-container rounded-[2rem] p-4 bg-warm-gray/30">
+                                    <img
+                                        src={item.images?.[0]?.url || '/images/product_shower_1.png'}
+                                        alt={item.name}
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
+
+                                {/* Quick Add Button — Enhanced */}
+                                <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-20">
                                     <button
                                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(item); }}
-                                        className="w-full bg-dark-900 hover:bg-accent-500 text-white py-3 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold tracking-wider uppercase shadow-xl transition-colors duration-300"
+                                        className="w-full bg-dark-900/90 backdrop-blur-md hover:bg-accent-500 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
                                     >
                                         <FiShoppingCart className="w-4 h-4" /> Add to cart
                                     </button>
                                 </div>
 
-                                {/* Discount badge */}
+                                {/* Discount badge — Premium Style */}
                                 {item.mrp > item.price && (
-                                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-lg z-20">
-                                        {Math.round(((item.mrp - item.price) / item.mrp) * 100)}% Off
+                                    <div className="absolute top-5 left-5 bg-accent-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent-500/20 z-20">
+                                        -{Math.round(((item.mrp - item.price) / item.mrp) * 100)}%
                                     </div>
                                 )}
+
+                                {/* Wishlist Heart Icon */}
+                                <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
+                                    className={`absolute top-5 right-5 z-20 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm hover:scale-110 active:scale-90
+                                        ${isInWishlist(item._id) ? 'bg-red-500 text-white shadow-red-500/30' : 'bg-white/80 backdrop-blur-md text-dark-400 hover:text-red-500 hover:bg-white'}`}
+                                    aria-label="Add to wishlist"
+                                >
+                                    <FiHeart className={`w-4 h-4 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
+                                </button>
                             </div>
 
-                            <div className="flex flex-col flex-1 px-1">
-                                <p className="text-dark-400 text-xs font-semibold uppercase tracking-wider mb-1">{item.category?.name || 'Shower Enclosures'}</p>
-                                <h3 className="font-bold text-dark-900 text-base mb-2 group-hover:text-accent-500 transition-colors line-clamp-1">{item.name}</h3>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <div className="flex text-accent-400 text-xs gap-0.5">
+                            <div className="flex flex-col flex-1 px-4 text-center">
+                                <p className="text-accent-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{item.category?.name || 'Collection'}</p>
+                                <h3 className="font-bold text-dark-900 text-sm mb-3 group-hover:text-accent-500 transition-colors line-clamp-2 leading-snug">{item.name}</h3>
+                                <div className="flex flex-col items-center gap-2 mt-auto pb-2">
+                                    <div className="flex text-accent-500 text-[10px] gap-0.5">
                                         {[...Array(5)].map((_, star) => (
-                                            <FiStar key={star} className={star < (item.avgRating || 5) ? 'fill-current' : 'text-dark-200'} />
+                                            <FiStar key={star} className={star < (item.avgRating || 5) ? 'fill-current' : 'text-dark-100'} />
                                         ))}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {item.mrp > item.price && <span className="text-dark-300 text-xs line-through">₹{item.mrp?.toLocaleString()}</span>}
-                                        <span className="font-extrabold text-dark-900 text-lg">₹{item.price?.toLocaleString() || '0'}</span>
+                                        {item.mrp > item.price && <span className="text-dark-300 text-xs line-through font-medium">₹{item.mrp?.toLocaleString()}</span>}
+                                        <span className="font-black text-dark-900 text-lg">₹{item.price?.toLocaleString() || '0'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -596,23 +622,24 @@ const HomePage = () => {
                     </motion.div>
 
                     <div className="flex flex-col lg:flex-row gap-6">
-                        {/* Large Featured Tile */}
+                        {/* Large Featured Tile — Enhanced */}
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                            className="lg:w-[38%] bg-gradient-to-br from-dark-100 to-dark-50 rounded-3xl relative overflow-hidden min-h-[420px] group"
+                            className="lg:w-[38%] bg-gradient-to-br from-dark-100 to-dark-50 rounded-[2.5rem] relative overflow-hidden min-h-[480px] group shadow-xl"
                         >
                             <img
                                 src="/images/sale_bathroom.png"
-                                alt="Featured Product"
-                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                alt="Featured Collection"
+                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-dark-900/60 via-transparent to-transparent" />
-                            <div className="absolute bottom-6 left-6 right-6 z-10">
-                                <span className="badge-featured mb-2">Featured</span>
-                                <h3 className="text-white font-display font-bold text-xl">Premium Collection</h3>
+                            <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 via-dark-900/20 to-transparent" />
+                            <div className="absolute bottom-10 left-10 right-10 z-10">
+                                <span className="bg-accent-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 inline-block">Featured</span>
+                                <h3 className="text-white font-display font-extrabold text-3xl leading-tight mb-2">Luxury Bath <br /> Essentials</h3>
+                                <p className="text-white/70 text-sm font-medium">Elevate your sanctuary with <br /> our bespoke collections.</p>
                             </div>
                         </motion.div>
 
@@ -630,19 +657,40 @@ const HomePage = () => {
                                     variants={fadeInUp}
                                     className="group"
                                 >
-                                    <div className="bg-white border-2 border-transparent hover:border-accent-200 rounded-2xl p-4 mb-2 aspect-square flex flex-col items-center justify-center relative hover:shadow-lg transition-all duration-400">
+                                    <div className="bg-white border-2 border-transparent hover:border-accent-200 rounded-[2rem] mb-3 relative overflow-hidden hover:shadow-2xl transition-all duration-500 group-hover:-translate-y-1">
                                         <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
-                                        <img
-                                            src={item.images?.[0]?.url || '/images/product_shower_1.png'}
-                                            alt={item.name}
-                                            className="w-[75%] h-[75%] object-contain transition-transform duration-500 group-hover:-translate-y-2 group-hover:scale-110"
-                                        />
+
+                                        {/* Image Container with "Curve Feel" */}
+                                        <div className="image-fit-container rounded-[1.8rem] bg-warm-gray/20">
+                                            <img
+                                                src={item.images?.[0]?.url || '/images/product_shower_1.png'}
+                                                alt={item.name}
+                                                className="w-full h-full object-contain p-4 group-hover:scale-110"
+                                            />
+                                        </div>
+
+                                        {/* Price Floating Overlay */}
+                                        <div className="absolute top-3 right-3 z-20">
+                                            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-sm">
+                                                <span className="font-black text-dark-900 text-xs">₹{item.price?.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Wishlist Heart Icon */}
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
+                                            className={`absolute top-3 left-3 z-20 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90
+                                                ${isInWishlist(item._id) ? 'bg-red-500 text-white shadow-sm shadow-red-500/30' : 'bg-white/70 backdrop-blur-sm text-dark-300 hover:text-red-500 hover:bg-white'}`}
+                                            aria-label="Add to wishlist"
+                                        >
+                                            <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
+                                        </button>
                                     </div>
-                                    <div className="flex justify-between items-center px-1">
-                                        <h4 className="font-semibold text-dark-900 text-xs truncate pr-2" title={item.name}>
-                                            {item.name.length > 18 ? item.name.substring(0, 18) + '...' : item.name}
+                                    <div className="px-2">
+                                        <h4 className="font-bold text-dark-950 text-[11px] uppercase tracking-wider truncate mb-1" title={item.name}>
+                                            {item.name}
                                         </h4>
-                                        <span className="font-bold text-accent-500 text-sm whitespace-nowrap">₹{item.price?.toLocaleString()}</span>
+                                        <div className="w-6 h-0.5 bg-accent-500/30 rounded-full group-hover:w-full transition-all duration-500" />
                                     </div>
                                 </motion.div>
                             ))}
@@ -700,19 +748,23 @@ const HomePage = () => {
                     </motion.div>
 
                     <motion.div
-                        className="lg:w-3/5 relative"
+                        className="lg:w-3/5 relative group"
                         initial={{ opacity: 0, scale: 0.9, x: 50 }}
                         whileInView={{ opacity: 1, scale: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        <img
-                            src="/images/sale_bathroom.png"
-                            alt="Premium Bathroom Sale"
-                            className="w-full h-auto rounded-3xl shadow-2xl shadow-dark-900/10 relative z-10 max-h-[480px] object-cover"
-                        />
-                        {/* Circle highlight */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[105%] h-[115%] border border-accent-300/30 rounded-[50%] rotate-[8deg]" />
+                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl shadow-dark-900/20 group-hover:scale-[1.02] transition-transform duration-700">
+                            <img
+                                src="/images/sale_bathroom.png"
+                                alt="Premium Bathroom Sale"
+                                className="w-full h-auto max-h-[480px] object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-accent-500/20 to-transparent mix-blend-overlay" />
+                        </div>
+                        {/* Circle highlight — refined */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[108%] h-[118%] border-2 border-accent-300/20 rounded-[45%] rotate-[12deg] pointer-events-none" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[105%] h-[115%] border border-primary-300/10 rounded-[50%] -rotate-[8deg] pointer-events-none" />
                     </motion.div>
                 </div>
             </section>
@@ -802,31 +854,31 @@ const HomePage = () => {
                         <motion.div
                             key={blog._id}
                             variants={fadeInUp}
-                            className="group cursor-pointer"
+                            className="flex flex-col group cursor-pointer"
                         >
-                            <Link to={`/blog/${blog.slug || blog._id}`}>
-                                <div className="rounded-3xl overflow-hidden mb-5 aspect-[4/3] relative">
-                                    <img
-                                        src={blog.featuredImage?.url || '/images/hero_bathroom.png'}
-                                        alt={blog.title}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-dark-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                    <div className="absolute top-4 left-4">
-                                        <span className="bg-white/90 backdrop-blur-sm text-dark-900 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
-                                            {blog.category || 'Design'}
-                                        </span>
-                                    </div>
+                            <div className="relative aspect-[16/10] mb-6 rounded-[2.5rem] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 group-hover:-translate-y-2">
+                                <Link to={`/blog/${blog.slug}`} className="absolute inset-0 z-10" />
+                                <img
+                                    src={blog.featuredImage?.url || '/images/hero_bathroom.png'}
+                                    alt={blog.title}
+                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                                />
+                                <div className="absolute top-4 left-4">
+                                    <span className="bg-white/90 backdrop-blur-md text-dark-900 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                        {blog.category}
+                                    </span>
                                 </div>
-                                <div className="flex items-center gap-3 text-xs text-dark-400 mb-3 font-medium">
-                                    <span>{new Date(blog.createdAt || blog.customDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                    <span className="w-1 h-1 bg-dark-300 rounded-full" />
-                                    <span>5 min read</span>
+                            </div>
+                            <div className="px-2">
+                                <div className="flex items-center gap-2 text-dark-400 text-[10px] font-bold uppercase tracking-widest mb-3">
+                                    <span>{blog.customDate}</span>
+                                    <span className="w-1 h-1 bg-accent-500 rounded-full" />
+                                    <span>5 Min Read</span>
                                 </div>
-                                <h3 className="text-lg font-bold text-dark-900 group-hover:text-accent-500 transition-colors duration-300 line-clamp-2">
+                                <h3 className="text-xl font-display font-bold text-dark-900 group-hover:text-accent-500 transition-colors leading-tight line-clamp-2">
                                     {blog.title}
                                 </h3>
-                            </Link>
+                            </div>
                         </motion.div>
                     ))}
                 </motion.div>

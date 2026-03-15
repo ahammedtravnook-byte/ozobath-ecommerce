@@ -5,6 +5,7 @@ import { FiStar, FiShoppingCart, FiHeart, FiShare2, FiTruck, FiShield, FiCheckCi
 import { productAPI, reviewAPI } from '@api/services';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
+import { useWishlist } from '@context/WishlistContext';
 import toast from 'react-hot-toast';
 
 const fadeInUp = {
@@ -36,6 +37,7 @@ const ProductPage = () => {
     const { slug } = useParams();
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const [product, setProduct] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -43,6 +45,8 @@ const ProductPage = () => {
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [activeTab, setActiveTab] = useState('description');
+    const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', comment: '' });
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -84,26 +88,30 @@ const ProductPage = () => {
         }
     };
 
-    const handleAddToWishlist = async () => {
+    const handleAddToWishlist = () => {
         if (!product) return;
-        if (isAuthenticated) {
-            try {
-                const { wishlistAPI } = await import('@api/services');
-                await wishlistAPI.add(product._id);
-                toast.success('Added to wishlist! ❤️');
-            } catch (e) {
-                toast.error('Failed to add to wishlist');
-            }
-        } else {
-            const guestWishlist = JSON.parse(localStorage.getItem('guestWishlist') || '[]');
-            const existing = guestWishlist.find(i => i._id === product._id);
-            if (!existing) {
-                guestWishlist.push(product);
-                localStorage.setItem('guestWishlist', JSON.stringify(guestWishlist));
-                toast.success('Added to wishlist! ❤️');
-            } else {
-                toast('Already in wishlist!', { icon: '❤️' });
-            }
+        isInWishlist(product._id) ? removeFromWishlist(product._id) : addToWishlist(product._id);
+    };
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        if (!isAuthenticated) return toast.error('Please login to submit a review');
+        if (!reviewForm.comment.trim()) return toast.error('Please write a review comment');
+
+        try {
+            setIsSubmittingReview(true);
+            await reviewAPI.create({
+                product: product._id,
+                rating: reviewForm.rating,
+                title: reviewForm.title,
+                comment: reviewForm.comment
+            });
+            toast.success('Review submitted successfully for approval! 🎉');
+            setReviewForm({ rating: 5, title: '', comment: '' });
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to submit review');
+        } finally {
+            setIsSubmittingReview(false);
         }
     };
 
@@ -249,10 +257,11 @@ const ProductPage = () => {
                                 </button>
                                 <button
                                     onClick={handleAddToWishlist}
-                                    className="w-[56px] bg-dark-50 hover:bg-red-50 text-dark-400 hover:text-red-500 py-4 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md border border-dark-100"
+                                    className={`w-[56px] py-4 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md border border-dark-100
+                                        ${product && isInWishlist(product._id) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-dark-50 hover:bg-red-50 text-dark-400 hover:text-red-500 hover:border-red-200'}`}
                                     aria-label="Add to wishlist"
                                 >
-                                    <FiHeart className="w-5 h-5" />
+                                    <FiHeart className={`w-5 h-5 ${product && isInWishlist(product._id) ? 'fill-current' : ''}`} />
                                 </button>
                             </div>
                         </div>
@@ -332,36 +341,101 @@ const ProductPage = () => {
                         {activeTab === 'description' ? (
                             <div className="prose prose-lg max-w-none text-dark-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: product.description || '<p>No description available.</p>' }} />
                         ) : (
-                            <div className="space-y-6">
-                                {reviews.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <div className="w-16 h-16 bg-dark-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <FiStar className="w-7 h-7 text-dark-300" />
+                            <div className="space-y-10">
+                                {/* Review Form */}
+                                {isAuthenticated ? (
+                                    <form onSubmit={handleReviewSubmit} className="bg-dark-50 rounded-2xl p-6 border border-dark-100">
+                                        <h3 className="text-lg font-bold text-dark-900 mb-4">Write a Review</h3>
+
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-semibold text-dark-700 mb-2">Rating</label>
+                                            <div className="flex gap-2">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                                        className="p-1 focus:outline-none transition-transform hover:scale-110"
+                                                    >
+                                                        <FiStar className={`w-6 h-6 ${star <= reviewForm.rating ? 'fill-accent-400 text-accent-400' : 'text-dark-200'}`} />
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <p className="text-dark-400 font-medium">No reviews yet. Be the first to review!</p>
-                                    </div>
+
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-semibold text-dark-700 mb-2">Title (Optional)</label>
+                                            <input
+                                                type="text"
+                                                value={reviewForm.title}
+                                                onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
+                                                placeholder="Summarize your experience"
+                                                className="w-full bg-white border border-dark-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-all"
+                                            />
+                                        </div>
+
+                                        <div className="mb-6">
+                                            <label className="block text-sm font-semibold text-dark-700 mb-2">Review</label>
+                                            <textarea
+                                                value={reviewForm.comment}
+                                                onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                                                placeholder="What did you like or dislike?"
+                                                rows="4"
+                                                className="w-full bg-white border border-dark-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-all resize-none"
+                                                required
+                                            ></textarea>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmittingReview}
+                                            className="btn-primary w-full sm:w-auto px-8"
+                                        >
+                                            {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                                        </button>
+                                    </form>
                                 ) : (
-                                    reviews.map(review => (
-                                        <div key={review._id} className="border-b border-dark-50 pb-6 last:border-0">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center text-sm font-bold text-white shadow-md">
-                                                    {review.user?.name?.[0]?.toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-dark-900">{review.user?.name}</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex text-accent-400 text-xs gap-0.5">
-                                                            {[...Array(5)].map((_, i) => <FiStar key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-current' : 'text-dark-200'}`} />)}
+                                    <div className="bg-dark-50 rounded-2xl p-6 border border-dark-100 flex flex-col items-center text-center">
+                                        <h3 className="text-lg font-bold text-dark-900 mb-2">Have you purchased this product?</h3>
+                                        <p className="text-dark-500 text-sm mb-4">Please log in to leave a review and share your experience.</p>
+                                        <Link to="/login" className="btn-primary px-6 py-2.5 text-sm">Log In to Review</Link>
+                                    </div>
+                                )}
+
+                                {/* Reviews List */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-dark-900 mb-6">Customer Reviews</h3>
+                                    {reviews.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <div className="w-16 h-16 bg-dark-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <FiStar className="w-7 h-7 text-dark-300" />
+                                            </div>
+                                            <p className="text-dark-400 font-medium">No reviews yet. Be the first to review!</p>
+                                        </div>
+
+                                    ) : (
+                                        reviews.map(review => (
+                                            <div key={review._id} className="border-b border-dark-50 pb-6 last:border-0">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center text-sm font-bold text-white shadow-md">
+                                                        {review.user?.name?.[0]?.toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-dark-900">{review.user?.name}</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex text-accent-400 text-xs gap-0.5">
+                                                                {[...Array(5)].map((_, i) => <FiStar key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-current' : 'text-dark-200'}`} />)}
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                    <span className="text-xs text-dark-300 ml-auto">{new Date(review.createdAt).toLocaleDateString()}</span>
                                                 </div>
-                                                <span className="text-xs text-dark-300 ml-auto">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                                {review.title && <p className="text-sm font-semibold text-dark-900 mb-1">{review.title}</p>}
+                                                <p className="text-sm text-dark-500 leading-relaxed">{review.comment}</p>
                                             </div>
-                                            {review.title && <p className="text-sm font-semibold text-dark-900 mb-1">{review.title}</p>}
-                                            <p className="text-sm text-dark-500 leading-relaxed">{review.comment}</p>
-                                        </div>
-                                    ))
-                                )}
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>

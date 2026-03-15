@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiSearch, FiFilter, FiGrid, FiList, FiShoppingCart, FiStar, FiChevronLeft, FiChevronRight, FiX, FiSliders } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiGrid, FiList, FiShoppingCart, FiStar, FiChevronLeft, FiChevronRight, FiX, FiSliders, FiHeart } from 'react-icons/fi';
 import { productAPI, categoryAPI } from '@api/services';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
+import { useWishlist } from '@context/WishlistContext';
 import toast from 'react-hot-toast';
 
 const fadeInUp = {
@@ -32,6 +33,7 @@ const ShopPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -246,6 +248,16 @@ const ShopPage = () => {
                                         {product.isNewArrival && (
                                             <span className="absolute top-3 right-3 bg-green-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl">New</span>
                                         )}
+
+                                        {/* Grid View Wishlist Heart */}
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(product._id) ? removeFromWishlist(product._id) : addToWishlist(product._id); }}
+                                            className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90
+                                                ${isInWishlist(product._id) ? 'bg-red-500 text-white shadow-sm shadow-red-500/30' : 'bg-white/70 backdrop-blur-sm text-dark-300 hover:text-red-500 hover:bg-white'}`}
+                                            aria-label="Add to wishlist"
+                                        >
+                                            <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(product._id) ? 'fill-current' : ''}`} />
+                                        </button>
                                     </Link>
                                     <div className="p-4 border-t border-dark-50">
                                         <Link to={`/product/${product.slug}`}>
@@ -288,7 +300,17 @@ const ShopPage = () => {
                                         <img src={product.images?.[0]?.url || '/images/product_shower_1.png'} alt={product.name} className="w-[80%] h-[80%] object-contain group-hover:scale-105 transition-transform duration-500" />
                                     </div>
                                 </Link>
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 relative">
+                                    {/* List View Wishlist Heart */}
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(product._id) ? removeFromWishlist(product._id) : addToWishlist(product._id); }}
+                                        className={`absolute top-0 right-0 z-20 w-8 h-8 rounded-lg flex md:hidden sm:flex lg:flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90
+                                            ${isInWishlist(product._id) ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-dark-50 text-dark-400 hover:text-red-500 hover:bg-red-50'}`}
+                                        aria-label="Add to wishlist"
+                                    >
+                                        <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(product._id) ? 'fill-current' : ''}`} />
+                                    </button>
+
                                     <Link to={`/product/${product.slug}`}>
                                         <p className="text-[10px] text-accent-500 font-bold uppercase tracking-widest">{product.category?.name}</p>
                                         <h3 className="text-base md:text-lg font-bold text-dark-900 mb-1 group-hover:text-accent-500 transition-colors">{product.name}</h3>

@@ -115,9 +115,9 @@ const Footer = () => {
                     <motion.div variants={fadeInUp} className="lg:col-span-4">
                         <Link to="/" className="inline-block mb-6">
                             <img
-                                src="/images/Ozo-bath-3-2.jpg.jpeg"
+                                src="/images/logo.png"
                                 alt="OzoBath"
-                                className="h-12 w-auto object-contain brightness-0 invert"
+                                className="h-14 w-auto object-contain brightness-0 invert drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all hover:scale-105 hover:drop-shadow-[0_0_30px_rgba(255,255,255,0.6)]"
                             />
                         </Link>
                         <p className="text-dark-400 text-sm leading-relaxed mb-8 max-w-xs font-medium">

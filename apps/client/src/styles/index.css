@@ -143,8 +143,8 @@
 
   /* Fix Chrome autofill yellow background */
   input:-webkit-autofill,
-  input:-webkit-autofill:hover, 
-  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 30px white inset !important;
     -webkit-text-fill-color: var(--color-dark) !important;
@@ -223,6 +223,37 @@
   .glass-morph:hover {
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
     transform: translateY(-4px);
+  }
+
+  /* Glassmorphism Premium — More translucent & refined */
+  .glass-morph-premium {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+    transition: all 0.6s var(--ease-spring);
+  }
+
+  .glass-morph-premium:hover {
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    transform: translateY(-8px) scale(1.01);
+  }
+
+  /* Image Fit Container — ensuring diverse ratios fit perfectly with curves */
+  .image-fit-container {
+    @apply relative w-full overflow-hidden;
+    aspect-ratio: 4/5;
+  }
+
+  .image-fit-container img {
+    @apply w-full h-full object-cover transition-transform duration-700;
+  }
+
+  .image-fit-container:hover img {
+    @apply scale-105;
   }
 
   /* Section Wrapper */
@@ -540,6 +571,26 @@
   animation: float 4s ease-in-out infinite;
 }
 
+.animate-float-premium {
+  animation: float-premium 6s ease-in-out infinite;
+}
+
+@keyframes float-premium {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  33% {
+    transform: translateY(-15px) rotate(1deg);
+  }
+
+  66% {
+    transform: translateY(-5px) rotate(-1deg);
+  }
+}
+
 @keyframes count-up {
   from {
     opacity: 0;
@@ -627,4 +678,46 @@
 .form-input-premium:focus {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1);
+}
+
+/* ─── Custom Scrollbar ──────────────────── */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 180, 216, 0.2) transparent;
+  -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 180, 216, 0.25);
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 180, 216, 0.4);
+}
+
+/* ─── Chatbot Message Animation ─────────── */
+@keyframes chatMsg {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat-msg-enter {
+  animation: chatMsg 0.3s var(--ease-spring) both;
 }
