@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { FiAward, FiTarget, FiHeart, FiZap, FiTruck, FiShield, FiStar, FiArrowRight, FiUsers, FiMapPin, FiCheckCircle } from 'react-icons/fi';
+import { FiAward, FiTarget, FiHeart, FiZap, FiTruck, FiShield, FiStar, FiArrowRight, FiUsers, FiMapPin, FiCheckCircle, FiShoppingBag } from 'react-icons/fi';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
 

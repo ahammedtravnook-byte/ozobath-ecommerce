@@ -87,7 +87,7 @@ export const analyticsAPI = {
 // ─── Products ────────────────────────────────────
 export const productAPI = {
   getAll: (params) => api.get('/products/admin/all', { params }),
-  getById: (id) => api.get(`/products/${id}`),
+  getById: (id) => api.get(`/products/admin/${id}`),
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),

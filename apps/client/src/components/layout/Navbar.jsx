@@ -199,13 +199,12 @@ const Navbar = () => {
                             }`}
                     >
                         {/* Logo */}
-                        <Link to="/" className="flex-shrink-0 flex items-center gap-2.5 group">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/25 group-hover:shadow-accent-500/40 transition-shadow duration-300 group-hover:scale-105">
-                                <span className="text-white font-bold text-sm">O</span>
-                            </div>
-                            <h1 className="text-xl font-display font-extrabold tracking-tight text-dark-900">
-                                OZO<span className="text-accent-500">BATH</span>
-                            </h1>
+                        <Link to="/" className="flex-shrink-0 flex items-center group">
+                            <img
+                                src="/images/logo-transparent.png"
+                                alt="OZOBATH"
+                                className="h-10 w-auto group-hover:scale-105 transition-transform duration-300"
+                            />
                         </Link>
 
                         {/* Desktop Navigation — optimized (no layoutId) */}

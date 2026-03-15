@@ -82,6 +82,7 @@ const ChatBot = () => {
     const [isTyping, setIsTyping] = useState(false);
     const [hasInteracted, setHasInteracted] = useState(false);
     const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
     const inputRef = useRef(null);
 
     // Show greeting on first open
@@ -96,7 +97,16 @@ const ChatBot = () => {
 
     // Auto-scroll
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (messagesContainerRef.current) {
+            setTimeout(() => {
+                if (messagesContainerRef.current) {
+                    messagesContainerRef.current.scrollTo({
+                        top: messagesContainerRef.current.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 50);
+        }
     }, [messages, isTyping]);
 
     // Pulse notification after 5 seconds
@@ -229,8 +239,8 @@ const ChatBot = () => {
                     >
                         {/* Header */}
                         <div className="bg-gradient-to-r from-dark-900 via-dark-800 to-dark-900 px-5 py-4 flex items-center gap-3 shrink-0">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
-                                <span className="text-white font-bold text-sm">O</span>
+                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/5">
+                                <img src="/images/logo.png" alt="Ozo Assistant" className="w-full h-full object-contain" />
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-white font-display font-bold text-sm">OZO Assistant</h3>
@@ -248,10 +258,10 @@ const ChatBot = () => {
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto bg-[#FAF7F2] px-4 py-4 space-y-4 no-scrollbar">
+                        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto bg-[#FAF7F2] p-4 flex flex-col gap-4 min-h-0 relative">
                             {messages.map((msg) => (
-                                <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[85%] ${msg.type === 'user' ? '' : ''}`}>
+                                <div key={msg.id} className={`flex shrink-0 ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className="max-w-[85%]">
                                         <div
                                             className={`px-4 py-3 rounded-2xl text-sm leading-relaxed space-y-1
                                                 ${msg.type === 'user'
@@ -311,7 +321,7 @@ const ChatBot = () => {
 
                             {/* Typing indicator */}
                             {isTyping && (
-                                <div className="flex justify-start">
+                                <div className="flex justify-start shrink-0">
                                     <div className="bg-white border border-dark-100/30 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
                                         <div className="flex items-center gap-1.5">
                                             <span className="w-2 h-2 bg-dark-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -322,7 +332,7 @@ const ChatBot = () => {
                                 </div>
                             )}
 
-                            <div ref={messagesEndRef} />
+                            <div ref={messagesEndRef} className="h-2 shrink-0" />
                         </div>
 
                         {/* Input */}
