@@ -86,15 +86,70 @@
           </div>
         </div>
 
-        <!-- Payment -->
+        <!-- Payment Details (Enhanced) -->
         <div class="admin-card p-4">
-          <h2 class="text-sm font-bold text-gray-900 mb-3">Payment</h2>
+          <h2 class="text-sm font-bold text-gray-900 mb-3">💳 Payment Details</h2>
           <div class="space-y-2 text-sm">
-            <div class="flex justify-between"><span class="text-gray-500">Method</span><span class="capitalize">{{ order.paymentMethod || '—' }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">Status</span>
-              <span :class="order.paymentStatus === 'paid' ? 'text-green-600 font-semibold' : 'text-yellow-600'" class="capitalize">{{ order.paymentStatus }}</span>
+            <div class="flex justify-between"><span class="text-gray-500">Method</span><span class="capitalize font-medium">{{ order.paymentMethod || '—' }}</span></div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Status</span>
+              <span :class="{
+                'text-green-600 font-semibold': order.paymentStatus === 'paid',
+                'text-yellow-600': order.paymentStatus === 'pending',
+                'text-red-600': order.paymentStatus === 'failed',
+                'text-purple-600': order.paymentStatus === 'refunded'
+              }" class="capitalize">{{ order.paymentStatus }}</span>
             </div>
-            <div v-if="order.razorpayPaymentId" class="flex justify-between"><span class="text-gray-500">Payment ID</span><span class="font-mono text-xs">{{ order.razorpayPaymentId }}</span></div>
+            <div v-if="order.razorpayOrderId" class="flex justify-between">
+              <span class="text-gray-500">Razorpay Order</span>
+              <span class="font-mono text-xs text-gray-700">{{ order.razorpayOrderId }}</span>
+            </div>
+            <div v-if="order.razorpayPaymentId" class="flex justify-between">
+              <span class="text-gray-500">Payment ID</span>
+              <span class="font-mono text-xs text-gray-700">{{ order.razorpayPaymentId }}</span>
+            </div>
+            <div v-if="order.razorpaySignature" class="pt-2 border-t border-gray-100">
+              <span class="text-gray-400 text-xs">Signature verified ✓</span>
+            </div>
+          </div>
+          <!-- Refund Button -->
+          <div v-if="order.paymentStatus === 'paid' && order.razorpayPaymentId" class="mt-4 pt-3 border-t border-gray-100">
+            <button
+              @click="initiateRefund"
+              :disabled="refunding"
+              class="w-full text-sm px-3 py-2 bg-red-50 text-red-600 font-semibold rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+            >
+              {{ refunding ? 'Processing Refund...' : '↩ Initiate Refund' }}
+            </button>
+          </div>
+          <div v-if="order.paymentStatus === 'refunded'" class="mt-3 p-2 bg-purple-50 rounded-lg">
+            <p class="text-xs text-purple-700 font-semibold">✓ Refund processed</p>
+          </div>
+        </div>
+
+        <!-- Shipping / Tracking -->
+        <div class="admin-card p-4">
+          <h2 class="text-sm font-bold text-gray-900 mb-3">🚚 Shipping</h2>
+          <div v-if="order.shipment" class="space-y-2 text-sm">
+            <div v-if="order.shipment.courierName" class="flex justify-between">
+              <span class="text-gray-500">Courier</span>
+              <span class="font-medium">{{ order.shipment.courierName }}</span>
+            </div>
+            <div v-if="order.shipment.awbCode" class="flex justify-between">
+              <span class="text-gray-500">AWB</span>
+              <span class="font-mono text-xs">{{ order.shipment.awbCode }}</span>
+            </div>
+            <div v-if="order.shipment.status" class="flex justify-between">
+              <span class="text-gray-500">Status</span>
+              <span class="capitalize font-medium">{{ order.shipment.status }}</span>
+            </div>
+            <a v-if="order.shipment.trackingUrl" :href="order.shipment.trackingUrl" target="_blank" class="block mt-2 text-xs text-blue-600 hover:text-blue-700 font-semibold">
+              🔗 Track on Courier Site →
+            </a>
+          </div>
+          <div v-else class="text-sm text-gray-400">
+            <p>No shipment created yet</p>
+            <p class="text-xs mt-1">Update order status to "shipped" to create a shipment via Shiprocket</p>
           </div>
         </div>
 
@@ -115,10 +170,12 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { orderAPI } from '@/api/services';
 import { useToast } from 'vue-toastification';
+import api from '@/api/axiosInstance';
 
 const route = useRoute(); const toast = useToast();
 const orderId = route.params.id;
 const loading = ref(true); const order = ref({}); const newStatus = ref('pending');
+const refunding = ref(false);
 
 const fetchOrder = async () => {
   try { loading.value = true; const res = await orderAPI.getById(orderId); order.value = res.data || {}; newStatus.value = order.value.orderStatus || order.value.status || 'pending'; } catch (e) { toast.error('Failed to load order'); } finally { loading.value = false; }
@@ -128,5 +185,20 @@ const updateStatus = async () => {
   try { await orderAPI.updateStatus(orderId, { orderStatus: newStatus.value }); toast.success('Status updated'); fetchOrder(); } catch (e) { toast.error('Failed to update'); }
 };
 
+const initiateRefund = async () => {
+  if (!confirm('Are you sure you want to refund this order? This cannot be undone.')) return;
+  try {
+    refunding.value = true;
+    await api.post(`/payment/${orderId}/refund`, { reason: 'Admin initiated refund' });
+    toast.success('Refund initiated successfully');
+    fetchOrder();
+  } catch (e) {
+    toast.error(e.response?.data?.message || 'Refund failed');
+  } finally {
+    refunding.value = false;
+  }
+};
+
 onMounted(fetchOrder);
 </script>
+

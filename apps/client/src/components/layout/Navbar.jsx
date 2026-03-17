@@ -201,9 +201,9 @@ const Navbar = () => {
                         {/* Logo */}
                         <Link to="/" className="flex-shrink-0 flex items-center group">
                             <img
-                                src="/images/logo-transparent.png"
-                                alt="OZOBATH"
-                                className="h-10 w-auto group-hover:scale-105 transition-transform duration-300"
+                                src="/images/logo.jpeg"
+                                alt="OzoBath"
+                                className="h-10 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
                             />
                         </Link>
 
@@ -339,7 +339,7 @@ const Navbar = () => {
                             <div className="flex items-center justify-between px-6 py-5 border-b border-dark-50">
                                 <Link to="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                                     <img
-                                        src="/images/Ozo-bath-3-2.jpg.jpeg"
+                                        src="/images/logo.png"
                                         alt="OzoBath"
                                         className="h-8 w-auto object-contain"
                                     />
