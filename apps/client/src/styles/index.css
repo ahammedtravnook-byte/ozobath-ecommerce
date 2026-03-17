@@ -411,11 +411,18 @@
   /* No scrollbar */
   .no-scrollbar {
     -ms-overflow-style: none;
+    /* IE and Edge */
     scrollbar-width: none;
+    /* Firefox */
+    overflow-y: auto;
+    /* Ensure scrolling is actually possible */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
   }
 
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+    /* Chrome, Safari and Opera */
   }
 
   /* Text shadow for hero */

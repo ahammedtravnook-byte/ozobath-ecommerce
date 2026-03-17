@@ -138,4 +138,13 @@ const getAllProductsAdmin = asyncHandler(async (req, res) => {
   }, 'All products fetched');
 });
 
-module.exports = { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, getAllProductsAdmin };
+// GET /products/admin/:id (Admin - fully fetch product by ID)
+const getProductByIdAdmin = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id)
+    .populate('category', 'name slug')
+    .populate('relatedProducts', 'name slug price compareAtPrice images badges avgRating reviewCount');
+  if (!product) throw new ApiError(404, 'Product not found.');
+  sendResponse(res, 200, product, 'Product fetched');
+});
+
+module.exports = { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, getAllProductsAdmin, getProductByIdAdmin };
