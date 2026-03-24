@@ -69,7 +69,6 @@ const ChatBot = () => {
     const [showDemoTooltip, setShowDemoTooltip] = useState(false);
     const messagesContainerRef = useRef(null);
     const messagesEndRef = useRef(null);
-    const messagesContainerRef = useRef(null);
     const inputRef = useRef(null);
 
     // Show greeting on first open

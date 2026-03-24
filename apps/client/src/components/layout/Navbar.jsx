@@ -201,9 +201,9 @@ const Navbar = () => {
                         {/* Logo */}
                         <Link to="/" className="flex-shrink-0 flex items-center group">
                             <img
-                                src="/images/logo.jpeg"
-                                alt="OzoBath"
-                                className="h-10 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
+                                src="/images/logo-transparent.png"
+                                alt="OZOBATH"
+                                className="h-10 w-auto group-hover:scale-105 transition-transform duration-300"
                             />
                         </Link>
 
