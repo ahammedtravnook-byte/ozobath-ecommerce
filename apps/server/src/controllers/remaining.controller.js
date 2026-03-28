@@ -24,6 +24,7 @@ const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const slugify = require('../utils/slugify');
 const { createNotification } = require('./notification.controller');
+const { createAdminNotification } = require('./adminNotification.controller');
 
 // ─── REVIEW ──────────────────────────────────────
 const getProductReviews = asyncHandler(async (req, res) => {
@@ -61,6 +62,16 @@ const createReview = asyncHandler(async (req, res) => {
       reviewCount: stats[0].count,
     });
   }
+
+  // Notify admins of new review pending approval
+  const productDoc = await Product.findById(product).select('name slug').lean();
+  await createAdminNotification(
+    'new_review',
+    'New Review Pending Approval',
+    `${req.user.name || 'A customer'} left a ${rating}★ review on "${productDoc?.name || 'a product'}"`,
+    `/reviews`,
+    { reviewId: review._id, productId: product, rating }
+  );
 
   sendResponse(res, 201, review, 'Review submitted for approval');
 });

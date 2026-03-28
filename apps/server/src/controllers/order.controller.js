@@ -9,6 +9,7 @@ const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const { createNotification } = require('./notification.controller');
+const { createAdminNotification } = require('./adminNotification.controller');
 
 // POST /orders — Create order from cart
 const createOrder = asyncHandler(async (req, res) => {
@@ -82,7 +83,7 @@ const createOrder = asyncHandler(async (req, res) => {
   // Clear cart
   await Cart.findOneAndUpdate({ user: req.user._id }, { items: [], totalAmount: 0 });
 
-  // Send notification
+  // Notify customer
   await createNotification(
     req.user._id,
     'order_placed',
@@ -90,6 +91,29 @@ const createOrder = asyncHandler(async (req, res) => {
     `Your order #${order.orderNumber} for ₹${total.toLocaleString('en-IN')} has been placed.`,
     { orderId: order._id, orderNumber: order.orderNumber }
   );
+
+  // Notify admins
+  await createAdminNotification(
+    'new_order',
+    `New Order #${order.orderNumber}`,
+    `₹${total.toLocaleString('en-IN')} — ${items.length} item(s) from ${req.user.name || req.user.email}`,
+    `/orders/${order._id}`,
+    { orderId: order._id, orderNumber: order.orderNumber, total }
+  );
+
+  // Check for low stock after order
+  for (const item of items) {
+    const updatedProduct = await Product.findById(item.product).select('name stock').lean();
+    if (updatedProduct && updatedProduct.stock <= 5) {
+      await createAdminNotification(
+        'low_stock',
+        'Low Stock Alert',
+        `${updatedProduct.name} has only ${updatedProduct.stock} unit(s) remaining`,
+        `/inventory`,
+        { productId: item.product, stock: updatedProduct.stock }
+      );
+    }
+  }
 
   sendResponse(res, 201, order, 'Order placed successfully');
 });

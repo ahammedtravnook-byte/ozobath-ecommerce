@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiSearch, FiHeart, FiShoppingBag, FiMenu, FiX, FiUser, FiArrowRight, FiBell, FiClock, FiTag } from 'react-icons/fi';
+import { FiSearch, FiHeart, FiShoppingBag, FiMenu, FiX, FiUser, FiArrowRight, FiBell, FiClock, FiTag, FiPackage } from 'react-icons/fi';
 import { useAuth } from '@context/AuthContext';
 import { useCart } from '@context/CartContext';
 import { useWishlist } from '@context/WishlistContext';
@@ -326,9 +326,53 @@ const SearchOverlay = ({ onClose }) => {
     );
 };
 
+/* ─── Notification link resolver ────────────── */
+const getNotificationLink = (notif) => {
+    const d = notif.data || {};
+    switch (notif.type) {
+        case 'order_placed':
+        case 'order_confirmed':
+        case 'order_cancelled':
+        case 'order_delivered':
+        case 'payment_success':
+        case 'payment_failed':
+            return '/orders';
+        case 'order_shipped':
+            return d.orderId ? `/track-order?orderId=${d.orderId}` : '/orders';
+        case 'review_approved':
+            return d.productSlug ? `/product/${d.productSlug}` : '/orders';
+        case 'coupon_applied':
+        case 'first_order_discount':
+            return '/shop';
+        case 'welcome':
+            return '/shop';
+        default:
+            return null;
+    }
+};
+
+const NOTIF_ICONS = {
+    order_placed: '🛍️', order_confirmed: '✅', order_shipped: '🚚',
+    order_delivered: '📦', order_cancelled: '❌', payment_success: '💳',
+    payment_failed: '⚠️', coupon_applied: '🎟️', review_approved: '⭐',
+    welcome: '👋', first_order_discount: '🎁',
+};
+
+const formatRelTime = (date) => {
+    const diff = Date.now() - new Date(date);
+    const mins = Math.floor(diff / 60000);
+    const hrs = Math.floor(mins / 60);
+    const days = Math.floor(hrs / 24);
+    if (days > 0) return `${days}d ago`;
+    if (hrs > 0) return `${hrs}h ago`;
+    if (mins > 0) return `${mins}m ago`;
+    return 'Just now';
+};
+
 /* ─── Notification Bell Component ────────────── */
 const NotificationBell = () => {
-    const { notifications, unreadCount, loading, fetchNotifications, markAsRead, markAllRead, deleteNotification } = useNotifications();
+    const navigate = useNavigate();
+    const { notifications, unreadCount, loading, fetchNotifications, markAsRead, markAllRead } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -344,25 +388,15 @@ const NotificationBell = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const getIcon = (type) => {
-        const icons = {
-            order_placed: '🛍️', order_confirmed: '✅', order_shipped: '🚚',
-            order_delivered: '📦', order_cancelled: '❌', payment_success: '💳',
-            payment_failed: '⚠️', coupon_applied: '🎟️', review_approved: '⭐',
-            welcome: '👋', first_order_discount: '🎁', low_stock: '📉',
-        };
-        return icons[type] || '🔔';
-    };
-
-    const formatTime = (date) => {
-        const diff = Date.now() - new Date(date);
-        const mins = Math.floor(diff / 60000);
-        const hrs = Math.floor(mins / 60);
-        const days = Math.floor(hrs / 24);
-        if (days > 0) return `${days}d ago`;
-        if (hrs > 0) return `${hrs}h ago`;
-        if (mins > 0) return `${mins}m ago`;
-        return 'Just now';
+    const handleNotifClick = async (notif) => {
+        // Mark as read
+        if (!notif.isRead) await markAsRead(notif._id);
+        // Navigate to relevant page
+        const link = getNotificationLink(notif);
+        if (link) {
+            setIsOpen(false);
+            navigate(link);
+        }
     };
 
     return (
@@ -400,16 +434,13 @@ const NotificationBell = () => {
                                 )}
                             </div>
                             {unreadCount > 0 && (
-                                <button
-                                    onClick={markAllRead}
-                                    className="text-[11px] text-accent-500 font-semibold hover:text-accent-600"
-                                >
+                                <button onClick={markAllRead} className="text-[11px] text-accent-500 font-semibold hover:text-accent-600">
                                     Mark all read
                                 </button>
                             )}
                         </div>
 
-                        {/* Notifications List */}
+                        {/* List */}
                         <div className="max-h-80 overflow-y-auto">
                             {loading ? (
                                 <div className="flex items-center justify-center py-8">
@@ -421,31 +452,42 @@ const NotificationBell = () => {
                                     <p className="text-sm text-dark-400">No notifications yet</p>
                                 </div>
                             ) : (
-                                notifications.map(notif => (
-                                    <div
-                                        key={notif._id}
-                                        className={`flex items-start gap-3 px-4 py-3 hover:bg-dark-50/50 transition-colors border-b border-dark-50 last:border-0 cursor-pointer group ${!notif.isRead ? 'bg-accent-50/30' : ''}`}
-                                        onClick={() => !notif.isRead && markAsRead(notif._id)}
-                                    >
-                                        <span className="text-xl shrink-0 mt-0.5">{getIcon(notif.type)}</span>
-                                        <div className="flex-1 min-w-0">
-                                            <p className={`text-xs font-semibold truncate ${!notif.isRead ? 'text-dark-900' : 'text-dark-600'}`}>
-                                                {notif.title}
-                                            </p>
-                                            <p className="text-[11px] text-dark-400 mt-0.5 line-clamp-2">{notif.message}</p>
-                                            <p className="text-[10px] text-dark-300 mt-1">{formatTime(notif.createdAt)}</p>
+                                notifications.map(notif => {
+                                    const link = getNotificationLink(notif);
+                                    return (
+                                        <div
+                                            key={notif._id}
+                                            onClick={() => handleNotifClick(notif)}
+                                            className={`flex items-start gap-3 px-4 py-3 border-b border-dark-50 last:border-0 transition-colors
+                                                ${link ? 'cursor-pointer hover:bg-accent-50/60' : 'cursor-default hover:bg-dark-50/40'}
+                                                ${!notif.isRead ? 'bg-accent-50/30' : ''}`}
+                                        >
+                                            <span className="text-xl shrink-0 mt-0.5">{NOTIF_ICONS[notif.type] || '🔔'}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`text-xs font-semibold truncate ${!notif.isRead ? 'text-dark-900' : 'text-dark-600'}`}>
+                                                    {notif.title}
+                                                </p>
+                                                <p className="text-[11px] text-dark-400 mt-0.5 line-clamp-2">{notif.message}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <p className="text-[10px] text-dark-300">{formatRelTime(notif.createdAt)}</p>
+                                                    {link && <p className="text-[10px] text-accent-400 font-medium">Tap to view →</p>}
+                                                </div>
+                                            </div>
+                                            {!notif.isRead && (
+                                                <div className="w-2 h-2 bg-accent-500 rounded-full shrink-0 mt-1.5" />
+                                            )}
                                         </div>
-                                        {!notif.isRead && (
-                                            <div className="w-2 h-2 bg-accent-500 rounded-full shrink-0 mt-1.5" />
-                                        )}
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
 
                         {notifications.length > 0 && (
-                            <div className="px-4 py-2 border-t border-dark-50">
-                                <p className="text-[10px] text-dark-300 text-center">Last 20 notifications</p>
+                            <div className="px-4 py-2.5 border-t border-dark-50 flex items-center justify-between">
+                                <p className="text-[10px] text-dark-300">Last 20 notifications</p>
+                                <Link to="/orders" onClick={() => setIsOpen(false)} className="text-[10px] text-accent-500 font-semibold hover:text-accent-600">
+                                    View orders →
+                                </Link>
                             </div>
                         )}
                     </motion.div>
@@ -539,6 +581,16 @@ const Navbar = () => {
                             {/* Desktop actions */}
                             <div className="hidden sm:flex items-center gap-1.5">
                                 {isAuthenticated && <NotificationBell />}
+                                {isAuthenticated && (
+                                    <Link
+                                        to="/orders"
+                                        className={`p-2.5 hover:bg-accent-50 rounded-full relative transition-colors duration-200 ${location.pathname === '/orders' ? 'text-accent-500' : 'text-dark-700'}`}
+                                        aria-label="My Orders"
+                                        title="My Orders"
+                                    >
+                                        <FiPackage className="w-[18px] h-[18px]" />
+                                    </Link>
+                                )}
                                 <Link
                                     to="/wishlist"
                                     className="p-2.5 hover:bg-pink-50 rounded-full relative transition-colors duration-200"
@@ -674,21 +726,27 @@ const Navbar = () => {
                                 <hr className="border-dark-100 my-3" />
 
                                 {/* Quick Action Links */}
-                                <div className="flex items-center gap-3 px-2 mb-4">
-                                    <Link to="/wishlist" className="flex-1 flex items-center gap-3 p-3 bg-pink-50/80 rounded-2xl hover:bg-pink-50 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                                <div className="grid grid-cols-3 gap-2 px-2 mb-4">
+                                    <Link to="/wishlist" className="flex flex-col items-center gap-2 p-3 bg-pink-50/80 rounded-2xl hover:bg-pink-50 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                                         <div className="relative">
                                             <FiHeart className="w-5 h-5 text-pink-500" />
                                             {wishlistCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">{wishlistCount}</span>}
                                         </div>
-                                        <span className="text-dark-600 font-medium text-sm">Wishlist</span>
+                                        <span className="text-dark-600 font-medium text-xs">Wishlist</span>
                                     </Link>
-                                    <Link to="/cart" className="flex-1 flex items-center gap-3 p-3 bg-blue-50/80 rounded-2xl hover:bg-blue-50 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <Link to="/cart" className="flex flex-col items-center gap-2 p-3 bg-blue-50/80 rounded-2xl hover:bg-blue-50 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                                         <div className="relative">
                                             <FiShoppingBag className="w-5 h-5 text-blue-500" />
                                             {itemCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-accent-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">{itemCount}</span>}
                                         </div>
-                                        <span className="text-dark-600 font-medium text-sm">Cart</span>
+                                        <span className="text-dark-600 font-medium text-xs">Cart</span>
                                     </Link>
+                                    {isAuthenticated && (
+                                        <Link to="/orders" className="flex flex-col items-center gap-2 p-3 bg-accent-50/80 rounded-2xl hover:bg-accent-50 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                                            <FiPackage className="w-5 h-5 text-accent-500" />
+                                            <span className="text-dark-600 font-medium text-xs">My Orders</span>
+                                        </Link>
+                                    )}
                                 </div>
 
                                 {/* User Section */}
@@ -704,7 +762,10 @@ const Navbar = () => {
                                                     <p className="text-xs text-dark-400">{user?.email}</p>
                                                 </div>
                                             </div>
-                                            <Link to="/profile" className="w-full py-3.5 bg-dark-900 text-white rounded-2xl flex justify-center font-bold text-sm tracking-wider hover:bg-accent-500 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>MY PROFILE</Link>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Link to="/profile" className="py-3.5 bg-dark-900 text-white rounded-2xl flex justify-center font-bold text-sm tracking-wider hover:bg-accent-500 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>MY PROFILE</Link>
+                                                <Link to="/orders" className="py-3.5 bg-accent-500 text-white rounded-2xl flex justify-center font-bold text-sm tracking-wider hover:bg-accent-600 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>MY ORDERS</Link>
+                                            </div>
                                             <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="w-full py-3.5 text-dark-400 font-medium text-sm border border-dark-100 rounded-2xl hover:border-red-200 hover:text-red-500 transition-all">LOGOUT</button>
                                         </>
                                     ) : (

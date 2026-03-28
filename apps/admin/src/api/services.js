@@ -23,6 +23,12 @@ export const productAPI = {
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),
+  bulkUpload: (file) => {
+    const formData = new FormData();
+    formData.append('excel', file);
+    return api.post('/products/bulk-upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  downloadTemplate: () => api.get('/products/bulk-upload/template', { responseType: 'blob' }),
 };
 
 // ─── Categories ──────────────────────────────────
@@ -135,6 +141,14 @@ export const uploadAPI = {
     return api.post('/upload/images', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
   deleteImage: (publicId) => api.delete(`/upload/image/${publicId}`),
+};
+
+// ─── Admin Notifications ─────────────────────────
+export const adminNotificationAPI = {
+  getAll: (limit = 30) => api.get('/admin-notifications', { params: { limit } }),
+  getUnreadCount: () => api.get('/admin-notifications/unread-count'),
+  markAsRead: (id) => api.put(`/admin-notifications/${id}/read`),
+  markAllRead: () => api.put('/admin-notifications/mark-all-read'),
 };
 
 // ─── Admin Users (SuperAdmin) ────────────────────

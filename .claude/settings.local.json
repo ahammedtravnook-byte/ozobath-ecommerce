@@ -5,7 +5,10 @@
       "Bash(grep -E \"\\\\.js$\")",
       "Bash(xargs ls:*)",
       "Bash(find /c/Users/ahamm/OneDrive/Desktop/ecom_project/ozobath-ecommerce -name .env* -type f)",
-      "Bash(grep -n \"findOneAndUpdate\\\\|atomic\\\\|$inc.*usedCount\" \"/c/Users/ahamm/OneDrive/Desktop/ecom_project/ozobath-ecommerce/apps/server/src/controllers/order.controller.js\")"
+      "Bash(grep -n \"findOneAndUpdate\\\\|atomic\\\\|$inc.*usedCount\" \"/c/Users/ahamm/OneDrive/Desktop/ecom_project/ozobath-ecommerce/apps/server/src/controllers/order.controller.js\")",
+      "Bash(npm install:*)",
+      "Bash(node -e \"const p=require\\(''path''\\); const d=p.join\\(__dirname,''src'',''seeds''\\); console.log\\(p.resolve\\(d,''../../../Product imaegs''\\)\\);\")",
+      "Bash(npm run:*)"
     ]
   }
 }
