@@ -15,7 +15,6 @@ const OrderDetailView = () => import('@/views/OrderDetailView.vue');
 const CustomersView = () => import('@/views/CustomersView.vue');
 const CouponsView = () => import('@/views/CouponsView.vue');
 const BannersView = () => import('@/views/BannersView.vue');
-const ContentManagerView = () => import('@/views/ContentManagerView.vue');
 const BlogsView = () => import('@/views/BlogsView.vue');
 const BlogFormView = () => import('@/views/BlogFormView.vue');
 const ReviewsView = () => import('@/views/ReviewsView.vue');
@@ -54,7 +53,6 @@ const routes = [
       { path: 'customers', name: 'Customers', component: CustomersView },
       { path: 'coupons', name: 'Coupons', component: CouponsView },
       { path: 'banners', name: 'Banners', component: BannersView },
-      { path: 'content', name: 'ContentManager', component: ContentManagerView },
       { path: 'blogs', name: 'Blogs', component: BlogsView },
       { path: 'blogs/new', name: 'NewBlog', component: BlogFormView },
       { path: 'blogs/:id/edit', name: 'EditBlog', component: BlogFormView },

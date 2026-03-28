@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(head -50 /c/Users/ahamm/OneDrive/Desktop/ecom_project/ozobath-ecommerce/apps/server/src/routes/*.js)",
+      "Bash(grep -E \"\\\\.js$\")",
+      "Bash(xargs ls:*)",
+      "Bash(find /c/Users/ahamm/OneDrive/Desktop/ecom_project/ozobath-ecommerce -name .env* -type f)",
+      "Bash(grep -n \"findOneAndUpdate\\\\|atomic\\\\|$inc.*usedCount\" \"/c/Users/ahamm/OneDrive/Desktop/ecom_project/ozobath-ecommerce/apps/server/src/controllers/order.controller.js\")"
+    ]
+  }
+}

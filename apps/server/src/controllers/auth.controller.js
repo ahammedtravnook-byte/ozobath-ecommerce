@@ -31,6 +31,10 @@ const register = asyncHandler(async (req, res) => {
   user.refreshToken = refreshToken;
   await user.save({ validateBeforeSave: false });
 
+  // Fire welcome notification (non-blocking)
+  const { createNotification } = require('./notification.controller');
+  createNotification(user._id, 'welcome', 'Welcome to OZOBATH!', `Hi ${user.name}! Welcome to OZOBATH. Use code FIRST10 for 10% off your first order!`, {}).catch(() => {});
+
   const options = {
     httpOnly: true, secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000,

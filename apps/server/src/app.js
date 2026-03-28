@@ -73,6 +73,7 @@ app.use('/api/v1/analytics', require('./routes/analytics.routes'));
 app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/reels', require('./routes/reel.routes'));
 app.use('/api/v1/shipping', require('./routes/shipping.routes'));
+app.use('/api/v1/notifications', require('./routes/notification.routes'));
 
 // ─── 404 Handler ─────────────────────────────────────
 app.use('*', (req, res) => {

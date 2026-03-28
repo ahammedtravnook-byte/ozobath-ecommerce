@@ -2,6 +2,14 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-900">Orders</h1>
+      <button
+        @click="exportOrders"
+        :disabled="exporting"
+        class="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        <span v-if="exporting">Exporting...</span>
+        <span v-else>Export CSV</span>
+      </button>
     </div>
 
     <!-- Filters -->
@@ -84,9 +92,11 @@
 import { ref, onMounted } from 'vue';
 import { orderAPI } from '@/api/services';
 import { useToast } from 'vue-toastification';
+import api from '@/api/axiosInstance';
 
 const toast = useToast();
 const loading = ref(true);
+const exporting = ref(false);
 const orders = ref([]);
 const search = ref('');
 const filterStatus = ref('');
@@ -103,6 +113,44 @@ const fetchOrders = async () => {
     toast.error('Failed to load orders');
   } finally {
     loading.value = false;
+  }
+};
+
+const exportOrders = async () => {
+  try {
+    exporting.value = true;
+    const params = {};
+    if (filterStatus.value) params.status = filterStatus.value;
+
+    // Use the raw axios instance with responseType blob; bypass the services wrapper
+    // since the interceptor returns res.data — we need the raw axios for blob
+    const { default: axios } = await import('axios');
+    const token = localStorage.getItem('adminAccessToken');
+    const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+
+    const response = await axios.get(`${API_URL}/orders/export`, {
+      params,
+      responseType: 'blob',
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+      },
+      withCredentials: true,
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `orders-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    toast.success('Orders exported successfully');
+  } catch (e) {
+    toast.error('Export failed');
+  } finally {
+    exporting.value = false;
   }
 };
 

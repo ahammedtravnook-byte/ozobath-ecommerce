@@ -51,6 +51,31 @@
         </button>
 
         <div class="flex items-center gap-4 ml-auto">
+          <!-- Pending Alerts -->
+          <div v-if="!alertsLoading && (pendingOrders > 0 || lowStockCount > 0)" class="flex items-center gap-2">
+            <!-- Pending Orders alert -->
+            <router-link
+              v-if="pendingOrders > 0"
+              to="/orders"
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 transition-colors"
+              title="Pending Orders"
+            >
+              <span class="text-xs">🛒</span>
+              <span class="text-xs font-semibold">{{ pendingOrders }} pending</span>
+            </router-link>
+
+            <!-- Low Stock alert -->
+            <router-link
+              v-if="lowStockCount > 0"
+              to="/inventory"
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+              title="Low Stock Products"
+            >
+              <span class="text-xs">⚠️</span>
+              <span class="text-xs font-semibold">{{ lowStockCount }} low stock</span>
+            </router-link>
+          </div>
+
           <span class="text-sm text-gray-500">
             {{ authStore.user?.name || 'Admin' }}
           </span>
@@ -82,13 +107,35 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.store';
+import { analyticsAPI } from '@/api/services';
 
 const sidebarOpen = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
+
+// Pending alerts state
+const pendingOrders = ref(0);
+const lowStockCount = ref(0);
+const alertsLoading = ref(true);
+
+const fetchAlerts = async () => {
+  try {
+    alertsLoading.value = true;
+    const res = await analyticsAPI.getDashboard();
+    const stats = res.data?.stats || res.stats || {};
+    pendingOrders.value = stats.pendingOrders ?? 0;
+    lowStockCount.value = stats.lowStockCount ?? stats.lowStock ?? 0;
+  } catch (e) {
+    // Silently fail — alerts are non-critical
+    pendingOrders.value = 0;
+    lowStockCount.value = 0;
+  } finally {
+    alertsLoading.value = false;
+  }
+};
 
 const menuGroups = computed(() => {
   const groups = [
@@ -118,7 +165,6 @@ const menuGroups = computed(() => {
     {
       label: 'Content',
       items: [
-        { label: 'Dynamic Content', path: '/content', icon: '✨' },
         { label: 'Banners', path: '/banners', icon: '🖼️' },
         { label: 'Blogs', path: '/blogs', icon: '📝' },
         { label: 'FAQs', path: '/faqs', icon: '❓' },
@@ -160,4 +206,6 @@ const handleLogout = () => {
   authStore.logout();
   router.push('/login');
 };
+
+onMounted(fetchAlerts);
 </script>

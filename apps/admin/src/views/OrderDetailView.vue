@@ -27,8 +27,9 @@
           <div class="px-4 py-3 border-t border-gray-100 bg-gray-50">
             <div class="flex justify-between text-sm mb-1"><span class="text-gray-500">Subtotal</span><span>₹{{ (order.subtotal || order.totalAmount)?.toLocaleString() }}</span></div>
             <div v-if="order.discount" class="flex justify-between text-sm mb-1"><span class="text-gray-500">Discount</span><span class="text-green-600">-₹{{ order.discount?.toLocaleString() }}</span></div>
-            <div v-if="order.shippingCharges" class="flex justify-between text-sm mb-1"><span class="text-gray-500">Shipping</span><span>₹{{ order.shippingCharges?.toLocaleString() }}</span></div>
-            <div class="flex justify-between text-sm font-bold border-t border-gray-200 pt-2 mt-2"><span>Total</span><span>₹{{ order.totalAmount?.toLocaleString() }}</span></div>
+            <div v-if="order.shippingCost" class="flex justify-between text-sm mb-1"><span class="text-gray-500">Shipping</span><span>₹{{ order.shippingCost?.toLocaleString() }}</span></div>
+            <div v-if="order.tax" class="flex justify-between text-sm mb-1"><span class="text-gray-500">Tax (GST)</span><span>₹{{ order.tax?.toLocaleString() }}</span></div>
+            <div class="flex justify-between text-sm font-bold border-t border-gray-200 pt-2 mt-2"><span>Total</span><span>₹{{ order.total?.toLocaleString() }}</span></div>
           </div>
         </div>
 
@@ -36,7 +37,7 @@
         <div class="admin-card p-4">
           <h2 class="text-sm font-bold text-gray-900 mb-4">Status Timeline</h2>
           <div class="space-y-3">
-            <div v-for="(s, i) in (order.statusHistory || [])" :key="i" class="flex items-start gap-3">
+            <div v-for="(s, i) in [...(order.statusHistory || [])].reverse()" :key="i" class="flex items-start gap-3">
               <div class="w-3 h-3 rounded-full mt-1" :class="i === 0 ? 'bg-blue-500' : 'bg-gray-300'"></div>
               <div>
                 <p class="text-sm font-medium text-gray-900 capitalize">{{ s.status }}</p>
@@ -182,7 +183,7 @@ const fetchOrder = async () => {
 };
 
 const updateStatus = async () => {
-  try { await orderAPI.updateStatus(orderId, { orderStatus: newStatus.value }); toast.success('Status updated'); fetchOrder(); } catch (e) { toast.error('Failed to update'); }
+  try { await orderAPI.updateStatus(orderId, { status: newStatus.value }); toast.success('Status updated'); fetchOrder(); } catch (e) { toast.error('Failed to update'); }
 };
 
 const initiateRefund = async () => {

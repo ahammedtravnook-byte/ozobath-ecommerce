@@ -173,21 +173,23 @@ const Footer = () => {
                                 Get the latest design inspiration, exclusive deals & new arrivals in your inbox.
                             </p>
                             <form className="relative z-10" onSubmit={(e) => e.preventDefault()}>
-                                <div className="relative">
+                                <div className="flex items-center gap-2 bg-dark-950/80 border border-dark-700 rounded-2xl pr-2 focus-within:border-accent-500 transition-all duration-300">
                                     <input
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="Email address..."
-                                        className="w-full bg-dark-950/80 border border-dark-700 text-white text-sm rounded-2xl py-4 pl-5 pr-14 focus:outline-none focus:border-accent-500 transition-all duration-300 placeholder:text-dark-500"
+                                        className="flex-1 bg-transparent text-white text-sm py-4 pl-5 focus:outline-none placeholder:text-dark-500 min-w-0"
                                         required
                                     />
-                                    <button
+                                    <motion.button
                                         type="submit"
-                                        className="absolute right-1.5 top-1.5 bottom-1.5 aspect-square bg-accent-500 hover:bg-accent-400 text-white rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg shadow-accent-500/20 hover:shadow-accent-500/40 hover:scale-105"
+                                        className="shrink-0 w-10 h-10 bg-accent-500 hover:bg-accent-400 text-white rounded-xl flex items-center justify-center transition-colors duration-300 shadow-lg shadow-accent-500/20"
+                                        whileHover={{ scale: 1.08 }}
+                                        whileTap={{ scale: 0.94 }}
                                     >
-                                        <FiArrowRight className="w-5 h-5" />
-                                    </button>
+                                        <FiArrowRight className="w-4 h-4" />
+                                    </motion.button>
                                 </div>
                             </form>
                         </div>

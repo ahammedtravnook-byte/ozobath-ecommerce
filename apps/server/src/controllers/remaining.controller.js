@@ -3,9 +3,6 @@
 // Wishlist, Newsletter, Enquiry, Service, Booking,
 // Payment, Analytics, Admin Controllers
 // ============================================
-// This file contains all remaining controllers
-// consolidated for rapid implementation.
-
 const Review = require('../models/Review');
 const Blog = require('../models/Blog');
 const Coupon = require('../models/Coupon');
@@ -26,6 +23,7 @@ const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const slugify = require('../utils/slugify');
+const { createNotification } = require('./notification.controller');
 
 // ─── REVIEW ──────────────────────────────────────
 const getProductReviews = asyncHandler(async (req, res) => {
@@ -36,10 +34,21 @@ const getProductReviews = asyncHandler(async (req, res) => {
 
 const createReview = asyncHandler(async (req, res) => {
   const { product, rating, title, comment, images } = req.body;
+
   const existing = await Review.findOne({ product, user: req.user._id });
   if (existing) throw new ApiError(400, 'You already reviewed this product.');
 
-  const review = await Review.create({ product, user: req.user._id, rating, title, comment, images });
+  // Check verified purchase
+  const purchasedOrder = await Order.findOne({
+    user: req.user._id,
+    'items.product': product,
+    status: 'delivered',
+  });
+  const isVerifiedPurchase = !!purchasedOrder;
+
+  const review = await Review.create({
+    product, user: req.user._id, rating, title, comment, images, isVerifiedPurchase,
+  });
 
   // Update product avg rating
   const stats = await Review.aggregate([
@@ -47,7 +56,10 @@ const createReview = asyncHandler(async (req, res) => {
     { $group: { _id: '$product', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } },
   ]);
   if (stats.length > 0) {
-    await Product.findByIdAndUpdate(product, { avgRating: Math.round(stats[0].avgRating * 10) / 10, reviewCount: stats[0].count });
+    await Product.findByIdAndUpdate(product, {
+      avgRating: Math.round(stats[0].avgRating * 10) / 10,
+      reviewCount: stats[0].count,
+    });
   }
 
   sendResponse(res, 201, review, 'Review submitted for approval');
@@ -59,19 +71,70 @@ const getAllReviewsAdmin = asyncHandler(async (req, res) => {
   if (status === 'pending') filter.isApproved = false;
   if (status === 'approved') filter.isApproved = true;
 
-  const reviews = await Review.find(filter).populate('user', 'name email').populate('product', 'name slug').sort('-createdAt').lean();
+  const reviews = await Review.find(filter)
+    .populate('user', 'name email')
+    .populate('product', 'name slug')
+    .sort('-createdAt').lean();
   sendResponse(res, 200, reviews, 'Reviews fetched');
 });
 
 const approveReview = asyncHandler(async (req, res) => {
-  const review = await Review.findByIdAndUpdate(req.params.id, { isApproved: req.body.isApproved ?? true }, { new: true });
+  const review = await Review.findByIdAndUpdate(
+    req.params.id,
+    { isApproved: req.body.isApproved ?? true },
+    { new: true }
+  );
   if (!review) throw new ApiError(404, 'Review not found.');
+
+  // Recalculate product rating after approval/rejection
+  const stats = await Review.aggregate([
+    { $match: { product: review.product, isApproved: true } },
+    { $group: { _id: '$product', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } },
+  ]);
+  await Product.findByIdAndUpdate(review.product, {
+    avgRating: stats[0]?.avgRating ? Math.round(stats[0].avgRating * 10) / 10 : 0,
+    reviewCount: stats[0]?.count || 0,
+  });
+
+  // Notify user if approved
+  if (req.body.isApproved) {
+    await createNotification(
+      review.user,
+      'review_approved',
+      'Your Review Was Published',
+      'Your product review has been approved and is now visible to other customers.',
+      { productId: review.product }
+    );
+  }
+
   sendResponse(res, 200, review, 'Review updated');
 });
 
 const deleteReview = asyncHandler(async (req, res) => {
-  await Review.findByIdAndDelete(req.params.id);
+  const review = await Review.findByIdAndDelete(req.params.id);
+  if (review) {
+    // Recalculate rating after deletion
+    const stats = await Review.aggregate([
+      { $match: { product: review.product, isApproved: true } },
+      { $group: { _id: '$product', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+    await Product.findByIdAndUpdate(review.product, {
+      avgRating: stats[0]?.avgRating ? Math.round(stats[0].avgRating * 10) / 10 : 0,
+      reviewCount: stats[0]?.count || 0,
+    });
+  }
   sendResponse(res, 200, null, 'Review deleted');
+});
+
+// Review helpfulness vote
+const voteReviewHelpful = asyncHandler(async (req, res) => {
+  const review = await Review.findByIdAndUpdate(
+    req.params.id,
+    { $inc: { helpfulCount: 1 } },
+    { new: true }
+  );
+  if (!review) throw new ApiError(404, 'Review not found.');
+  sendResponse(res, 200, { helpfulCount: review.helpfulCount }, 'Vote recorded');
 });
 
 // ─── BLOG ────────────────────────────────────────
@@ -87,18 +150,29 @@ const getBlogs = asyncHandler(async (req, res) => {
     Blog.countDocuments(filter),
   ]);
 
-  sendResponse(res, 200, { blogs, pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / limit) } }, 'Blogs fetched');
+  sendResponse(res, 200, {
+    blogs,
+    pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / limit) },
+  }, 'Blogs fetched');
 });
 
 const getBlogBySlug = asyncHandler(async (req, res) => {
-  const blog = await Blog.findOneAndUpdate({ slug: req.params.slug, isPublished: true }, { $inc: { views: 1 } }, { new: true })
-    .populate('author', 'name avatar');
+  const blog = await Blog.findOneAndUpdate(
+    { slug: req.params.slug, isPublished: true },
+    { $inc: { views: 1 } },
+    { new: true }
+  ).populate('author', 'name avatar');
   if (!blog) throw new ApiError(404, 'Blog post not found.');
   sendResponse(res, 200, blog, 'Blog fetched');
 });
 
 const createBlog = asyncHandler(async (req, res) => {
-  req.body.slug = slugify(req.body.title);
+  // Ensure slug uniqueness
+  let slug = slugify(req.body.title);
+  const existingSlug = await Blog.findOne({ slug });
+  if (existingSlug) slug = `${slug}-${Date.now()}`;
+
+  req.body.slug = slug;
   req.body.author = req.user._id;
   if (req.body.isPublished) req.body.publishedAt = new Date();
 
@@ -107,7 +181,12 @@ const createBlog = asyncHandler(async (req, res) => {
 });
 
 const updateBlog = asyncHandler(async (req, res) => {
-  if (req.body.title) req.body.slug = slugify(req.body.title);
+  if (req.body.title) {
+    let slug = slugify(req.body.title);
+    const existingSlug = await Blog.findOne({ slug, _id: { $ne: req.params.id } });
+    if (existingSlug) slug = `${slug}-${Date.now()}`;
+    req.body.slug = slug;
+  }
   if (req.body.isPublished && !req.body.publishedAt) req.body.publishedAt = new Date();
 
   const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -136,13 +215,74 @@ const validateCoupon = asyncHandler(async (req, res) => {
   if (orderAmount < coupon.minOrderAmount) throw new ApiError(400, `Minimum order amount is ₹${coupon.minOrderAmount}.`);
 
   const userUsage = coupon.usedBy.filter((id) => id.toString() === req.user._id.toString()).length;
-  if (userUsage >= coupon.perUserLimit) throw new ApiError(400, 'Coupon already used.');
+  if (coupon.perUserLimit && userUsage >= coupon.perUserLimit) {
+    throw new ApiError(400, 'You have already used this coupon the maximum number of times.');
+  }
 
   let discount = coupon.type === 'percentage'
     ? Math.min((orderAmount * coupon.value) / 100, coupon.maxDiscount || Infinity)
     : coupon.value;
 
-  sendResponse(res, 200, { code: coupon.code, type: coupon.type, value: coupon.value, discount: Math.round(discount) }, 'Coupon valid');
+  sendResponse(res, 200, {
+    code: coupon.code,
+    type: coupon.type,
+    value: coupon.value,
+    discount: Math.round(discount),
+    description: coupon.description,
+  }, 'Coupon valid');
+});
+
+// GET /coupons/auto-apply — find best applicable coupon for cart amount
+const autoApplyCoupon = asyncHandler(async (req, res) => {
+  const { orderAmount } = req.query;
+  const amount = Number(orderAmount) || 0;
+
+  if (amount <= 0) return sendResponse(res, 200, null, 'No coupon applicable');
+
+  const now = new Date();
+  // Find all active coupons valid for this order amount
+  const coupons = await Coupon.find({
+    isActive: true,
+    startDate: { $lte: now },
+    endDate: { $gte: now },
+    minOrderAmount: { $lte: amount },
+    $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
+  }).lean();
+
+  if (coupons.length === 0) return sendResponse(res, 200, null, 'No applicable coupon found');
+
+  // Filter out coupons user has exhausted their per-user limit
+  const userOrders = await Order.find({ user: req.user._id, coupon: { $in: coupons.map(c => c._id) } }).select('coupon').lean();
+  const userCouponUsage = {};
+  userOrders.forEach(o => {
+    if (o.coupon) userCouponUsage[o.coupon.toString()] = (userCouponUsage[o.coupon.toString()] || 0) + 1;
+  });
+
+  const eligible = coupons.filter(c => {
+    if (!c.perUserLimit) return true;
+    return (userCouponUsage[c._id.toString()] || 0) < c.perUserLimit;
+  });
+
+  if (eligible.length === 0) return sendResponse(res, 200, null, 'No applicable coupon found');
+
+  // Calculate discount for each and pick best
+  const withDiscount = eligible.map(c => {
+    const disc = c.type === 'percentage'
+      ? Math.min((amount * c.value) / 100, c.maxDiscount || Infinity)
+      : c.value;
+    return { ...c, computedDiscount: Math.round(disc) };
+  });
+
+  withDiscount.sort((a, b) => b.computedDiscount - a.computedDiscount);
+  const best = withDiscount[0];
+
+  sendResponse(res, 200, {
+    code: best.code,
+    type: best.type,
+    value: best.value,
+    discount: best.computedDiscount,
+    description: best.description,
+  }, 'Best coupon found');
 });
 
 const getCoupons = asyncHandler(async (req, res) => {
@@ -164,6 +304,28 @@ const updateCoupon = asyncHandler(async (req, res) => {
 const deleteCoupon = asyncHandler(async (req, res) => {
   await Coupon.findByIdAndDelete(req.params.id);
   sendResponse(res, 200, null, 'Coupon deleted');
+});
+
+// GET /coupons/analytics — coupon usage stats
+const getCouponAnalytics = asyncHandler(async (req, res) => {
+  const coupons = await Coupon.find().lean();
+
+  const analytics = await Promise.all(coupons.map(async (c) => {
+    const ordersWithCoupon = await Order.find({ coupon: c._id, paymentStatus: 'paid' })
+      .select('total discount').lean();
+    const totalRevenue = ordersWithCoupon.reduce((sum, o) => sum + o.total, 0);
+    const totalDiscount = ordersWithCoupon.reduce((sum, o) => sum + o.discount, 0);
+    const usageRate = c.usageLimit ? Math.round((c.usedCount / c.usageLimit) * 100) : null;
+    return {
+      ...c,
+      totalOrders: ordersWithCoupon.length,
+      totalRevenue,
+      totalDiscount,
+      usageRate,
+    };
+  }));
+
+  sendResponse(res, 200, analytics, 'Coupon analytics fetched');
 });
 
 // ─── FAQ ─────────────────────────────────────────
@@ -260,9 +422,11 @@ const subscribe = asyncHandler(async (req, res) => {
 });
 
 const unsubscribe = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-  await Newsletter.findOneAndUpdate({ email }, { isActive: false, unsubscribedAt: new Date() });
-  sendResponse(res, 200, null, 'Unsubscribed');
+  const { email, token } = req.body;
+  // Support token-based unsubscribe (from email links) or direct
+  const query = token ? { unsubscribeToken: token } : { email };
+  await Newsletter.findOneAndUpdate(query, { isActive: false, unsubscribedAt: new Date() });
+  sendResponse(res, 200, null, 'Unsubscribed successfully');
 });
 
 const getSubscribers = asyncHandler(async (req, res) => {
@@ -454,16 +618,25 @@ const verifyPayment = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Payment verification failed.');
   }
 
-  // Update order
   if (orderId) {
-    await Order.findByIdAndUpdate(orderId, {
+    const order = await Order.findByIdAndUpdate(orderId, {
       paymentStatus: 'paid',
       status: 'confirmed',
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       razorpaySignature: razorpay_signature,
       $push: { statusHistory: { status: 'confirmed', date: new Date(), note: 'Payment verified' } },
-    });
+    }, { new: true });
+
+    if (order) {
+      await createNotification(
+        order.user,
+        'payment_success',
+        'Payment Successful',
+        `Payment of ₹${order.total?.toLocaleString('en-IN')} for order #${order.orderNumber} was successful.`,
+        { orderId: order._id, orderNumber: order.orderNumber }
+      );
+    }
   }
 
   sendResponse(res, 200, { verified: true }, 'Payment verified successfully');
@@ -480,17 +653,13 @@ const getDashboard = asyncHandler(async (req, res) => {
     pendingReviews, newEnquiries,
   ] = await Promise.all([
     Order.countDocuments(),
-    Order.aggregate([{ $match: { paymentStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$totalAmount' } } }]),
+    Order.aggregate([{ $match: { paymentStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$total' } } }]),
     Product.countDocuments({ isActive: true }),
     User.countDocuments({ role: 'customer' }),
     Order.find().sort('-createdAt').limit(10).populate('user', 'name email').lean(),
-    Order.countDocuments({ orderStatus: 'pending' }),
+    Order.countDocuments({ status: 'pending' }),
     Product.find({ isActive: true }).sort('-salesCount').limit(10).select('name images price salesCount stock').lean(),
-    // Order status distribution (for pie chart)
-    Order.aggregate([
-      { $group: { _id: '$orderStatus', count: { $sum: 1 } } },
-    ]),
-    // Customer growth last 30 days (for line chart)
+    Order.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
     User.aggregate([
       { $match: { role: 'customer', createdAt: { $gte: thirtyDaysAgo } } },
       { $group: {
@@ -499,16 +668,12 @@ const getDashboard = asyncHandler(async (req, res) => {
       }},
       { $sort: { _id: 1 } },
     ]),
-    // Low stock products (stock < 10)
     Product.find({ isActive: true, stock: { $lt: 10 } })
-      .select('name stock images sku').sort('stock').limit(10).lean(),
-    // Pending reviews count
+      .select('name stock images sku lowStockThreshold').sort('stock').limit(10).lean(),
     Review.countDocuments({ isApproved: false }),
-    // New B2B enquiries
     B2BEnquiry.countDocuments({ status: 'new' }),
   ]);
 
-  // Format order status distribution
   const orderStatusDistribution = {};
   orderStatusCounts.forEach(s => { orderStatusDistribution[s._id] = s.count; });
 
@@ -606,11 +771,11 @@ const toggleAdminStatus = asyncHandler(async (req, res) => {
 
 module.exports = {
   // Review
-  getProductReviews, createReview, getAllReviewsAdmin, approveReview, deleteReview,
+  getProductReviews, createReview, getAllReviewsAdmin, approveReview, deleteReview, voteReviewHelpful,
   // Blog
   getBlogs, getBlogBySlug, createBlog, updateBlog, deleteBlog, getAllBlogsAdmin,
   // Coupon
-  validateCoupon, getCoupons, createCoupon, updateCoupon, deleteCoupon,
+  validateCoupon, autoApplyCoupon, getCouponAnalytics, getCoupons, createCoupon, updateCoupon, deleteCoupon,
   // FAQ
   getFAQs, createFAQ, updateFAQ, deleteFAQ,
   // Testimonial

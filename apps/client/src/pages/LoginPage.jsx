@@ -132,8 +132,8 @@ const LoginPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary-600/25">
-                            <span className="text-white font-display font-bold text-2xl">O</span>
+                        <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary-600/10 overflow-hidden p-2">
+                            <img src="/images/logo.png" alt="OZOBATH" className="w-full h-full object-contain" />
                         </div>
                         <h2 className="text-3xl font-display font-bold text-white mb-4">
                             Welcome to <span className="text-accent-400">OZOBATH</span>
@@ -165,9 +165,7 @@ const LoginPage = () => {
                     {/* Mobile logo */}
                     <div className="lg:hidden text-center mb-8">
                         <Link to="/" className="inline-block">
-                            <h1 className="text-3xl font-display font-extrabold tracking-tight">
-                                OZO<span className="text-accent-500">BATH</span>
-                            </h1>
+                            <img src="/images/logo.png" alt="OZOBATH" className="h-10 w-auto mx-auto" />
                         </Link>
                     </div>
 
