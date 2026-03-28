@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { FiArrowRight, FiPlay, FiShoppingCart, FiStar, FiArrowUpRight, FiCheckCircle, FiTruck, FiShield, FiAward, FiChevronDown, FiHeart } from 'react-icons/fi';
-import { productAPI, categoryAPI } from '@api/services';
+import { productAPI, categoryAPI, bannerAPI } from '@api/services';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
@@ -185,6 +185,7 @@ const HomePage = () => {
     const [blogs, setBlogs] = useState([]);
     const [categories, setCategories] = useState([]);
     const [activeTab, setActiveTab] = useState('all');
+    const [promoBanners, setPromoBanners] = useState([]);
 
     // Parallax for hero
     const { scrollYProgress } = useScroll({
@@ -217,6 +218,11 @@ const HomePage = () => {
                     if (blogRes.data?.data?.length > 0) setBlogs(blogRes.data.data.slice(0, 3));
                     else setBlogs(fallbackBlogs);
                 } catch (e) { setBlogs(fallbackBlogs); }
+
+                try {
+                    const bannerRes = await bannerAPI.get({ page: 'home', position: 'promo' });
+                    if (bannerRes?.data?.length > 0) setPromoBanners(bannerRes.data.slice(0, 2));
+                } catch (e) { /* keep empty, will use hardcoded fallback */ }
 
             } catch (error) {
                 console.error("Using fallback content");
@@ -279,7 +285,7 @@ const HomePage = () => {
                                 <span className="text-xs font-semibold uppercase tracking-widest text-white/90">Premium Collection</span>
                             </motion.div>
 
-                            <motion.h1 variants={fadeInUp} className="text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.05] mb-6 tracking-tight">
+                            <motion.h1 variants={fadeInUp} className="text-[2.6rem] sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.1] mb-5 tracking-tight">
                                 Make Your{' '}
                                 <span className="relative inline-block">
                                     <span className="text-accent-400">Bathroom</span>
@@ -306,11 +312,11 @@ const HomePage = () => {
                                 Unique & Modern.
                             </motion.h1>
 
-                            <motion.p variants={fadeInUp} className="text-white/80 text-base md:text-lg max-w-lg mb-10 leading-relaxed font-medium">
+                            <motion.p variants={fadeInUp} className="text-white/80 text-sm md:text-lg max-w-lg mb-8 leading-relaxed font-medium">
                                 Transform your space with premium bespoke shower enclosures. Crafted with precision, designed for modern luxury.
                             </motion.p>
 
-                            <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-4">
+                            <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-3">
                                 <Link
                                     to="/shop"
                                     className="bg-primary-600 hover:bg-accent-500 text-white px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-primary-600/30 hover:shadow-accent-500/50 hover:scale-105 transition-all duration-300"
@@ -402,27 +408,30 @@ const HomePage = () => {
             ═══════════════════════════════════════════ */}
             <section className="relative -mt-16 z-20 max-w-6xl mx-auto px-4">
                 <motion.div
-                    className="bg-white rounded-3xl shadow-xl shadow-dark-900/5 p-8 grid grid-cols-2 md:grid-cols-4 gap-6"
+                    className="bg-white rounded-3xl shadow-xl shadow-dark-900/5 p-5 sm:p-8"
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true }}
                     variants={staggerFast}
                 >
-                    {trustBadges.map((badge, i) => (
-                        <motion.div
-                            key={i}
-                            variants={fadeInUp}
-                            className="flex items-center gap-4 group cursor-default"
-                        >
-                            <div className="w-12 h-12 rounded-2xl bg-accent-50 flex items-center justify-center group-hover:bg-accent-500 transition-colors duration-300 shrink-0">
-                                <badge.icon className="w-5 h-5 text-accent-500 group-hover:text-white transition-colors duration-300" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-dark-900 text-sm">{badge.label}</p>
-                                <p className="text-dark-400 text-xs">{badge.sublabel}</p>
-                            </div>
-                        </motion.div>
-                    ))}
+                    {/* Mobile: horizontal scroll; Desktop: grid */}
+                    <div className="flex gap-4 overflow-x-auto no-scrollbar sm:grid sm:grid-cols-2 md:grid-cols-4 sm:gap-6">
+                        {trustBadges.map((badge, i) => (
+                            <motion.div
+                                key={i}
+                                variants={fadeInUp}
+                                className="flex items-center gap-3 group cursor-default shrink-0 sm:shrink"
+                            >
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-accent-50 flex items-center justify-center group-hover:bg-accent-500 transition-colors duration-300 shrink-0">
+                                    <badge.icon className="w-4 h-4 sm:w-5 sm:h-5 text-accent-500 group-hover:text-white transition-colors duration-300" />
+                                </div>
+                                <div className="min-w-max sm:min-w-0">
+                                    <p className="font-bold text-dark-900 text-xs sm:text-sm">{badge.label}</p>
+                                    <p className="text-dark-400 text-[10px] sm:text-xs">{badge.sublabel}</p>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
                 </motion.div>
             </section>
 
@@ -437,58 +446,73 @@ const HomePage = () => {
                     viewport={{ once: true, margin: "-80px" }}
                     variants={stagger}
                 >
-                    {/* Promo 1 — Enhanced Glassmorphism */}
-                    <motion.div
-                        variants={fadeInLeft}
-                        className="glass-morph-premium p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer"
-                    >
-                        <div className="w-1/2 relative z-10">
-                            <span className="text-accent-500 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Featured Collection</span>
-                            <h3 className="text-3xl lg:text-4xl font-display font-bold text-dark-900 mb-3 leading-tight">Shower Enclosures</h3>
-                            <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-[200px]">Premium frameless glass for modern bathrooms.</p>
-                            <Link to="/shop/shower-enclosures" className="inline-flex items-center gap-2 bg-dark-900 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider group-hover:bg-accent-500 transition-all duration-300 shadow-lg">
-                                SHOP NOW <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </div>
-                        <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-6">
-                            <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700">
-                                <img
-                                    src="/images/promo_shower_enclosure.png"
-                                    alt="Shower Enclosure"
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-tr from-accent-500/10 to-transparent" />
+                    {promoBanners.length >= 1 ? (
+                        /* ── Dynamic Banner 1 (from admin) ── */
+                        <motion.div variants={fadeInLeft} className="relative rounded-[2.5rem] overflow-hidden group min-h-[320px] cursor-pointer shadow-xl">
+                            <img src={promoBanners[0].image?.url} alt={promoBanners[0].title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-dark-900/70 via-dark-900/30 to-transparent" />
+                            <div className="relative z-10 p-8 lg:p-10 flex flex-col justify-end h-full">
+                                <h3 className="text-3xl lg:text-4xl font-display font-bold text-white mb-3 leading-tight">{promoBanners[0].title}</h3>
+                                {promoBanners[0].subtitle && <p className="text-white/70 text-sm mb-6">{promoBanners[0].subtitle}</p>}
+                                <Link to={promoBanners[0].link || '/shop'} className="inline-flex items-center gap-2 bg-white text-dark-900 px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider w-fit hover:bg-accent-500 hover:text-white transition-all duration-300 shadow-lg">
+                                    {promoBanners[0].buttonText || 'Shop Now'} <FiArrowRight />
+                                </Link>
                             </div>
-                        </div>
-                        {/* Decorative Blur */}
-                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-accent-400/20 rounded-full blur-3xl" />
-                    </motion.div>
+                        </motion.div>
+                    ) : (
+                        /* ── Hardcoded Promo 1 ── */
+                        <motion.div variants={fadeInLeft} className="glass-morph-premium p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer">
+                            <div className="w-1/2 relative z-10">
+                                <span className="text-accent-500 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Featured Collection</span>
+                                <h3 className="text-3xl lg:text-4xl font-display font-bold text-dark-900 mb-3 leading-tight">Shower Enclosures</h3>
+                                <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-[200px]">Premium frameless glass for modern bathrooms.</p>
+                                <Link to="/shop" className="inline-flex items-center gap-2 bg-dark-900 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider group-hover:bg-accent-500 transition-all duration-300 shadow-lg">
+                                    SHOP NOW <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            </div>
+                            <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-6">
+                                <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700">
+                                    <img src="/images/promo_shower_enclosure.png" alt="Shower Enclosure" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-accent-500/10 to-transparent" />
+                                </div>
+                            </div>
+                            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-accent-400/20 rounded-full blur-3xl" />
+                        </motion.div>
+                    )}
 
-                    {/* Promo 2 — Enhanced Glassmorphism */}
-                    <motion.div
-                        variants={fadeInRight}
-                        className="glass-morph-premium p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer"
-                    >
-                        <div className="w-1/2 relative z-10">
-                            <span className="text-primary-600 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Popular Choice</span>
-                            <h3 className="text-3xl lg:text-4xl font-display font-bold text-dark-900 mb-3 leading-tight">Bathroom Fittings</h3>
-                            <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-[200px]">Precision engineered hardware & accessories.</p>
-                            <Link to="/shop/fittings" className="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider hover:bg-dark-900 transition-all duration-300 shadow-lg">
-                                SHOP NOW <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </div>
-                        <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-6">
-                            <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700 [animation-delay:1s]">
-                                <img
-                                    src="/images/promo_sliding_door.png"
-                                    alt="Bathroom Fittings"
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/10 to-transparent" />
+                    {promoBanners.length >= 2 ? (
+                        /* ── Dynamic Banner 2 (from admin) ── */
+                        <motion.div variants={fadeInRight} className="relative rounded-[2.5rem] overflow-hidden group min-h-[320px] cursor-pointer shadow-xl">
+                            <img src={promoBanners[1].image?.url} alt={promoBanners[1].title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-dark-900/70 via-dark-900/30 to-transparent" />
+                            <div className="relative z-10 p-8 lg:p-10 flex flex-col justify-end h-full">
+                                <h3 className="text-3xl lg:text-4xl font-display font-bold text-white mb-3 leading-tight">{promoBanners[1].title}</h3>
+                                {promoBanners[1].subtitle && <p className="text-white/70 text-sm mb-6">{promoBanners[1].subtitle}</p>}
+                                <Link to={promoBanners[1].link || '/shop'} className="inline-flex items-center gap-2 bg-white text-dark-900 px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider w-fit hover:bg-accent-500 hover:text-white transition-all duration-300 shadow-lg">
+                                    {promoBanners[1].buttonText || 'Shop Now'} <FiArrowRight />
+                                </Link>
                             </div>
-                        </div>
-                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary-400/20 rounded-full blur-3xl" />
-                    </motion.div>
+                        </motion.div>
+                    ) : (
+                        /* ── Hardcoded Promo 2 ── */
+                        <motion.div variants={fadeInRight} className="glass-morph-premium p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer">
+                            <div className="w-1/2 relative z-10">
+                                <span className="text-primary-600 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Popular Choice</span>
+                                <h3 className="text-3xl lg:text-4xl font-display font-bold text-dark-900 mb-3 leading-tight">Bathroom Fittings</h3>
+                                <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-[200px]">Precision engineered hardware & accessories.</p>
+                                <Link to="/shop" className="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider hover:bg-dark-900 transition-all duration-300 shadow-lg">
+                                    SHOP NOW <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            </div>
+                            <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-6">
+                                <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700 [animation-delay:1s]">
+                                    <img src="/images/promo_sliding_door.png" alt="Bathroom Fittings" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/10 to-transparent" />
+                                </div>
+                            </div>
+                            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary-400/20 rounded-full blur-3xl" />
+                        </motion.div>
+                    )}
                 </motion.div>
             </section>
 
@@ -515,8 +539,53 @@ const HomePage = () => {
                     </motion.div>
                 </motion.div>
 
+                {/* Mobile: horizontal snap scroll; Desktop: 4-col grid */}
+                <div className="sm:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 no-scrollbar">
+                    {trending.map((item, i) => (
+                        <div key={item._id || i} className="snap-start shrink-0 w-[72vw] group cursor-pointer flex flex-col">
+                            <div className="bg-white rounded-[2rem] mb-4 relative overflow-hidden border border-dark-100/50 shadow-sm active:shadow-lg transition-all duration-300">
+                                <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
+                                <div className="image-fit-container rounded-[1.8rem] p-4 bg-warm-gray/30">
+                                    <img src={item.images?.[0]?.url || '/images/product_shower_1.png'} alt={item.name} className="w-full h-full object-contain" />
+                                </div>
+                                {item.mrp > item.price && (
+                                    <div className="absolute top-3 left-3 bg-accent-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent-500/20 z-20">
+                                        -{Math.round(((item.mrp - item.price) / item.mrp) * 100)}%
+                                    </div>
+                                )}
+                                <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
+                                    className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-xl flex items-center justify-center transition-all shadow-sm
+                                        ${isInWishlist(item._id) ? 'bg-red-500 text-white' : 'bg-white/80 backdrop-blur-md text-dark-400'}`}
+                                >
+                                    <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
+                                </button>
+                            </div>
+                            <div className="px-2 text-center">
+                                <p className="text-accent-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{item.category?.name || 'Collection'}</p>
+                                <h3 className="font-bold text-dark-900 text-sm mb-2 line-clamp-2 leading-snug">{item.name}</h3>
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="flex text-accent-500 text-[10px] gap-0.5">
+                                        {[...Array(5)].map((_, star) => <FiStar key={star} className={star < (item.avgRating || 5) ? 'fill-current' : 'text-dark-100'} />)}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {item.mrp > item.price && <span className="text-dark-300 text-xs line-through">₹{item.mrp?.toLocaleString()}</span>}
+                                        <span className="font-black text-dark-900 text-base">₹{item.price?.toLocaleString() || '0'}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                                    className="mt-3 w-full bg-dark-900 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
+                                >
+                                    <FiShoppingCart className="w-3.5 h-3.5" /> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
                 <motion.div
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                    className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-6"
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-80px" }}

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiStar, FiShoppingCart, FiHeart, FiShare2, FiTruck, FiShield, FiCheckCircle, FiMinus, FiPlus, FiChevronRight, FiX, FiCheck } from 'react-icons/fi';
+import { FiStar, FiShoppingCart, FiHeart, FiShare2, FiTruck, FiShield, FiCheckCircle, FiMinus, FiPlus, FiChevronRight, FiChevronLeft, FiX, FiCheck, FiZoomIn, FiMaximize2 } from 'react-icons/fi';
 import { productAPI, reviewAPI } from '@api/services';
 import RecentlyViewed, { addToRecentlyViewed } from '@components/RecentlyViewed';
 import { useCart } from '@context/CartContext';
@@ -143,6 +143,7 @@ const ProductPage = () => {
     const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', comment: '' });
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -201,6 +202,31 @@ const ProductPage = () => {
             setTimeout(() => setCopied(false), 2000);
         } catch { toast.error('Could not copy link'); }
     };
+
+    const totalImages = product?.images?.length || 0;
+    const prevImage = useCallback(() => setSelectedImage(i => (i - 1 + totalImages) % totalImages), [totalImages]);
+    const nextImage = useCallback(() => setSelectedImage(i => (i + 1) % totalImages), [totalImages]);
+
+    // Touch swipe for image gallery
+    const touchStartX = useRef(null);
+    const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+    const handleTouchEnd = (e) => {
+        if (touchStartX.current === null) return;
+        const diff = touchStartX.current - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) diff > 0 ? nextImage() : prevImage();
+        touchStartX.current = null;
+    };
+
+    useEffect(() => {
+        if (!lightboxOpen) return;
+        const handler = (e) => {
+            if (e.key === 'ArrowLeft') prevImage();
+            if (e.key === 'ArrowRight') nextImage();
+            if (e.key === 'Escape') setLightboxOpen(false);
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [lightboxOpen, prevImage, nextImage]);
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
@@ -276,7 +302,17 @@ const ProductPage = () => {
                     {/* ── Gallery ───────────────────────────── */}
                     <motion.div variants={fadeInUp} className="space-y-4">
                         {/* Main image */}
-                        <div className="relative bg-white rounded-3xl overflow-hidden border border-dark-100/40 aspect-square flex items-center justify-center p-8 group shadow-sm">
+                        <div
+                            className="relative bg-white rounded-3xl overflow-hidden border border-dark-100/40 aspect-square flex items-center justify-center p-8 group shadow-sm"
+                            onTouchStart={handleTouchStart}
+                            onTouchEnd={handleTouchEnd}
+                        >
+                            {/* Clickable image → lightbox */}
+                            <button
+                                onClick={() => setLightboxOpen(true)}
+                                className="absolute inset-0 z-10 cursor-zoom-in focus:outline-none"
+                                aria-label="Zoom image"
+                            />
                             <AnimatePresence mode="wait">
                                 <motion.img
                                     key={selectedImage}
@@ -290,8 +326,42 @@ const ProductPage = () => {
                                 />
                             </AnimatePresence>
 
+                            {/* Prev / Next arrows */}
+                            {totalImages > 1 && (
+                                <>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-dark-700 hover:bg-accent-500 hover:text-white transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100"
+                                        aria-label="Previous image"
+                                    >
+                                        <FiChevronLeft className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-dark-700 hover:bg-accent-500 hover:text-white transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100"
+                                        aria-label="Next image"
+                                    >
+                                        <FiChevronRight className="w-5 h-5" />
+                                    </button>
+                                </>
+                            )}
+
+                            {/* Zoom hint */}
+                            <div className="absolute bottom-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <div className="bg-dark-900/70 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
+                                    <FiMaximize2 className="w-3 h-3" /> Click to zoom
+                                </div>
+                            </div>
+
+                            {/* Image counter */}
+                            {totalImages > 1 && (
+                                <div className="absolute bottom-3 left-3 z-20 bg-dark-900/60 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg">
+                                    {selectedImage + 1} / {totalImages}
+                                </div>
+                            )}
+
                             {/* Badges overlay */}
-                            <div className="absolute top-4 left-4 flex flex-col gap-2">
+                            <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-none">
                                 {discountPct > 0 && (
                                     <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-md">
                                         {discountPct}% OFF
@@ -305,7 +375,7 @@ const ProductPage = () => {
                             </div>
 
                             {/* Wishlist + Share */}
-                            <div className="absolute top-4 right-4 flex flex-col gap-2">
+                            <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
                                 <button
                                     onClick={() => inWishlist ? removeFromWishlist(product._id) : addToWishlist(product._id)}
                                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm
@@ -323,7 +393,7 @@ const ProductPage = () => {
 
                             {/* Stock badge */}
                             {product.stock > 0 && product.stock <= 5 && (
-                                <div className="absolute bottom-4 left-4 bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                                <div className="absolute bottom-4 left-4 z-20 bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 pointer-events-none">
                                     <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
                                     Only {product.stock} left!
                                 </div>
@@ -348,6 +418,90 @@ const ProductPage = () => {
                             </div>
                         )}
                     </motion.div>
+
+                    {/* ── Lightbox ──────────────────────────── */}
+                    <AnimatePresence>
+                        {lightboxOpen && (
+                            <motion.div
+                                className="fixed inset-0 z-[9999] flex items-center justify-center bg-dark-950/95 backdrop-blur-md"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                onClick={() => setLightboxOpen(false)}
+                            >
+                                {/* Close */}
+                                <button
+                                    onClick={() => setLightboxOpen(false)}
+                                    className="absolute top-5 right-5 z-10 w-11 h-11 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                                >
+                                    <FiX className="w-5 h-5" />
+                                </button>
+
+                                {/* Counter */}
+                                {totalImages > 1 && (
+                                    <div className="absolute top-5 left-5 z-10 bg-white/10 text-white text-sm font-semibold px-4 py-2 rounded-xl">
+                                        {selectedImage + 1} / {totalImages}
+                                    </div>
+                                )}
+
+                                {/* Prev */}
+                                {totalImages > 1 && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                                    >
+                                        <FiChevronLeft className="w-6 h-6" />
+                                    </button>
+                                )}
+
+                                {/* Main lightbox image */}
+                                <motion.div
+                                    className="max-w-3xl max-h-[80vh] w-full mx-16 flex items-center justify-center"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <AnimatePresence mode="wait">
+                                        <motion.img
+                                            key={`lb-${selectedImage}`}
+                                            src={product.images?.[selectedImage]?.url}
+                                            alt={product.name}
+                                            className="max-w-full max-h-[80vh] object-contain rounded-2xl select-none"
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 1.03 }}
+                                            transition={{ duration: 0.2 }}
+                                        />
+                                    </AnimatePresence>
+                                </motion.div>
+
+                                {/* Next */}
+                                {totalImages > 1 && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                                    >
+                                        <FiChevronRight className="w-6 h-6" />
+                                    </button>
+                                )}
+
+                                {/* Thumbnail strip */}
+                                {totalImages > 1 && (
+                                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10" onClick={e => e.stopPropagation()}>
+                                        {product.images.map((img, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => setSelectedImage(i)}
+                                                className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 bg-dark-800
+                                                    ${i === selectedImage ? 'border-accent-500 scale-110' : 'border-white/20 opacity-60 hover:opacity-100'}`}
+                                            >
+                                                <img src={img.url} alt="" className="w-full h-full object-contain p-1" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* ── Product Details ───────────────────── */}
                     <motion.div variants={fadeInUp} className="space-y-5">
@@ -495,13 +649,17 @@ const ProductPage = () => {
                         {product.specifications?.length > 0 && (
                             <div className="border-t border-dark-100 pt-5">
                                 <h3 className="text-xs font-bold text-dark-900 mb-3 uppercase tracking-widest">Specifications</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {product.specifications.map((s, i) => (
-                                        <div key={i} className="flex justify-between text-sm bg-dark-50 rounded-xl px-3.5 py-2.5 border border-dark-100/30">
-                                            <span className="text-dark-400 font-medium">{s.key}</span>
-                                            <span className="text-dark-900 font-semibold">{s.value}</span>
-                                        </div>
-                                    ))}
+                                <div className="overflow-hidden rounded-xl border border-dark-100/60">
+                                    <table className="w-full text-sm border-collapse">
+                                        <tbody>
+                                            {product.specifications.map((s, i) => (
+                                                <tr key={i} className={i % 2 === 0 ? 'bg-dark-50' : 'bg-white'}>
+                                                    <td className="py-2.5 px-3.5 text-dark-400 font-medium w-[45%] border-b border-dark-100/40 align-top">{s.key}</td>
+                                                    <td className="py-2.5 px-3.5 text-dark-900 font-semibold border-b border-dark-100/40 align-top">{s.value}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         )}
@@ -544,25 +702,56 @@ const ProductPage = () => {
                     <div className="bg-white rounded-3xl p-6 md:p-8 border border-dark-100/30 shadow-sm">
                         {/* Description Tab */}
                         {activeTab === 'description' && (
-                            <div
-                                className="prose prose-base max-w-none text-dark-600 leading-relaxed
-                                    prose-h3:text-dark-900 prose-h3:font-bold prose-h3:text-lg
-                                    prose-ul:text-dark-500 prose-li:marker:text-accent-500
-                                    prose-strong:text-dark-900"
-                                dangerouslySetInnerHTML={{ __html: product.description || '<p>No description available.</p>' }}
-                            />
+                            <div className="space-y-6">
+                                {/* Short description highlight */}
+                                {product.shortDescription && (
+                                    <div className="bg-accent-50 border-l-4 border-accent-500 rounded-r-2xl px-5 py-4">
+                                        <p className="text-dark-700 font-medium leading-relaxed text-[15px]">{product.shortDescription}</p>
+                                    </div>
+                                )}
+
+                                {/* Main description */}
+                                <div
+                                    className="prose prose-base max-w-none text-dark-600 leading-relaxed
+                                        prose-headings:text-dark-900 prose-headings:font-bold
+                                        prose-h3:text-base prose-h3:uppercase prose-h3:tracking-wider prose-h3:mt-6
+                                        prose-ul:text-dark-500 prose-li:marker:text-accent-500 prose-li:my-1
+                                        prose-strong:text-dark-900 prose-p:leading-relaxed prose-p:text-dark-500"
+                                    dangerouslySetInnerHTML={{ __html: (product.description || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/^•\s/gm, '• ') || '<p>No description available.</p>' }}
+                                />
+
+                                {/* Specifications quick view */}
+                                {product.specifications?.length > 0 && (
+                                    <div className="mt-6 pt-6 border-t border-dark-100">
+                                        <h4 className="text-xs font-bold text-dark-900 uppercase tracking-widest mb-4">Key Specifications</h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            {product.specifications.map((s, i) => (
+                                                <div key={i} className="flex items-center gap-3 bg-dark-50 rounded-xl px-4 py-2.5 border border-dark-100/40">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-accent-500 shrink-0" />
+                                                    <span className="text-dark-400 text-sm font-medium flex-1">{s.key}</span>
+                                                    <span className="text-dark-900 text-sm font-bold">{s.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {/* Specifications Tab */}
                         {activeTab === 'specs' && (
                             product.specifications?.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {product.specifications.map((s, i) => (
-                                        <div key={i} className={`flex justify-between py-3 px-4 rounded-xl text-sm ${i % 2 === 0 ? 'bg-dark-50' : 'bg-white border border-dark-50'}`}>
-                                            <span className="text-dark-500 font-medium">{s.key}</span>
-                                            <span className="text-dark-900 font-bold">{s.value}</span>
-                                        </div>
-                                    ))}
+                                <div className="overflow-hidden rounded-2xl border border-dark-100/60">
+                                    <table className="w-full text-sm border-collapse">
+                                        <tbody>
+                                            {product.specifications.map((s, i) => (
+                                                <tr key={i} className={i % 2 === 0 ? 'bg-dark-50' : 'bg-white'}>
+                                                    <td className="py-3 px-4 text-dark-500 font-medium w-[45%] border-b border-dark-100/40 align-top">{s.key}</td>
+                                                    <td className="py-3 px-4 text-dark-900 font-semibold border-b border-dark-100/40 align-top">{s.value}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             ) : (
                                 <p className="text-dark-400 text-sm">No specifications available.</p>
@@ -743,6 +932,50 @@ const ProductPage = () => {
                 {/* ── Recently Viewed ───────────────────────── */}
                 {product && <RecentlyViewed currentProductId={product._id} />}
             </div>
+
+            {/* ── Mobile Sticky CTA Bar ─────────────────── */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-dark-100/60 px-4 py-3 shadow-2xl shadow-dark-900/20">
+                <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                        <p className="text-[11px] text-dark-400 font-medium leading-none mb-0.5 truncate">{product.name}</p>
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg font-extrabold text-dark-900">₹{product.price?.toLocaleString('en-IN')}</span>
+                            {origPrice > product.price && (
+                                <span className="text-xs text-dark-300 line-through">₹{origPrice.toLocaleString('en-IN')}</span>
+                            )}
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => inWishlist ? removeFromWishlist(product._id) : addToWishlist(product._id)}
+                        className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center border-2 transition-all
+                            ${inWishlist ? 'border-red-400 bg-red-50 text-red-500' : 'border-dark-100 text-dark-400 hover:border-red-300 hover:text-red-500'}`}
+                    >
+                        <FiHeart className={`w-4.5 h-4.5 ${inWishlist ? 'fill-current' : ''}`} />
+                    </button>
+                    {product.stock === 0 ? (
+                        <button disabled className="shrink-0 px-5 h-11 bg-dark-100 text-dark-400 rounded-2xl font-bold text-xs uppercase tracking-widest cursor-not-allowed">
+                            Out of Stock
+                        </button>
+                    ) : (
+                        <>
+                            <button
+                                onClick={handleAddToCart}
+                                className="shrink-0 px-4 h-11 bg-dark-900 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95"
+                            >
+                                <FiShoppingCart className="w-4 h-4" /> Cart
+                            </button>
+                            <button
+                                onClick={handleBuyNow}
+                                className="shrink-0 px-5 h-11 bg-accent-500 text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-accent-500/30"
+                            >
+                                Buy Now
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+            {/* Spacer for mobile sticky bar */}
+            <div className="lg:hidden h-[72px]" />
         </div>
     );
 };

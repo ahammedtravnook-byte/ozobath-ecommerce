@@ -228,7 +228,7 @@ const ChatBot = () => {
                             <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
                             <div className="relative flex items-center gap-3">
                                 <div className="w-12 h-10 rounded-xl bg-white/10 flex items-center justify-center p-1.5 ring-1 ring-white/20">
-                                    <img src="/images/Ozo-bath-3-2.jpg.jpeg" alt="OzoBath" className="w-full h-full object-contain brightness-0 invert drop-shadow-md" />
+                                    <img src="/images/logo-transparent.png" alt="OzoBath" className="w-full h-full object-contain drop-shadow-md" />
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="text-white font-display font-bold text-sm tracking-wide">OZO Assistant</h3>
@@ -263,7 +263,7 @@ const ChatBot = () => {
                                         {msg.type === 'bot' && (
                                             <div className="flex items-center gap-2 mb-1.5">
                                                 <div className="w-6 h-5 rounded-lg bg-white/10 flex items-center justify-center ring-1 ring-dark-200/30 overflow-hidden">
-                                                    <img src="/images/Ozo-bath-3-2.jpg.jpeg" alt="OZO" className="w-full h-full object-contain mix-blend-multiply opacity-80" />
+                                                    <img src="/images/logo-transparent.png" alt="OZO" className="w-full h-full object-contain mix-blend-multiply opacity-80" />
                                                 </div>
                                                 <span className="text-[10px] text-dark-300 font-semibold">OZO Assistant</span>
                                             </div>

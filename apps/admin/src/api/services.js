@@ -73,9 +73,9 @@ export const blogAPI = {
 
 // ─── Reviews ─────────────────────────────────────
 export const reviewAPI = {
-  getAll: (params) => api.get('/reviews', { params }),
-  approve: (id, isApproved) => api.put(`/reviews/${id}/approve`, { isApproved }),
-  delete: (id) => api.delete(`/reviews/${id}`),
+  getAll: (params) => api.get('/reviews/admin/all', { params }),
+  approve: (id, isApproved) => api.put(`/reviews/admin/${id}`, { isApproved }),
+  delete: (id) => api.delete(`/reviews/admin/${id}`),
 };
 
 // ─── Coupons ─────────────────────────────────────
