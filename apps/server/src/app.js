@@ -18,7 +18,16 @@ const app = express();
 // ─── Security ────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: [env.CLIENT_URL, env.ADMIN_URL],
+  origin: (origin, callback) => {
+    const allowed = [env.CLIENT_URL, env.ADMIN_URL].filter(Boolean);
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    // Allow exact matches or any *.vercel.app preview URL
+    if (allowed.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.railway.app')) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS: ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
