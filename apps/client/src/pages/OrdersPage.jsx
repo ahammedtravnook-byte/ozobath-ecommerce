@@ -7,13 +7,13 @@ import { useAuth } from '@context/AuthContext';
 import toast from 'react-hot-toast';
 
 const statusConfig = {
-  pending:    { label: 'Pending',    bg: 'bg-amber-50',   text: 'text-amber-700',  border: 'border-amber-200', dot: 'bg-amber-400',   bar: 'bg-amber-400',   icon: FiClock },
-  confirmed:  { label: 'Confirmed',  bg: 'bg-blue-50',    text: 'text-blue-700',   border: 'border-blue-200',  dot: 'bg-blue-400',    bar: 'bg-blue-500',    icon: FiCheckCircle },
-  processing: { label: 'Processing', bg: 'bg-indigo-50',  text: 'text-indigo-700', border: 'border-indigo-200',dot: 'bg-indigo-400',  bar: 'bg-indigo-500',  icon: FiRefreshCw },
-  shipped:    { label: 'Shipped',    bg: 'bg-purple-50',  text: 'text-purple-700', border: 'border-purple-200',dot: 'bg-purple-400',  bar: 'bg-purple-500',  icon: FiTruck },
-  delivered:  { label: 'Delivered',  bg: 'bg-green-50',   text: 'text-green-700',  border: 'border-green-200', dot: 'bg-green-400',   bar: 'bg-green-500',   icon: FiCheckCircle },
-  cancelled:  { label: 'Cancelled',  bg: 'bg-red-50',     text: 'text-red-700',    border: 'border-red-200',   dot: 'bg-red-400',     bar: 'bg-red-400',     icon: FiXCircle },
-  returned:   { label: 'Returned',   bg: 'bg-orange-50',  text: 'text-orange-700', border: 'border-orange-200',dot: 'bg-orange-400',  bar: 'bg-orange-400',  icon: FiRefreshCw },
+  pending:    { label: 'Pending',    bg: 'bg-amber-50',    text: 'text-amber-700',   border: 'border-amber-200',  dot: 'bg-amber-400',  bar: 'bg-amber-400',   icon: FiClock },
+  confirmed:  { label: 'Confirmed',  bg: 'bg-accent-50',   text: 'text-accent-700',  border: 'border-accent-200', dot: 'bg-accent-400', bar: 'bg-accent-500',  icon: FiCheckCircle },
+  processing: { label: 'Processing', bg: 'bg-primary-50',  text: 'text-primary-700', border: 'border-primary-200',dot: 'bg-primary-400',bar: 'bg-primary-500', icon: FiRefreshCw },
+  shipped:    { label: 'Shipped',    bg: 'bg-primary-50',  text: 'text-primary-600', border: 'border-primary-200',dot: 'bg-primary-500',bar: 'bg-primary-600', icon: FiTruck },
+  delivered:  { label: 'Delivered',  bg: 'bg-green-50',    text: 'text-green-700',   border: 'border-green-200',  dot: 'bg-green-400',  bar: 'bg-green-500',   icon: FiCheckCircle },
+  cancelled:  { label: 'Cancelled',  bg: 'bg-red-50',      text: 'text-red-700',     border: 'border-red-200',    dot: 'bg-red-400',    bar: 'bg-red-400',     icon: FiXCircle },
+  returned:   { label: 'Returned',   bg: 'bg-dark-100',    text: 'text-dark-600',    border: 'border-dark-200',   dot: 'bg-dark-400',   bar: 'bg-dark-400',    icon: FiRefreshCw },
 };
 
 const steps = [
@@ -234,7 +234,7 @@ const OrdersPage = () => {
                         <div className="px-5 pb-5 flex flex-wrap gap-2">
                           <Link
                             to={`/track-order?orderId=${order._id}`}
-                            className="flex items-center gap-2 text-xs px-4 py-2.5 bg-primary-50 text-primary-700 rounded-xl font-semibold hover:bg-primary-100 transition-colors border border-primary-100"
+                            className="flex items-center gap-2 text-xs px-4 py-2.5 bg-accent-50 text-accent-700 rounded-xl font-semibold hover:bg-accent-100 transition-colors border border-accent-200"
                           >
                             <FiTruck className="w-3.5 h-3.5" /> Track Order
                           </Link>

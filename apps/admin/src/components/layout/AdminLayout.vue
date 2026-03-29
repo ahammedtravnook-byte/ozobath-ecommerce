@@ -343,6 +343,12 @@ const menuGroups = computed(() => {
         { label: 'Newsletter', path: '/newsletter', icon: '📧' },
       ],
     },
+    {
+      label: 'Monitoring',
+      items: [
+        { label: 'Activity Logs', path: '/activity-logs', icon: '🗂️' },
+      ],
+    },
   ];
 
   if (authStore.isSuperAdmin) {

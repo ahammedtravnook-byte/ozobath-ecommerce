@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#0A3D6B"/>
+  <!-- Shower head (simplified) -->
+  <rect x="30" y="8" width="4" height="8" rx="2" fill="#00B4D8"/>
+  <rect x="18" y="16" width="28" height="4" rx="2" fill="#00B4D8"/>
+  <!-- Water drops -->
+  <rect x="20" y="23" width="2" height="8" rx="1" fill="#5BA8F0" opacity="0.9"/>
+  <rect x="25" y="23" width="2" height="10" rx="1" fill="#5BA8F0" opacity="0.9"/>
+  <rect x="30" y="23" width="2" height="8" rx="1" fill="#5BA8F0" opacity="0.9"/>
+  <rect x="35" y="23" width="2" height="10" rx="1" fill="#5BA8F0" opacity="0.9"/>
+  <rect x="40" y="23" width="2" height="8" rx="1" fill="#5BA8F0" opacity="0.9"/>
+  <!-- OZO Text -->
+  <text x="7" y="50" font-size="13" font-family="Arial" font-weight="900" fill="white" letter-spacing="0.5">OZO</text>
+  <text x="7" y="60" font-size="8" font-family="Arial" font-weight="700" fill="#00B4D8" letter-spacing="1">BATH</text>
+</svg>

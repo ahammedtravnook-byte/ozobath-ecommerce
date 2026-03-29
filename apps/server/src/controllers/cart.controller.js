@@ -58,7 +58,8 @@ const updateCartItem = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   await cart.save();
 
-  sendResponse(res, 200, cart, 'Cart updated');
+  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock');
+  sendResponse(res, 200, populated, 'Cart updated');
 });
 
 const removeFromCart = asyncHandler(async (req, res) => {
@@ -69,7 +70,8 @@ const removeFromCart = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   await cart.save();
 
-  sendResponse(res, 200, cart, 'Item removed from cart');
+  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock');
+  sendResponse(res, 200, populated, 'Item removed from cart');
 });
 
 const clearCart = asyncHandler(async (req, res) => {

@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMinus, FiPlus, FiTrash2, FiShoppingBag, FiArrowRight, FiTag, FiTruck, FiShield, FiPercent } from 'react-icons/fi';
+import { FiMinus, FiPlus, FiTrash2, FiShoppingBag, FiArrowRight, FiTruck, FiShield, FiTag } from 'react-icons/fi';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
-import { couponAPI } from '@api/services';
 import toast from 'react-hot-toast';
 
 const fadeInUp = {
@@ -17,9 +16,6 @@ const CartPage = () => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const [guestCart, setGuestCart] = useState([]);
-    const [couponCode, setCouponCode] = useState('');
-    const [couponDiscount, setCouponDiscount] = useState(0);
-    const [applyingCoupon, setApplyingCoupon] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -41,7 +37,7 @@ const CartPage = () => {
         }, 0);
     }, [items]);
 
-    const total = subtotal - couponDiscount;
+    const total = subtotal;
 
     const updateGuestQuantity = (idx, qty) => {
         if (qty < 1) return;
@@ -58,19 +54,6 @@ const CartPage = () => {
         toast.success('Item removed');
     };
 
-    const applyCoupon = async () => {
-        if (!couponCode) return;
-        try {
-            setApplyingCoupon(true);
-            const res = await couponAPI.validate({ code: couponCode, orderAmount: subtotal });
-            setCouponDiscount(res.data?.discount || 0);
-            toast.success(`Coupon applied! ₹${res.data?.discount} off`);
-        } catch (e) {
-            toast.error(e.message || 'Invalid coupon');
-            setCouponDiscount(0);
-        } finally { setApplyingCoupon(false); }
-    };
-
     const handleCheckout = () => {
         if (!isAuthenticated) navigate('/login?redirect=/checkout');
         else navigate('/checkout');
@@ -83,15 +66,20 @@ const CartPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#ffffff] pt-28 pb-20">
+        <div className="min-h-screen bg-dark-50/30 pt-28 pb-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-center justify-between mb-6"
                 >
-                    <h1 className="text-3xl md:text-4xl font-display font-bold text-dark-900">Shopping Cart</h1>
-                    {items.length > 0 && <span className="text-sm text-dark-400 font-medium">{items.length} item{items.length > 1 ? 's' : ''}</span>}
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-display font-bold text-dark-900">Shopping Cart</h1>
+                        {items.length > 0 && <p className="text-sm text-dark-400 font-medium mt-1">{items.length} item{items.length > 1 ? 's' : ''} in your cart</p>}
+                    </div>
+                    <Link to="/shop" className="hidden sm:flex items-center gap-2 text-sm font-semibold text-accent-600 hover:text-accent-700 transition-colors">
+                        ← Continue Shopping
+                    </Link>
                 </motion.div>
 
                 {/* Step Progress Indicator */}
@@ -99,21 +87,21 @@ const CartPage = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="flex items-center justify-center gap-2 md:gap-4 mb-10"
+                    className="flex items-center justify-center gap-2 md:gap-3 mb-10"
                 >
                     {[
-                        { step: 1, label: 'Cart', active: true },
-                        { step: 2, label: 'Checkout', active: false },
-                        { step: 3, label: 'Confirmation', active: false },
+                        { step: 1, label: 'Cart', active: true, done: false },
+                        { step: 2, label: 'Checkout', active: false, done: false },
+                        { step: 3, label: 'Confirm', active: false, done: false },
                     ].map((s, i) => (
-                        <div key={s.step} className="flex items-center gap-2 md:gap-4">
+                        <div key={s.step} className="flex items-center gap-2 md:gap-3">
                             <div className="flex items-center gap-2">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${s.active ? 'bg-accent-500 text-white shadow-lg shadow-accent-500/20' : 'bg-dark-100 text-dark-400'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${s.active ? 'bg-accent-500 text-white shadow-lg shadow-accent-500/25 ring-4 ring-accent-500/15' : 'bg-dark-100 text-dark-400'}`}>
                                     {s.step}
                                 </div>
                                 <span className={`text-xs font-bold uppercase tracking-wider hidden sm:block ${s.active ? 'text-dark-900' : 'text-dark-300'}`}>{s.label}</span>
                             </div>
-                            {i < 2 && <div className={`w-8 md:w-16 h-0.5 rounded-full ${i === 0 ? 'bg-dark-200' : 'bg-dark-100'}`} />}
+                            {i < 2 && <div className={`w-10 md:w-20 h-0.5 rounded-full ${i === 0 ? 'bg-dark-200' : 'bg-dark-100'}`} />}
                         </div>
                     ))}
                 </motion.div>
@@ -148,50 +136,59 @@ const CartPage = () => {
                                             initial="hidden"
                                             animate="visible"
                                             exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
-                                            className="bg-white rounded-2xl p-4 md:p-5 flex items-center gap-4 md:gap-6 border border-dark-100/30 hover:shadow-lg transition-shadow duration-300"
+                                            className="bg-white rounded-2xl p-4 md:p-5 flex items-center gap-4 md:gap-5 border border-dark-100/40 hover:shadow-md hover:border-accent-200/50 transition-all duration-300"
                                         >
                                             <Link to={`/product/${prod.slug}`} className="shrink-0">
-                                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-dark-50 flex items-center justify-center overflow-hidden">
-                                                    <img src={prod.images?.[0]?.url || '/images/product_shower_1.png'} alt={prod.name} className="w-[80%] h-[80%] object-contain" />
+                                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-dark-50 flex items-center justify-center overflow-hidden border border-dark-100/30 group-hover:border-accent-200 transition-colors">
+                                                    <img src={prod.images?.[0]?.url || '/images/product_shower_1.png'} alt={prod.name} className="w-[82%] h-[82%] object-contain hover:scale-105 transition-transform duration-300" />
                                                 </div>
                                             </Link>
                                             <div className="flex-1 min-w-0">
                                                 <Link to={`/product/${prod.slug}`}>
-                                                    <h3 className="text-sm md:text-base font-bold text-dark-900 hover:text-accent-500 transition-colors truncate">{prod.name}</h3>
+                                                    <h3 className="text-sm md:text-base font-bold text-dark-900 hover:text-accent-600 transition-colors line-clamp-2">{prod.name}</h3>
                                                 </Link>
-                                                {item.variant && <p className="text-xs text-dark-400 mt-0.5 font-medium">Variant: {item.variant}</p>}
-                                                <div className="flex items-center gap-2 mt-1.5">
-                                                    <span className="text-lg font-extrabold text-dark-900">₹{prod.price?.toLocaleString()}</span>
-                                                    {prod.mrp > prod.price && <span className="text-xs text-dark-300 line-through">₹{prod.mrp?.toLocaleString()}</span>}
+                                                {item.variant && <p className="text-xs text-dark-400 mt-0.5 font-medium bg-dark-50 inline-block px-2 py-0.5 rounded-lg">Variant: {item.variant}</p>}
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-base md:text-lg font-extrabold text-dark-900">₹{prod.price?.toLocaleString('en-IN')}</span>
+                                                    {prod.mrp > prod.price && (
+                                                        <>
+                                                            <span className="text-xs text-dark-300 line-through">₹{prod.mrp?.toLocaleString('en-IN')}</span>
+                                                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-md">
+                                                                {Math.round(((prod.mrp - prod.price) / prod.mrp) * 100)}% OFF
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </div>
+                                                {/* Mobile total */}
+                                                <p className="text-sm font-bold text-accent-600 mt-1 md:hidden">Total: ₹{((prod.price || 0) * item.quantity).toLocaleString('en-IN')}</p>
                                             </div>
 
-                                            <div className="flex items-center bg-dark-50 rounded-xl overflow-hidden">
+                                            <div className="flex flex-col items-end gap-3">
+                                                <div className="flex items-center bg-dark-50 rounded-xl border border-dark-100/40 overflow-hidden">
+                                                    <button
+                                                        onClick={() => isAuthenticated ? updateQuantity(item._id, item.quantity - 1) : updateGuestQuantity(idx, item.quantity - 1)}
+                                                        className="p-2.5 text-dark-500 hover:text-dark-900 hover:bg-dark-100 transition-colors"
+                                                    >
+                                                        <FiMinus className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <span className="px-3 py-2 font-bold text-sm text-dark-900 min-w-[36px] text-center">{item.quantity}</span>
+                                                    <button
+                                                        onClick={() => isAuthenticated ? updateQuantity(item._id, item.quantity + 1) : updateGuestQuantity(idx, item.quantity + 1)}
+                                                        className="p-2.5 text-dark-500 hover:text-dark-900 hover:bg-dark-100 transition-colors"
+                                                    >
+                                                        <FiPlus className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                                <p className="text-base font-extrabold text-dark-900 hidden md:block">
+                                                    ₹{((prod.price || 0) * item.quantity).toLocaleString('en-IN')}
+                                                </p>
                                                 <button
-                                                    onClick={() => isAuthenticated ? updateQuantity(item._id, item.quantity - 1) : updateGuestQuantity(idx, item.quantity - 1)}
-                                                    className="p-2.5 text-dark-500 hover:text-dark-900 hover:bg-dark-100 transition-colors"
+                                                    onClick={() => isAuthenticated ? removeItem(item._id) : removeGuestItem(idx)}
+                                                    className="p-1.5 text-dark-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300"
                                                 >
-                                                    <FiMinus className="w-3.5 h-3.5" />
-                                                </button>
-                                                <span className="px-3 py-2 font-bold text-sm text-dark-900 min-w-[36px] text-center">{item.quantity}</span>
-                                                <button
-                                                    onClick={() => isAuthenticated ? updateQuantity(item._id, item.quantity + 1) : updateGuestQuantity(idx, item.quantity + 1)}
-                                                    className="p-2.5 text-dark-500 hover:text-dark-900 hover:bg-dark-100 transition-colors"
-                                                >
-                                                    <FiPlus className="w-3.5 h-3.5" />
+                                                    <FiTrash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
-
-                                            <p className="text-lg font-extrabold text-dark-900 hidden md:block min-w-[90px] text-right">
-                                                ₹{(prod.price * item.quantity)?.toLocaleString()}
-                                            </p>
-
-                                            <button
-                                                onClick={() => isAuthenticated ? removeItem(item._id) : removeGuestItem(idx)}
-                                                className="p-2 text-dark-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300"
-                                            >
-                                                <FiTrash2 className="w-4 h-4" />
-                                            </button>
                                         </motion.div>
                                     );
                                 })}
@@ -201,62 +198,59 @@ const CartPage = () => {
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
                             <motion.div
-                                className="bg-white rounded-3xl p-6 md:p-8 border border-dark-100/30 sticky top-28"
+                                className="bg-white rounded-3xl border border-dark-100/40 sticky top-28 overflow-hidden shadow-sm"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
                             >
-                                <h2 className="text-lg font-display font-bold text-dark-900 mb-6">Order Summary</h2>
-                                <div className="space-y-4 text-sm">
-                                    <div className="flex justify-between"><span className="text-dark-400 font-medium">Subtotal ({items.length} items)</span><span className="font-bold text-dark-900">₹{subtotal.toLocaleString()}</span></div>
-                                    {totalSavings > 0 && <div className="flex justify-between"><span className="text-dark-400 font-medium">You Save</span><span className="font-bold text-green-600">-₹{totalSavings.toLocaleString()}</span></div>}
-                                    <div className="flex justify-between"><span className="text-dark-400 font-medium">Shipping</span><span className="font-bold text-green-600">FREE</span></div>
-                                    {couponDiscount > 0 && <div className="flex justify-between"><span className="text-dark-400 font-medium flex items-center gap-1"><FiPercent className="w-3 h-3" /> Coupon</span><span className="font-bold text-green-600">-₹{couponDiscount.toLocaleString()}</span></div>}
-                                    <hr className="border-dark-100" />
-                                    <div className="flex justify-between text-lg"><span className="font-display font-bold text-dark-900">Total</span><span className="font-display font-extrabold text-dark-900">₹{total.toLocaleString()}</span></div>
-                                </div>
-
-                                {/* Coupon */}
-                                <div className="mt-6">
-                                    <div className="flex gap-2">
-                                        <div className="relative flex-1">
-                                            <FiTag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-300" />
-                                            <input
-                                                value={couponCode}
-                                                onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                                                placeholder="Coupon code"
-                                                className="w-full pl-10 pr-4 py-3 bg-dark-50 border-0 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all uppercase"
-                                            />
+                                {/* Summary header with gradient */}
+                                <div className="bg-gradient-to-br from-primary-900 to-primary-700 px-6 pt-6 pb-5">
+                                    <h2 className="text-base font-display font-bold text-white mb-4">Order Summary</h2>
+                                    <div className="space-y-2.5 text-sm">
+                                        <div className="flex justify-between text-white/80">
+                                            <span>Subtotal ({items.length} item{items.length !== 1 ? 's' : ''})</span>
+                                            <span className="font-bold text-white">₹{subtotal.toLocaleString('en-IN')}</span>
                                         </div>
-                                        <button
-                                            onClick={applyCoupon}
-                                            disabled={applyingCoupon}
-                                            className="px-5 py-3 bg-dark-900 text-white text-xs font-bold rounded-xl hover:bg-accent-500 transition-colors uppercase tracking-wider disabled:opacity-50"
-                                        >
-                                            {applyingCoupon ? '...' : 'Apply'}
-                                        </button>
+                                        {totalSavings > 0 && (
+                                            <div className="flex justify-between">
+                                                <span className="text-white/80">You Save</span>
+                                                <span className="font-bold text-accent-300">-₹{totalSavings.toLocaleString('en-IN')}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between">
+                                            <span className="text-white/80">Shipping</span>
+                                            <span className="font-bold text-accent-300">FREE</span>
+                                        </div>
+                                        <div className="border-t border-white/20 pt-2.5 flex justify-between items-center">
+                                            <span className="font-display font-bold text-white text-base">Total</span>
+                                            <span className="font-display font-extrabold text-white text-xl">₹{total.toLocaleString('en-IN')}</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={handleCheckout}
-                                    className="w-full mt-6 bg-accent-500 hover:bg-accent-600 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 shadow-lg shadow-accent-500/20 hover:shadow-accent-500/40"
-                                >
-                                    {isAuthenticated ? 'Proceed to Checkout' : 'Login to Checkout'}
-                                    <FiArrowRight />
-                                </button>
-
-                                <Link to="/shop" className="block text-center text-sm text-accent-500 hover:text-accent-600 font-semibold mt-4 transition-colors">
-                                    ← Continue Shopping
-                                </Link>
-
-                                {/* Trust */}
-                                <div className="mt-6 pt-6 border-t border-dark-100 flex items-center justify-center gap-6 text-dark-300">
-                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
-                                        <FiTruck className="w-4 h-4" /> Free Ship
+                                <div className="p-6 space-y-4">
+                                    {/* Coupon hint */}
+                                    <div className="flex items-center gap-2 text-xs text-accent-600 font-semibold bg-accent-50 border border-accent-100 rounded-xl px-3 py-2.5">
+                                        <FiTag className="w-3.5 h-3.5 shrink-0" />
+                                        Have a coupon? Apply it at checkout
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
-                                        <FiShield className="w-4 h-4" /> Secure
+
+                                    <button
+                                        onClick={handleCheckout}
+                                        className="w-full bg-accent-500 hover:bg-accent-600 active:bg-accent-700 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 shadow-lg shadow-accent-500/20 hover:shadow-accent-500/30 active:scale-[0.98]"
+                                    >
+                                        {isAuthenticated ? 'Proceed to Checkout' : 'Login to Checkout'}
+                                        <FiArrowRight />
+                                    </button>
+
+                                    {/* Trust badges */}
+                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-dark-100">
+                                        <div className="flex items-center gap-2 text-dark-400 text-[11px] font-semibold">
+                                            <FiTruck className="w-4 h-4 text-accent-500 shrink-0" /> Free Delivery
+                                        </div>
+                                        <div className="flex items-center gap-2 text-dark-400 text-[11px] font-semibold">
+                                            <FiShield className="w-4 h-4 text-accent-500 shrink-0" /> Secure Pay
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>

@@ -9,6 +9,7 @@ const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const { createNotification } = require('./notification.controller');
+const { logActivity } = require('./activityLog.controller');
 const { createAdminNotification } = require('./adminNotification.controller');
 
 // POST /orders — Create order from cart
@@ -241,6 +242,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     await createNotification(order.user, `order_${status}`, notifMap[status].title, notifMap[status].msg, { orderId: order._id, orderNumber: order.orderNumber });
   }
 
+  await logActivity(req, `update_order_status_to_${status}`, 'Order', order._id, { orderNumber: order.orderNumber, newStatus: status, note });
   sendResponse(res, 200, order, 'Order status updated');
 });
 

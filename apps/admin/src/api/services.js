@@ -159,3 +159,7 @@ export const adminUserAPI = {
   delete: (id) => api.delete(`/admin/users/${id}`),
   toggleStatus: (id) => api.put(`/admin/users/${id}/toggle-status`),
 };
+
+export const activityLogAPI = {
+  getAll: (params) => api.get('/activity-logs', { params }),
+};
