@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OZOBATH — Client Setup Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    @media print {
+      body { font-size: 12px; background: white; }
+      .page-break { page-break-before: always; }
+      .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+      a { color: #1a1a2e !important; text-decoration: none; }
+      .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    /* COVER */
+    .cover {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      color: white;
+      padding: 72px 64px 56px;
+    }
+    .cover-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+    .cover h1 {
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .cover h1 span { color: #38bdf8; }
+    .cover-desc {
+      font-size: 15px;
+      color: #94a3b8;
+      max-width: 520px;
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+    .cover-pills { display: flex; gap: 12px; flex-wrap: wrap; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .pill-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* BODY */
+    .body { max-width: 860px; margin: 0 auto; padding: 56px 40px; }
+
+    /* INTRO BOX */
+    .intro-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 48px;
+      font-size: 13.5px;
+      color: #1e40af;
+      line-height: 1.8;
+    }
+    .intro-box strong { font-weight: 700; }
+    .intro-box ul { padding-left: 20px; margin-top: 10px; }
+    .intro-box ul li { margin-bottom: 4px; }
+
+    /* SECTION */
+    .section { margin-bottom: 60px; }
+
+    .section-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      margin-bottom: 24px;
+    }
+    .badge-razorpay { background: #dbeafe; color: #1d4ed8; }
+    .badge-shiprocket { background: #fef3c7; color: #b45309; }
+
+    .section-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+      line-height: 1.25;
+    }
+    .section-sub {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 28px;
+    }
+
+    /* CARD */
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* STEPS */
+    .steps { list-style: none; }
+    .step {
+      display: flex;
+      gap: 18px;
+      padding: 18px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .step:last-child { border: none; padding-bottom: 0; }
+    .step-num {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .num-blue   { background: #2563eb; color: white; }
+    .num-orange { background: #d97706; color: white; }
+
+    .step-body { flex: 1; }
+    .step-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 5px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.7;
+    }
+
+    /* LINK BOX */
+    .link-box {
+      margin-top: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .link-box a {
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .link-box a:hover { text-decoration: underline; }
+
+    /* ALERT */
+    .alert {
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13px;
+      line-height: 1.7;
+      margin: 16px 0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .alert-blue   { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+    .alert-yellow { background: #fffbeb; border-left: 4px solid #f59e0b; color: #78350f; }
+    .alert-red    { background: #fff1f2; border-left: 4px solid #f43f5e; color: #9f1239; }
+    .alert-green  { background: #f0fdf4; border-left: 4px solid #22c55e; color: #14532d; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px; }
+    th {
+      background: #1e293b;
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: .3px;
+    }
+    th:first-child { border-radius: 6px 0 0 0; }
+    th:last-child  { border-radius: 0 6px 0 0; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    tr:last-child td { border: none; }
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    /* TAG */
+    .tag {
+      display: inline-flex;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .tag-must { background: #fee2e2; color: #991b1b; }
+    .tag-once { background: #dbeafe; color: #1e3a8a; }
+
+    /* DIVIDER */
+    .divider { height: 1px; background: #e2e8f0; margin: 48px 0; }
+
+    /* CHECKLIST */
+    .checklist { list-style: none; }
+    .checklist li {
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13px;
+      color: #334155;
+    }
+    .checklist li:last-child { border: none; }
+    .check-box {
+      width: 20px; height: 20px;
+      border: 2px solid #cbd5e1;
+      border-radius: 5px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* FOOTER */
+    .footer {
+      background: #0f172a;
+      color: #94a3b8;
+      text-align: center;
+      padding: 32px;
+      font-size: 13px;
+    }
+    .footer strong { color: white; display: block; font-size: 15px; margin-bottom: 6px; }
+
+    /* SUMMARY RIBBON */
+    .ribbon {
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: white;
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 48px;
+    }
+    .ribbon h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #38bdf8; }
+    .ribbon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .ribbon-item { font-size: 13px; }
+    .ribbon-item .label { color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .ribbon-item .value { color: white; font-weight: 500; }
+
+    @media (max-width: 640px) {
+      .body { padding: 32px 20px; }
+      .cover { padding: 40px 24px; }
+      .ribbon-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════ COVER ══════════════════════ -->
+<div class="cover">
+  <div class="cover-eyebrow">OZOBATH — Confidential Client Setup</div>
+  <h1>Payment &amp; Shipping<br><span>Account Setup Guide</span></h1>
+  <p class="cover-desc">
+    This guide walks you through creating your own Razorpay (payment gateway) and Shiprocket (shipping) accounts. These accounts must be in <strong>your name / business name</strong> so that money goes directly to your bank.
+  </p>
+  <div class="cover-pills">
+    <div class="pill">
+      <div class="pill-dot" style="background:#3b82f6;"></div>
+      Razorpay — Payments
+    </div>
+    <div class="pill">
+      <div class="pill-dot" style="background:#f59e0b;"></div>
+      Shiprocket — Shipping
+    </div>
+    <div class="pill">
+      <div class="pill-dot" style="background:#22c55e;"></div>
+      ~1–2 Hours Total
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ BODY ══════════════════════ -->
+<div class="body">
+
+  <!-- INTRO -->
+  <div class="intro-box">
+    <strong>Dear Client,</strong><br>
+    To make your website accept online payments and ship orders to customers, two accounts need to be created by <strong>you (the business owner)</strong>. The developer cannot create these on your behalf because:
+    <ul>
+      <li>Money from orders goes <strong>directly into your bank account</strong> — so the account must be yours.</li>
+      <li>KYC (identity verification) requires your <strong>business PAN, GST, and bank details</strong>.</li>
+      <li>Shiprocket contracts are linked to your <strong>business address and pickup location</strong>.</li>
+    </ul>
+    Once you complete these steps, share the <strong>API keys / credentials</strong> (marked in each section) with your developer. That's all you need to do.
+  </div>
+
+  <!-- SUMMARY RIBBON -->
+  <div class="ribbon">
+    <h3>What You'll Be Creating</h3>
+    <div class="ribbon-grid">
+      <div class="ribbon-item">
+        <div class="label">Account 1</div>
+        <div class="value">Razorpay — to receive payments via UPI, Cards, Net Banking</div>
+      </div>
+      <div class="ribbon-item">
+        <div class="label">Account 2</div>
+        <div class="value">Shiprocket — to ship orders with Blue Dart, DTDC, Delhivery etc.</div>
+      </div>
+      <div class="ribbon-item">
+        <div class="label">Your effort</div>
+        <div class="value">Create accounts, upload documents, share 2 sets of keys</div>
+      </div>
+      <div class="ribbon-item">
+        <div class="label">After this</div>
+        <div class="value">Developer plugs in the keys — website goes live</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PART 1 — RAZORPAY
+  ══════════════════════════════════════════════ -->
+  <div class="section">
+
+    <div class="section-badge badge-razorpay">💳 &nbsp;Part 1 of 2 — Payment Gateway</div>
+    <div class="section-title">Razorpay Setup &amp; KYC</div>
+    <div class="section-sub">Accept UPI, credit/debit cards, net banking, and wallets. Settlements go to your bank account in 2 business days.</div>
+
+    <!-- PHASE A -->
+    <div class="card">
+      <div class="card-title">
+        <div class="dot" style="background:#2563eb;"></div>
+        Phase A — Create Account &amp; Get Test Keys
+        <span style="margin-left:auto;font-weight:400;font-size:12px;color:#64748b;">~15 minutes</span>
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num num-blue">1</div>
+          <div class="step-body">
+            <div class="step-title">Open Razorpay and sign up</div>
+            <div class="step-desc">Click the link below. Register using your <strong>business email address</strong>. Verify your email when prompted.</div>
+            <div class="link-box">🔗 &nbsp;<a href="https://dashboard.razorpay.com/signup" target="_blank">https://dashboard.razorpay.com/signup</a></div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-blue">2</div>
+          <div class="step-body">
+            <div class="step-title">Go to Settings → API Keys</div>
+            <div class="step-desc">After logging in, click <strong>Settings</strong> in the left sidebar → then click <strong>API Keys</strong>.</div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-blue">3</div>
+          <div class="step-body">
+            <div class="step-title">Generate Test Key</div>
+            <div class="step-desc">
+              Make sure you are in <strong>Test Mode</strong> (toggle is at the top of the dashboard).<br>
+              Click <strong>"Generate Test Key"</strong>. You'll see two values:
+            </div>
+            <div class="link-box">
+              <strong>Key ID:</strong> rzp_test_XXXXXXXXXXXXXXXX<br>
+              <strong>Key Secret:</strong> XXXXXXXXXXXXXXXXXXXXXXXX
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-blue">4</div>
+          <div class="step-body">
+            <div class="step-title">Copy and send these two keys to your developer</div>
+            <div class="step-desc">
+              ⚠️ The <strong>Key Secret is shown only once</strong>. Copy it immediately and save it in a secure note (e.g., Google Keep, Notes app, or a password manager). Then share both values with your developer.
+            </div>
+          </div>
+        </li>
+      </ol>
+
+      <div class="alert alert-blue">
+        <div class="alert-icon">ℹ️</div>
+        <div>These are <strong>Test Keys</strong> — they let the developer test payments without real money. You'll generate Live Keys after KYC is approved (Phase B below).</div>
+      </div>
+    </div>
+
+    <!-- PHASE B -->
+    <div class="card">
+      <div class="card-title">
+        <div class="dot" style="background:#16a34a;"></div>
+        Phase B — Complete KYC to Accept Real Payments
+        <span style="margin-left:auto;font-weight:400;font-size:12px;color:#64748b;">~30 minutes + 1–3 days approval</span>
+      </div>
+
+      <div class="alert alert-yellow">
+        <div class="alert-icon">⚠️</div>
+        <div>KYC is required by RBI regulations before Razorpay allows real payment settlements. Until KYC is approved, payments can be tested but money won't reach your bank.</div>
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num num-blue">1</div>
+          <div class="step-body">
+            <div class="step-title">Click "Activate Account" in your Razorpay dashboard</div>
+            <div class="step-desc">A banner appears at the top of the dashboard. Click <strong>"Activate Account"</strong> or go to <strong>Account &amp; Settings → Activation</strong>.</div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-blue">2</div>
+          <div class="step-body">
+            <div class="step-title">Fill in your Business Details</div>
+            <div class="step-desc">
+              Select your <strong>Business Type</strong> — choose the one that matches:
+            </div>
+            <table style="margin-top:10px;">
+              <tr><th>If you are…</th><th>Select this</th></tr>
+              <tr><td>Running the business in your own name</td><td>Proprietorship</td></tr>
+              <tr><td>Registered as Pvt Ltd company</td><td>Private Limited Company</td></tr>
+              <tr><td>Partnership firm</td><td>Partnership</td></tr>
+            </table>
+            <div class="step-desc" style="margin-top:10px;">
+              Business Category: Select <strong>"Retail"</strong> → Sub-category: <strong>"Home Improvement / Bathroom Fittings"</strong> (or closest match).
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-blue">3</div>
+          <div class="step-body">
+            <div class="step-title">Upload the required documents</div>
+            <div class="step-desc">Have these documents ready as scanned files (PDF, JPG, or PNG):</div>
+
+            <table style="margin-top:10px;">
+              <tr>
+                <th>Document</th>
+                <th>What it is</th>
+                <th>Required?</th>
+              </tr>
+              <tr>
+                <td><strong>Business PAN Card</strong></td>
+                <td>PAN card of the company or proprietor</td>
+                <td><span class="tag tag-must">Must</span></td>
+              </tr>
+              <tr>
+                <td><strong>Cancelled Cheque</strong></td>
+                <td>Cheque leaf with your bank account number (or bank passbook front page)</td>
+                <td><span class="tag tag-must">Must</span></td>
+              </tr>
+              <tr>
+                <td><strong>GST Certificate</strong></td>
+                <td>GST registration certificate</td>
+                <td><span class="tag tag-must">Must (if GST registered)</span></td>
+              </tr>
+              <tr>
+                <td><strong>Owner Aadhar Card</strong></td>
+                <td>Aadhar card of the proprietor / director</td>
+                <td><span class="tag tag-must">Must</span></td>
+              </tr>
+              <tr>
+                <td><strong>Owner PAN Card</strong></td>
+                <td>PAN card of the proprietor / director (personal)</td>
+                <td><span class="tag tag-must">Must</span></td>
+              </tr>
+              <tr>
+                <td><strong>Address Proof</strong></td>
+                <td>Electricity bill or rental agreement (last 3 months)</td>
+                <td><span class="tag tag-must">Must</span></td>
+              </tr>
+              <tr>
+                <td><strong>Certificate of Incorporation</strong></td>
+                <td>MCA certificate — only if Pvt Ltd / LLP</td>
+                <td><span class="tag tag-once">Only for Pvt Ltd</span></td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-blue">4</div>
+          <div class="step-body">
+            <div class="step-title">Add your Bank Account for settlements</div>
+            <div class="step-desc">
+              Enter your business bank account number and IFSC code. Razorpay will do a ₹1 penny deposit to verify it — confirm that penny drop in the dashboard to activate the account.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-blue">5</div>
+          <div class="step-body">
+            <div class="step-title">Wait for Razorpay approval (1–3 business days)</div>
+            <div class="step-desc">
+              You'll get an email when your account is activated. During this time, your website can still be tested with test keys — it just won't accept real money yet.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-blue">6</div>
+          <div class="step-body">
+            <div class="step-title">After approval — Generate Live Keys and share with developer</div>
+            <div class="step-desc">
+              Go to <strong>Settings → API Keys</strong> → Switch the toggle from <strong>Test</strong> to <strong>Live</strong> → Click <strong>"Generate Live Key"</strong>.<br><br>
+              You'll see a new pair:
+            </div>
+            <div class="link-box">
+              <strong>Live Key ID:</strong> rzp_live_XXXXXXXXXXXXXXXX<br>
+              <strong>Live Key Secret:</strong> XXXXXXXXXXXXXXXXXXXXXXXX
+            </div>
+            <div class="step-desc" style="margin-top:8px;color:#dc2626;">
+              ⚠️ Copy the Live Key Secret immediately — it's shown only once. Share both values with your developer.
+            </div>
+          </div>
+        </li>
+      </ol>
+
+      <div class="alert alert-green">
+        <div class="alert-icon">✅</div>
+        <div>Once live keys are shared, the developer will update the website. From that point, real customer payments will go directly to your bank account on a <strong>T+2 settlement cycle</strong> (2 business days).</div>
+      </div>
+    </div>
+
+    <!-- RAZORPAY FEES NOTE -->
+    <div class="card" style="border-left: 4px solid #3b82f6;">
+      <div class="card-title">
+        <div class="dot" style="background:#3b82f6;"></div>
+        Razorpay Fees — What They Charge
+      </div>
+      <table>
+        <tr><th>Transaction Type</th><th>Fee</th></tr>
+        <tr><td>Domestic Cards, UPI, Net Banking, Wallets</td><td><strong>2% per transaction</strong></td></tr>
+        <tr><td>EMI transactions</td><td>3% per transaction</td></tr>
+        <tr><td>International Cards</td><td>3% per transaction</td></tr>
+        <tr><td>GST on fees</td><td>18% on the 2% fee</td></tr>
+      </table>
+      <p style="font-size:12px;color:#64748b;margin-top:12px;">
+        Example: Customer pays ₹1,000 → Razorpay deducts ₹20 (2%) + ₹3.60 (GST on fee) = <strong>₹976.40 settled to your bank</strong>.
+      </p>
+    </div>
+
+  </div>
+
+  <div class="divider class-break"></div>
+
+  <!-- ═══════════════════════════════════════════
+       PART 2 — SHIPROCKET
+  ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+
+    <div class="section-badge badge-shiprocket">📦 &nbsp;Part 2 of 2 — Shipping</div>
+    <div class="section-title">Shiprocket Setup</div>
+    <div class="section-sub">Ship orders across India with multiple courier partners (Blue Dart, DTDC, Delhivery, Ecom Express, and more) from a single dashboard.</div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="dot" style="background:#d97706;"></div>
+        Step-by-Step: Create Your Shiprocket Account
+        <span style="margin-left:auto;font-weight:400;font-size:12px;color:#64748b;">~20 minutes</span>
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num num-orange">1</div>
+          <div class="step-body">
+            <div class="step-title">Register on Shiprocket</div>
+            <div class="step-desc">Use your <strong>business email address</strong> to register.</div>
+            <div class="link-box">🔗 &nbsp;<a href="https://app.shiprocket.in/register" target="_blank">https://app.shiprocket.in/register</a></div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-orange">2</div>
+          <div class="step-body">
+            <div class="step-title">Choose a plan — Start with Free</div>
+            <div class="step-desc">
+              Shiprocket offers a <strong>free plan</strong> to get started. You can upgrade later as order volume grows. Select <strong>"Lite" or "Free"</strong> plan when prompted.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-orange">3</div>
+          <div class="step-body">
+            <div class="step-title">Fill in your Company Profile</div>
+            <div class="step-desc">
+              Go to <strong>Settings → Company Details</strong> and fill in:
+            </div>
+            <table style="margin-top:10px;">
+              <tr><th>Field</th><th>What to Enter</th></tr>
+              <tr><td>Company Name</td><td>Your registered business name (e.g., OZOBATH)</td></tr>
+              <tr><td>Business Type</td><td>E-Commerce / Retail</td></tr>
+              <tr><td>GSTIN</td><td>Your GST number (if registered)</td></tr>
+              <tr><td>Business Address</td><td>Your office / warehouse address</td></tr>
+              <tr><td>Contact Number</td><td>Your business phone number</td></tr>
+            </table>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-orange">4</div>
+          <div class="step-body">
+            <div class="step-title">Add a Pickup Address</div>
+            <div class="step-desc">
+              This is the address where couriers will come to collect your parcels. Go to <strong>Settings → Pickup Addresses → Add New Address</strong>.
+            </div>
+            <div class="alert alert-yellow" style="margin-top:10px;">
+              <div class="alert-icon">📌</div>
+              <div>Write down the <strong>Pincode of your pickup address</strong> — share this with your developer. This is required to configure the shipping system.</div>
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-orange">5</div>
+          <div class="step-body">
+            <div class="step-title">Add Bank Account for COD Remittances</div>
+            <div class="step-desc">
+              If you plan to offer Cash on Delivery (COD) orders, go to <strong>Settings → Bank Details</strong> and add your business bank account. Shiprocket will remit COD collections to this account on a weekly basis.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num num-orange">6</div>
+          <div class="step-body">
+            <div class="step-title">Share your login credentials with your developer</div>
+            <div class="step-desc">
+              The shipping integration uses your Shiprocket <strong>email and password</strong> to connect automatically — no separate API key is needed. Share these two values:
+            </div>
+            <div class="link-box">
+              <strong>Shiprocket Email:</strong> your-registered@email.com<br>
+              <strong>Shiprocket Password:</strong> your-password<br>
+              <strong>Pickup Pincode:</strong> 560001 (replace with yours)
+            </div>
+            <div class="alert alert-red" style="margin-top:10px;">
+              <div class="alert-icon">🔐</div>
+              <div>Share these credentials <strong>only with your trusted developer</strong> via a secure channel (WhatsApp, direct message — not over email). Change your password after the developer has configured the system if you prefer.</div>
+            </div>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- HOW SHIPPING WORKS -->
+    <div class="card">
+      <div class="card-title">
+        <div class="dot" style="background:#d97706;"></div>
+        How Shipping Works After Setup
+      </div>
+      <table>
+        <tr><th>Step</th><th>What Happens</th><th>Who Does It</th></tr>
+        <tr>
+          <td><strong>1. Order Placed</strong></td>
+          <td>Customer places order on your website</td>
+          <td>Customer</td>
+        </tr>
+        <tr>
+          <td><strong>2. Order Confirmed</strong></td>
+          <td>Admin confirms payment in the admin panel</td>
+          <td>You (or your staff)</td>
+        </tr>
+        <tr>
+          <td><strong>3. Create Shipment</strong></td>
+          <td>One click in the admin panel sends order to Shiprocket</td>
+          <td>You / Staff</td>
+        </tr>
+        <tr>
+          <td><strong>4. Choose Courier</strong></td>
+          <td>Admin picks the best courier (by price or speed)</td>
+          <td>You / Staff</td>
+        </tr>
+        <tr>
+          <td><strong>5. Print Label</strong></td>
+          <td>Shipping label is auto-generated — print and stick on parcel</td>
+          <td>You / Staff</td>
+        </tr>
+        <tr>
+          <td><strong>6. Courier Pickup</strong></td>
+          <td>Courier arrives at your pickup address and collects parcel</td>
+          <td>Courier Partner</td>
+        </tr>
+        <tr>
+          <td><strong>7. Auto Tracking</strong></td>
+          <td>Customer gets real-time tracking updates on the website</td>
+          <td>Automatic</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- COURIER PARTNERS -->
+    <div class="card">
+      <div class="card-title">
+        <div class="dot" style="background:#7c3aed;"></div>
+        Courier Partners Available via Shiprocket
+      </div>
+      <p style="font-size:13px;color:#64748b;margin-bottom:14px;">Shiprocket gives you access to multiple couriers. You can compare rates and choose the cheapest or fastest for each order.</p>
+      <table>
+        <tr><th>Courier</th><th>Type</th><th>Best For</th></tr>
+        <tr><td>Delhivery</td><td>Surface + Air</td><td>Pan-India, affordable rates</td></tr>
+        <tr><td>Blue Dart</td><td>Air</td><td>Premium, fast delivery</td></tr>
+        <tr><td>DTDC</td><td>Surface + Air</td><td>Wide network across India</td></tr>
+        <tr><td>Ecom Express</td><td>Surface</td><td>Economical for heavy items</td></tr>
+        <tr><td>XpressBees</td><td>Surface + Air</td><td>Metro cities</td></tr>
+        <tr><td>Shadowfax</td><td>Hyperlocal</td><td>Same-day delivery</td></tr>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ FINAL CHECKLIST ═══════ -->
+  <div class="section">
+
+    <div class="section-title" style="margin-bottom:6px;">Final Checklist — What to Share with Developer</div>
+    <div class="section-sub">Once you complete both setups, share these with your developer and you're done.</div>
+
+    <div class="card">
+      <ul class="checklist">
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Razorpay Test Key ID</strong> — starts with <code>rzp_test_</code></div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Razorpay Test Key Secret</strong> — shown once during key generation</div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Razorpay KYC submitted</strong> — confirmation email received from Razorpay</div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Razorpay Live Key ID</strong> — starts with <code>rzp_live_</code> (share after KYC approval)</div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Razorpay Live Key Secret</strong> — share after KYC approval</div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Shiprocket registered email</strong> — the email used to sign up</div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Shiprocket password</strong> — the account password</div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Pickup Pincode</strong> — the pincode of your pickup/warehouse address</div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Pickup address added</strong> in Shiprocket Settings</div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div><strong>Bank account added</strong> in both Razorpay and Shiprocket for settlements</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="alert alert-green">
+      <div class="alert-icon">🎉</div>
+      <div>
+        <strong>That's it!</strong> Once you share these details with your developer, they will configure the website to accept payments and create shipments. Your website will be ready to go live.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+  <!-- ═══════════════════════════════════════════
+       PART 3 — DOMAIN & DEPLOYMENT
+  ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+
+    <div class="section-badge" style="background:#f0fdf4;color:#15803d;">🌐 &nbsp;Part 3 of 3 — Domain &amp; Hosting</div>
+    <div class="section-title">Purchase Domain on Hostinger</div>
+    <div class="section-sub">Your website needs a domain name (e.g., ozobath.com) so customers can find it. This is a one-time purchase you need to make.</div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="dot" style="background:#15803d;"></div>
+        Steps to Buy Your Domain
+        <span style="margin-left:auto;font-weight:400;font-size:12px;color:#64748b;">~10 minutes</span>
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num" style="background:#15803d;color:white;">1</div>
+          <div class="step-body">
+            <div class="step-title">Go to Hostinger and search for your domain</div>
+            <div class="step-desc">Open the link below and type your desired domain name (e.g., <strong>ozobath.com</strong>) in the search box.</div>
+            <div class="link-box">🔗 &nbsp;<a href="https://www.hostinger.in/domain-name-search" target="_blank">https://www.hostinger.in/domain-name-search</a></div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num" style="background:#15803d;color:white;">2</div>
+          <div class="step-body">
+            <div class="step-title">Choose a domain and add to cart</div>
+            <div class="step-desc">
+              Prefer <strong>.com</strong> if available. If taken, <strong>.in</strong> or <strong>.co.in</strong> are good alternatives for Indian businesses.<br>
+              Typical cost: <strong>₹800 – ₹1,500 / year</strong> for a .com domain.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num" style="background:#15803d;color:white;">3</div>
+          <div class="step-body">
+            <div class="step-title">Create a Hostinger account and complete payment</div>
+            <div class="step-desc">Register with your business email and pay for the domain. <strong>You do NOT need to buy any hosting plan</strong> — domain only is enough. The website will be hosted on free platforms by your developer.</div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num" style="background:#15803d;color:white;">4</div>
+          <div class="step-body">
+            <div class="step-title">Share your Hostinger login with your developer</div>
+            <div class="step-desc">
+              The developer needs access to your Hostinger account to point the domain to your website. Share your login credentials securely, or add them as a team member via <strong>Hostinger → Account → Access Management</strong>.
+            </div>
+          </div>
+        </li>
+      </ol>
+
+      <div class="alert alert-blue">
+        <div class="alert-icon">ℹ️</div>
+        <div>After the domain is purchased, your developer will handle all the technical configuration (DNS settings, SSL certificate, etc.). <strong>You don't need to do anything technical.</strong></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-left:4px solid #15803d;">
+      <div class="card-title">
+        <div class="dot" style="background:#15803d;"></div>
+        What Happens After You Buy the Domain
+      </div>
+      <table>
+        <tr><th>Who</th><th>What</th></tr>
+        <tr><td><strong>You (Client)</strong></td><td>Purchase domain on Hostinger → share login with developer</td></tr>
+        <tr><td><strong>Developer</strong></td><td>Points domain to the website — takes ~10 minutes + up to 24 hrs for DNS to propagate</td></tr>
+        <tr><td><strong>Result</strong></td><td>Customers can access your site at <strong>www.ozobath.com</strong></td></tr>
+      </table>
+    </div>
+
+  </div>
+
+<!-- ══════════════════════ FOOTER ══════════════════════ -->
+<div class="footer">
+  <strong>OZOBATH E-Commerce Platform</strong>
+  Client Setup Guide — Prepared by your Developer<br><br>
+  Questions about Razorpay? Contact: <span style="color:#60a5fa;">support@razorpay.com</span> | 1800-123-1272<br>
+  Questions about Shiprocket? Contact: <span style="color:#60a5fa;">support@shiprocket.in</span> | 1800-212-9ment
+</div>
+
+</body>
+</html>

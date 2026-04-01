@@ -116,9 +116,12 @@ export const serviceRequestAPI = {
 
 // ─── Bookings ────────────────────────────────────
 export const bookingAPI = {
+  getAllSlots: (date) => api.get('/bookings/video-call/all', { params: date ? { date } : {} }),
   getVideoCallBookings: () => api.get('/bookings/video-call'),
   createSlot: (data) => api.post('/bookings/video-call/create-slot', data),
+  createBulkSlots: (data) => api.post('/bookings/video-call/create-bulk', data),
   updateSlot: (id, data) => api.put(`/bookings/video-call/${id}`, data),
+  deleteSlot: (id) => api.delete(`/bookings/video-call/${id}`),
   getSiteVisits: () => api.get('/bookings/site-visit'),
   updateSiteVisit: (id, data) => api.put(`/bookings/site-visit/${id}`, data),
 };

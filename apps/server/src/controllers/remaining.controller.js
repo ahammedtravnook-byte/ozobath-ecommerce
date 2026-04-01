@@ -517,6 +517,59 @@ const createVideoCallSlot = asyncHandler(async (req, res) => {
   sendResponse(res, 201, slot, 'Slot created');
 });
 
+// Bulk: create slots for selected weekdays + time ranges for next N weeks
+const createBulkVideoCallSlots = asyncHandler(async (req, res) => {
+  // days: [0-6] where 0=Sun,1=Mon,...,6=Sat
+  // timeSlots: [{ startTime: '10:00', endTime: '11:00' }, ...]
+  // weeksAhead: number of weeks to generate (default 4)
+  const { days, timeSlots, weeksAhead = 4 } = req.body;
+
+  if (!days?.length || !timeSlots?.length) {
+    throw new ApiError(400, 'days and timeSlots are required.');
+  }
+
+  const slotsToCreate = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let w = 0; w < weeksAhead; w++) {
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + w * 7 + d);
+      const weekday = date.getDay(); // 0=Sun,1=Mon,...
+      if (!days.includes(weekday)) continue;
+
+      for (const ts of timeSlots) {
+        // Skip if slot already exists for this date+time
+        const exists = await VideoCallSlot.findOne({
+          date: { $gte: date, $lt: new Date(date.getTime() + 86400000) },
+          startTime: ts.startTime,
+        }).lean();
+        if (!exists) {
+          slotsToCreate.push({ date, startTime: ts.startTime, endTime: ts.endTime, isActive: true });
+        }
+      }
+    }
+  }
+
+  const created = await VideoCallSlot.insertMany(slotsToCreate);
+  sendResponse(res, 201, { count: created.length }, `${created.length} slots created`);
+});
+
+// Get ALL slots (available + booked) for admin management
+const getAllVideoCallSlots = asyncHandler(async (req, res) => {
+  const { date } = req.query;
+  const filter = {};
+  if (date) {
+    const d = new Date(date);
+    filter.date = { $gte: d, $lt: new Date(d.getTime() + 86400000) };
+  } else {
+    filter.date = { $gte: new Date() };
+  }
+  const slots = await VideoCallSlot.find(filter).sort('date startTime').lean();
+  sendResponse(res, 200, slots, 'All slots fetched');
+});
+
 const getAllVideoCallBookings = asyncHandler(async (req, res) => {
   const bookings = await VideoCallSlot.find({ isBooked: true }).sort('-date').lean();
   sendResponse(res, 200, bookings, 'Video call bookings fetched');
@@ -526,6 +579,14 @@ const updateVideoCallSlot = asyncHandler(async (req, res) => {
   const slot = await VideoCallSlot.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!slot) throw new ApiError(404, 'Slot not found.');
   sendResponse(res, 200, slot, 'Slot updated');
+});
+
+const deleteVideoCallSlot = asyncHandler(async (req, res) => {
+  const slot = await VideoCallSlot.findById(req.params.id);
+  if (!slot) throw new ApiError(404, 'Slot not found.');
+  if (slot.isBooked) throw new ApiError(400, 'Cannot delete a booked slot.');
+  await slot.deleteOne();
+  sendResponse(res, 200, null, 'Slot deleted');
 });
 
 // ─── SITE VISIT ──────────────────────────────────
@@ -800,7 +861,8 @@ module.exports = {
   // Service Request
   createServiceRequest, getServiceRequests, updateServiceRequest,
   // Video Call
-  getAvailableSlots, bookVideoCall, createVideoCallSlot, getAllVideoCallBookings, updateVideoCallSlot,
+  getAvailableSlots, bookVideoCall, createVideoCallSlot, createBulkVideoCallSlots,
+  getAllVideoCallSlots, getAllVideoCallBookings, updateVideoCallSlot, deleteVideoCallSlot,
   // Site Visit
   bookSiteVisit, getSiteVisitBookings, updateSiteVisitBooking,
   // Experience Centre
