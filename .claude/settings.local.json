@@ -19,7 +19,8 @@
       "Bash(railway --version)",
       "Bash(vercel whoami:*)",
       "Bash(railway login:*)",
-      "Bash(vercel login:*)"
+      "Bash(vercel login:*)",
+      "Bash(xargs basename:*)"
     ]
   }
 }

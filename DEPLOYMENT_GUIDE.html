@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OZOBATH — Complete Deployment Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --brand:       #1a1a2e;
+      --accent:      #e94560;
+      --accent2:     #0f3460;
+      --green:       #10b981;
+      --yellow:      #f59e0b;
+      --blue:        #3b82f6;
+      --purple:      #8b5cf6;
+      --bg:          #f8fafc;
+      --card:        #ffffff;
+      --border:      #e2e8f0;
+      --text:        #1e293b;
+      --muted:       #64748b;
+      --code-bg:     #0f172a;
+      --code-text:   #e2e8f0;
+      --shadow:      0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    /* ─── PRINT ─── */
+    @media print {
+      body { background: white; font-size: 12px; }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+      .card { box-shadow: none; border: 1px solid #ddd; }
+      a { color: #1a1a2e !important; }
+      pre { white-space: pre-wrap; word-break: break-all; }
+    }
+
+    /* ─── COVER ─── */
+    .cover {
+      background: linear-gradient(135deg, var(--brand) 0%, var(--accent2) 60%, #16213e 100%);
+      color: white;
+      padding: 80px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .cover-logo {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      opacity: .6;
+      margin-bottom: 24px;
+    }
+    .cover h1 {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .cover h1 span { color: var(--accent); }
+    .cover p {
+      font-size: 17px;
+      opacity: .75;
+      max-width: 560px;
+      margin-bottom: 40px;
+    }
+    .cover-meta {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .cover-meta-item { font-size: 13px; opacity: .6; }
+    .cover-meta-item strong { display: block; font-size: 15px; opacity: 1; color: white; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .badge-free { background: rgba(16,185,129,.15); color: #10b981; border: 1px solid rgba(16,185,129,.3); }
+    .badge-required { background: rgba(233,69,96,.15); color: #e94560; border: 1px solid rgba(233,69,96,.3); }
+    .badge-optional { background: rgba(245,158,11,.15); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
+
+    /* ─── LAYOUT ─── */
+    .container { max-width: 960px; margin: 0 auto; padding: 48px 32px; }
+
+    /* ─── TOC ─── */
+    .toc {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 48px;
+      box-shadow: var(--shadow);
+    }
+    .toc h2 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .toc-list { list-style: none; }
+    .toc-list li {
+      padding: 5px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .toc-list li:last-child { border: none; }
+    .toc-list a {
+      text-decoration: none;
+      color: var(--accent2);
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      transition: color .2s;
+    }
+    .toc-list a:hover { color: var(--accent); }
+    .toc-list .toc-num {
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* ─── SECTION ─── */
+    .section { margin-bottom: 56px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+    }
+    .section-num {
+      width: 40px; height: 40px;
+      background: var(--brand);
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .section-title { font-size: 22px; font-weight: 700; }
+    .section-subtitle { font-size: 13px; color: var(--muted); }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title .icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .icon-green  { background: #d1fae5; }
+    .icon-blue   { background: #dbeafe; }
+    .icon-purple { background: #ede9fe; }
+    .icon-orange { background: #ffedd5; }
+    .icon-red    { background: #fee2e2; }
+
+    /* ─── STEPS ─── */
+    .steps { list-style: none; }
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .step:last-child { border: none; }
+    .step-num {
+      width: 28px; height: 28px;
+      background: var(--accent2);
+      color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-body { flex: 1; }
+    .step-body strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .step-body p { color: var(--muted); font-size: 13px; }
+    .step-body .link-box {
+      margin-top: 8px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--accent2);
+      word-break: break-all;
+    }
+    .step-body .link-box a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .step-body .link-box a:hover { text-decoration: underline; }
+
+    /* ─── CODE ─── */
+    pre, code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: 10px;
+      padding: 20px;
+      overflow-x: auto;
+      font-size: 12.5px;
+      line-height: 1.8;
+      margin: 12px 0;
+    }
+    code {
+      background: #f1f5f9;
+      color: #dc2626;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+    .comment { color: #6b7280; }
+    .key     { color: #60a5fa; }
+    .val     { color: #34d399; }
+    .str     { color: #fbbf24; }
+
+    /* ─── GRID ─── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ─── TABLE ─── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 12px 0;
+    }
+    th {
+      background: var(--brand);
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:nth-child(even) td { background: #f8fafc; }
+    tr:last-child td { border: none; }
+
+    /* ─── ALERT ─── */
+    .alert {
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px;
+      margin: 12px 0;
+      display: flex;
+      gap: 10px;
+    }
+    .alert-info    { background: #eff6ff; border-left: 4px solid var(--blue);   color: #1e40af; }
+    .alert-success { background: #f0fdf4; border-left: 4px solid var(--green);  color: #166534; }
+    .alert-warning { background: #fffbeb; border-left: 4px solid var(--yellow); color: #92400e; }
+    .alert-danger  { background: #fef2f2; border-left: 4px solid var(--accent); color: #991b1b; }
+
+    /* ─── PLATFORM ROW ─── */
+    .platform-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .platform-logo {
+      width: 44px; height: 44px;
+      border-radius: 8px;
+      background: var(--brand);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800;
+      font-size: 11px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .platform-info { flex: 1; }
+    .platform-info strong { display: block; font-size: 14px; }
+    .platform-info span { font-size: 12px; color: var(--muted); }
+    .platform-badge { flex-shrink: 0; }
+
+    /* ─── CHECKLIST ─── */
+    .checklist { list-style: none; }
+    .checklist li {
+      padding: 7px 0;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .checklist li:last-child { border: none; }
+    .checklist li::before {
+      content: '☐';
+      font-size: 16px;
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-top: -1px;
+    }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+      margin: 40px 0;
+    }
+
+    /* ─── FOOTER ─── */
+    .footer {
+      background: var(--brand);
+      color: white;
+      padding: 40px 60px;
+      text-align: center;
+    }
+    .footer p { opacity: .5; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COVER PAGE
+═══════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">OZOBATH E-Commerce</div>
+  <h1>Complete <span>Deployment</span> &amp;<br>Integration Guide</h1>
+  <p>Step-by-step instructions to deploy the OZOBATH platform on free cloud services and integrate Razorpay payments &amp; Shiprocket shipping.</p>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <strong>Stack</strong>
+      React + Vue + Node.js + MongoDB
+    </div>
+    <div class="cover-meta-item">
+      <strong>Payment</strong>
+      Razorpay
+    </div>
+    <div class="cover-meta-item">
+      <strong>Shipping</strong>
+      Shiprocket
+    </div>
+    <div class="cover-meta-item">
+      <strong>Hosting Cost</strong>
+      $0 / month
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ═══════ TABLE OF CONTENTS ═══════ -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ul class="toc-list">
+      <li><a href="#s1"><span>1. Architecture &amp; Free Hosting Overview</span><span class="toc-num">Platform choices explained</span></a></li>
+      <li><a href="#s2"><span>2. MongoDB Atlas — Free Database</span><span class="toc-num">Cloud database setup</span></a></li>
+      <li><a href="#s3"><span>3. Cloudinary — Free Image Storage</span><span class="toc-num">Product image hosting</span></a></li>
+      <li><a href="#s4"><span>4. Render — Free Backend Hosting</span><span class="toc-num">Express API deployment</span></a></li>
+      <li><a href="#s5"><span>5. Vercel — Free Frontend Hosting</span><span class="toc-num">Client + Admin deployment</span></a></li>
+      <li><a href="#s6"><span>6. Razorpay — Payment Gateway</span><span class="toc-num">Account + API key setup</span></a></li>
+      <li><a href="#s7"><span>7. Shiprocket — Shipping Management</span><span class="toc-num">Account + API credentials</span></a></li>
+      <li><a href="#s8"><span>8. Gmail SMTP — Free Email</span><span class="toc-num">Order confirmation emails</span></a></li>
+      <li><a href="#s9"><span>9. Environment Variables Master Reference</span><span class="toc-num">All .env values in one place</span></a></li>
+      <li><a href="#s10"><span>10. Post-Deployment Checklist</span><span class="toc-num">Final verification steps</span></a></li>
+    </ul>
+  </div>
+
+  <!-- ═══════ SECTION 1 — ARCHITECTURE ═══════ -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div>
+        <div class="section-title">Architecture &amp; Free Hosting Overview</div>
+        <div class="section-subtitle">Understanding what goes where</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">🏗️</div>
+        OZOBATH has 3 apps — each deploys to a separate free service
+      </div>
+      <table>
+        <tr>
+          <th>App</th>
+          <th>Technology</th>
+          <th>Deploy To</th>
+          <th>Free Tier</th>
+        </tr>
+        <tr>
+          <td><strong>Customer Website</strong><br><small style="color:#64748b">apps/client</small></td>
+          <td>React + Vite</td>
+          <td>Vercel</td>
+          <td><span class="badge badge-free">Free Forever</span></td>
+        </tr>
+        <tr>
+          <td><strong>Admin Panel</strong><br><small style="color:#64748b">apps/admin</small></td>
+          <td>Vue 3 + Vite</td>
+          <td>Vercel</td>
+          <td><span class="badge badge-free">Free Forever</span></td>
+        </tr>
+        <tr>
+          <td><strong>Backend API</strong><br><small style="color:#64748b">apps/server</small></td>
+          <td>Node.js + Express</td>
+          <td>Render</td>
+          <td><span class="badge badge-free">Free (sleeps)</span></td>
+        </tr>
+        <tr>
+          <td><strong>Database</strong></td>
+          <td>MongoDB</td>
+          <td>MongoDB Atlas</td>
+          <td><span class="badge badge-free">512 MB Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>Images</strong></td>
+          <td>Product photos</td>
+          <td>Cloudinary</td>
+          <td><span class="badge badge-free">25 GB Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>Emails</strong></td>
+          <td>SMTP</td>
+          <td>Gmail</td>
+          <td><span class="badge badge-free">Free</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="alert alert-warning">
+      ⚠️ <strong>Render Free Tier Note:</strong> The free backend server goes to "sleep" after 15 minutes of inactivity. The first request after sleep takes ~30 seconds to wake up. This is normal and acceptable for low-traffic sites. Upgrade to a paid plan ($7/mo) when you need instant responses.
+    </div>
+
+    <div class="alert alert-info">
+      ℹ️ <strong>Accounts You Need to Create:</strong> MongoDB Atlas, Cloudinary, Render, Vercel (2 deployments), Razorpay, Shiprocket, and Gmail App Password. All sections below walk through each one step-by-step.
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 2 — MONGODB ATLAS ═══════ -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num" style="background:#10b981">2</div>
+      <div>
+        <div class="section-title">MongoDB Atlas — Free Cloud Database</div>
+        <div class="section-subtitle">Create and connect your database first — everything else depends on this</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">🍃</div>
+        Create a Free MongoDB Atlas Account
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Go to MongoDB Atlas and sign up</strong>
+            <p>Create a free account — you can sign up with Google for speed.</p>
+            <div class="link-box">🔗 <a href="https://www.mongodb.com/cloud/atlas/register" target="_blank">https://www.mongodb.com/cloud/atlas/register</a></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Create a New Project</strong>
+            <p>After login, click <strong>"New Project"</strong> → Name it <code>ozobath</code> → Click <strong>"Create Project"</strong>.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Build a Free Cluster</strong>
+            <p>Click <strong>"Build a Database"</strong> → Select <strong>"FREE" (M0 Sandbox)</strong> → Choose provider: <strong>AWS</strong> → Region: <strong>Mumbai (ap-south-1)</strong> for India → Click <strong>"Create"</strong>.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Create a Database User</strong>
+            <p>A popup will appear. Set a username (e.g., <code>ozobath-user</code>) and a strong password. <strong>Save this password — you'll need it.</strong> Click <strong>"Create User"</strong>.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <strong>Add IP Whitelist: Allow All</strong>
+            <p>On the same setup screen, under "Where would you like to connect from?" → Click <strong>"Add My Current IP"</strong> THEN also add <code>0.0.0.0/0</code> (allows all IPs — required for Render.com). Click <strong>"Finish and Close"</strong>.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <strong>Get Your Connection String</strong>
+            <p>In the Atlas dashboard, click <strong>"Connect"</strong> on your cluster → <strong>"Connect your application"</strong> → Select <strong>Node.js, version 4.1 or later</strong> → Copy the connection string. It looks like:</p>
+            <div class="link-box">mongodb+srv://ozobath-user:<strong>YOUR_PASSWORD</strong>@cluster0.xxxxx.mongodb.net/<strong>ozobath</strong>?retryWrites=true&w=majority</div>
+            <p style="margin-top:6px;color:#e94560;font-size:12px;">⚠️ Replace &lt;password&gt; with your actual password, and add <strong>ozobath</strong> as the database name before the <code>?</code>.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <strong>Seed Super Admin Account</strong>
+            <p>After deploying the backend, run this command once to create the admin user:</p>
+            <pre><code>cd apps/server
+node src/seeds/superAdmin.seed.js</code></pre>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 3 — CLOUDINARY ═══════ -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num" style="background:#3b82f6">3</div>
+      <div>
+        <div class="section-title">Cloudinary — Free Image Storage</div>
+        <div class="section-subtitle">Stores all product images, banners, and admin-uploaded media</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">☁️</div>
+        Create a Free Cloudinary Account
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Register for a free account</strong>
+            <p>Sign up for free — the free plan gives you <strong>25 GB storage</strong> and <strong>25 GB bandwidth/month</strong> which is more than enough to start.</p>
+            <div class="link-box">🔗 <a href="https://cloudinary.com/users/register_free" target="_blank">https://cloudinary.com/users/register_free</a></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Find your API credentials</strong>
+            <p>After login, go to your <strong>Dashboard</strong>. You'll see three values at the top:</p>
+            <div class="link-box">
+              Cloud Name: <strong>dxxxxxxxxx</strong><br>
+              API Key: <strong>123456789012345</strong><br>
+              API Secret: <strong>xxxxxxxxxxxxxxxxxxxxxxxx</strong>
+            </div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Copy all three values</strong>
+            <p>Save these in a notepad — you'll add them to the backend environment variables in Section 9.</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="alert alert-success">
+        ✅ No additional Cloudinary configuration needed — the app handles folder structure, image optimization, and deletion automatically.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 4 — RENDER ═══════ -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num" style="background:#7c3aed">4</div>
+      <div>
+        <div class="section-title">Render — Free Backend Hosting</div>
+        <div class="section-subtitle">Deploys the Node.js + Express API server (apps/server)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-purple">🚀</div>
+        Deploy the Backend API to Render
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Create a Render account</strong>
+            <p>Sign up with GitHub — this is the easiest way to connect your code repository.</p>
+            <div class="link-box">🔗 <a href="https://render.com" target="_blank">https://render.com</a></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Push code to GitHub first</strong>
+            <p>Make sure the project is pushed to a GitHub repository. If not, create a new repo at <a href="https://github.com/new" target="_blank">github.com/new</a> and push:
+            </p>
+            <pre><code>git remote add origin https://github.com/YOUR_USERNAME/ozobath-ecommerce.git
+git push -u origin main</code></pre>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Create a New Web Service on Render</strong>
+            <p>In Render dashboard → Click <strong>"New +"</strong> → <strong>"Web Service"</strong> → Connect your GitHub account → Select the <code>ozobath-ecommerce</code> repository.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Configure the service settings</strong>
+            <p>Fill in these exact values:</p>
+            <table>
+              <tr><th>Field</th><th>Value</th></tr>
+              <tr><td>Name</td><td>ozobath-api</td></tr>
+              <tr><td>Root Directory</td><td>apps/server</td></tr>
+              <tr><td>Environment</td><td>Node</td></tr>
+              <tr><td>Build Command</td><td><code>npm install</code></td></tr>
+              <tr><td>Start Command</td><td><code>node server.js</code></td></tr>
+              <tr><td>Plan</td><td>Free</td></tr>
+            </table>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <strong>Add Environment Variables</strong>
+            <p>Before clicking "Create Web Service", scroll down to <strong>"Environment Variables"</strong>. Add ALL the variables from <strong>Section 9</strong> of this guide. You MUST add these before deployment or the app will crash.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <strong>Click "Create Web Service" and wait</strong>
+            <p>Render will build and deploy your server. This takes 3–5 minutes. Once deployed, you'll get a URL like:</p>
+            <div class="link-box">https://ozobath-api.onrender.com</div>
+            <p style="margin-top:6px;font-size:12px;color:#64748b;">Save this URL — you'll need it when deploying the frontend apps.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="alert alert-warning">
+      ⚠️ <strong>Important:</strong> After getting your Render backend URL, go back and update the <code>CLIENT_URL</code> and <code>ADMIN_URL</code> environment variables to your actual Vercel URLs (you'll get those in the next section).
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 5 — VERCEL ═══════ -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num" style="background:#000000">5</div>
+      <div>
+        <div class="section-title">Vercel — Free Frontend Hosting</div>
+        <div class="section-subtitle">Deploy both the Customer Website (React) and Admin Panel (Vue)</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">
+          <div class="icon icon-blue">🛍️</div>
+          Deploy: Customer Website (apps/client)
+        </div>
+        <ol class="steps">
+          <li class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>Go to Vercel and sign in with GitHub</strong>
+              <div class="link-box">🔗 <a href="https://vercel.com/signup" target="_blank">https://vercel.com/signup</a></div>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>Import the repository</strong>
+              <p>Click <strong>"Add New → Project"</strong> → Import <code>ozobath-ecommerce</code> from GitHub.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>Configure project settings</strong>
+              <table>
+                <tr><th>Field</th><th>Value</th></tr>
+                <tr><td>Root Directory</td><td><code>apps/client</code></td></tr>
+                <tr><td>Framework Preset</td><td>Vite</td></tr>
+                <tr><td>Build Command</td><td><code>npm run build</code></td></tr>
+                <tr><td>Output Directory</td><td><code>dist</code></td></tr>
+              </table>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <strong>Add Environment Variable</strong>
+              <p>In the "Environment Variables" section add:</p>
+              <div class="link-box">VITE_API_URL = https://ozobath-api.onrender.com/api/v1</div>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num">5</div>
+            <div class="step-body">
+              <strong>Click Deploy</strong>
+              <p>Wait 2 minutes. You'll get a URL like <code>ozobath.vercel.app</code></p>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="icon icon-orange">⚙️</div>
+          Deploy: Admin Panel (apps/admin)
+        </div>
+        <ol class="steps">
+          <li class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>In Vercel, add a second project</strong>
+              <p>Click <strong>"Add New → Project"</strong> again → Import the same repository.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>Configure project settings</strong>
+              <table>
+                <tr><th>Field</th><th>Value</th></tr>
+                <tr><td>Root Directory</td><td><code>apps/admin</code></td></tr>
+                <tr><td>Framework Preset</td><td>Vite</td></tr>
+                <tr><td>Build Command</td><td><code>npm run build</code></td></tr>
+                <tr><td>Output Directory</td><td><code>dist</code></td></tr>
+              </table>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>Add Environment Variable</strong>
+              <div class="link-box">VITE_API_URL = https://ozobath-api.onrender.com/api/v1</div>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <strong>Click Deploy</strong>
+              <p>You'll get a URL like <code>ozobath-admin.vercel.app</code></p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">🔄</div>
+        After Both Vercel Deployments — Update Render
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Go back to Render → Your ozobath-api service → <strong>Environment</strong> → Update these two variables:</p>
+      <pre><code><span class="key">CLIENT_URL</span>=<span class="val">https://ozobath.vercel.app</span>
+<span class="key">ADMIN_URL</span>=<span class="val">https://ozobath-admin.vercel.app</span></code></pre>
+      <p style="font-size:12px;color:var(--muted);">Then click <strong>"Save Changes"</strong> — Render will automatically redeploy the backend with the updated CORS settings.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 6 — RAZORPAY ═══════ -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num" style="background:#3395ff">6</div>
+      <div>
+        <div class="section-title">Razorpay — Payment Gateway</div>
+        <div class="section-subtitle">Accepts UPI, Cards, Net Banking, Wallets in India — client must create this account</div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger">
+      🔴 <strong>Client Action Required:</strong> The business owner must create the Razorpay account using their business details. Payments will go directly to their bank account. This cannot be done by the developer on their behalf.
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">💳</div>
+        Phase 1: Create Razorpay Account &amp; Get Test Keys
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Sign up on Razorpay</strong>
+            <p>Create an account using the business email address.</p>
+            <div class="link-box">🔗 <a href="https://dashboard.razorpay.com/signup" target="_blank">https://dashboard.razorpay.com/signup</a></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Get Test API Keys (for testing)</strong>
+            <p>After login → Go to <strong>Settings → API Keys</strong> → Click <strong>"Generate Test Key"</strong>. You'll see:</p>
+            <div class="link-box">
+              Key ID: <strong>rzp_test_XXXXXXXXXXXXXXXX</strong><br>
+              Key Secret: <strong>XXXXXXXXXXXXXXXXXXXXXXXX</strong>
+            </div>
+            <p style="margin-top:6px;font-size:12px;color:#e94560;">⚠️ Copy the Key Secret immediately — it's shown only once.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Add test keys to environment variables</strong>
+            <p>Add these to your Render environment variables (see Section 9):</p>
+            <div class="link-box">
+              RAZORPAY_KEY_ID = rzp_test_XXXXXXXXXXXXXXXX<br>
+              RAZORPAY_KEY_SECRET = XXXXXXXXXXXXXXXXXXXXXXXX
+            </div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Test payments with test card numbers</strong>
+            <p>Use these Razorpay test credentials when placing test orders:</p>
+            <table>
+              <tr><th>Method</th><th>Value</th></tr>
+              <tr><td>Card Number</td><td><code>4111 1111 1111 1111</code></td></tr>
+              <tr><td>Expiry</td><td>Any future date (e.g., 12/26)</td></tr>
+              <tr><td>CVV</td><td>Any 3 digits (e.g., 123)</td></tr>
+              <tr><td>OTP</td><td><code>1234</code></td></tr>
+            </table>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">✅</div>
+        Phase 2: KYC Verification &amp; Go Live (Receive Real Payments)
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Complete Business Activation (KYC)</strong>
+            <p>In Razorpay Dashboard → Click <strong>"Activate Account"</strong> or go to <strong>Account &amp; Settings → Business Details</strong>. Fill in:</p>
+            <ul style="margin-top:8px;padding-left:20px;font-size:13px;color:var(--muted);">
+              <li>Business Type (Proprietorship / Private Limited etc.)</li>
+              <li>Business Category (Retail - Home Improvement)</li>
+              <li>Business PAN / GST Number</li>
+              <li>Bank Account details for settlements</li>
+              <li>Address proof documents</li>
+            </ul>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Wait for Razorpay approval</strong>
+            <p>Approval typically takes <strong>1–3 business days</strong> after document submission. You'll receive an email confirmation.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Generate Live API Keys</strong>
+            <p>After approval → Settings → API Keys → Switch to <strong>"Live Mode"</strong> toggle → Click <strong>"Generate Live Key"</strong>.</p>
+            <div class="link-box">
+              Key ID: <strong>rzp_live_XXXXXXXXXXXXXXXX</strong><br>
+              Key Secret: <strong>XXXXXXXXXXXXXXXXXXXXXXXX</strong>
+            </div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Update live keys in Render</strong>
+            <p>Replace test keys with live keys in Render environment variables. The server will automatically start accepting real payments.</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="alert alert-info">
+        ℹ️ <strong>Settlement Schedule:</strong> Razorpay settles payments to your bank account on a T+2 (2 business days) cycle by default. You can see all transactions in the Razorpay dashboard under <strong>Transactions</strong>.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-purple">📄</div>
+        Razorpay Documents Required for KYC
+      </div>
+      <table>
+        <tr><th>Document</th><th>Accepted Formats</th><th>Notes</th></tr>
+        <tr>
+          <td>Business PAN Card</td>
+          <td>PDF, JPG, PNG</td>
+          <td>Mandatory</td>
+        </tr>
+        <tr>
+          <td>Bank Account Proof</td>
+          <td>Cancelled cheque or passbook</td>
+          <td>Account where settlements go</td>
+        </tr>
+        <tr>
+          <td>GST Certificate</td>
+          <td>PDF, JPG</td>
+          <td>Required if GST registered</td>
+        </tr>
+        <tr>
+          <td>Certificate of Incorporation</td>
+          <td>PDF</td>
+          <td>For Pvt Ltd / LLP only</td>
+        </tr>
+        <tr>
+          <td>Address Proof</td>
+          <td>Electricity bill / rental agreement</td>
+          <td>Last 3 months</td>
+        </tr>
+        <tr>
+          <td>Director/Proprietor Aadhar + PAN</td>
+          <td>PDF, JPG</td>
+          <td>Personal KYC of owner</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 7 — SHIPROCKET ═══════ -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="section-num" style="background:#ff6b35">7</div>
+      <div>
+        <div class="section-title">Shiprocket — Shipping Management</div>
+        <div class="section-subtitle">Multi-carrier shipping, order tracking, AWB generation — client must create this account</div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger">
+      🔴 <strong>Client Action Required:</strong> The business owner must create a Shiprocket account. Shipping contracts and COD settlements are tied to the business details. The developer cannot create this account.
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-orange">📦</div>
+        Create Shiprocket Account &amp; Get API Credentials
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Sign up on Shiprocket</strong>
+            <p>Register with the business email. You can choose the free plan to start.</p>
+            <div class="link-box">🔗 <a href="https://app.shiprocket.in/register" target="_blank">https://app.shiprocket.in/register</a></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Complete business profile</strong>
+            <p>After login → <strong>Settings → Company Details</strong> → Fill in:</p>
+            <ul style="margin-top:8px;padding-left:20px;font-size:13px;color:var(--muted);">
+              <li>Company Name, Address, Pincode</li>
+              <li>GSTIN (if applicable)</li>
+              <li>Pickup Location details</li>
+              <li>Bank account for COD remittances</li>
+            </ul>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Create a Pickup Location</strong>
+            <p>Go to <strong>Settings → Pickup Addresses</strong> → Add the warehouse/office address where couriers will come to pick up orders. Note down the <strong>pickup pincode</strong>.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Get API Credentials</strong>
+            <p>The OZOBATH backend uses Shiprocket's email + password for API authentication (no separate API key needed). Simply use the registered Shiprocket account email and password:</p>
+            <div class="link-box">
+              SHIPROCKET_EMAIL = your-registered@email.com<br>
+              SHIPROCKET_PASSWORD = your-shiprocket-password<br>
+              PICKUP_PINCODE = 560001 <span style="color:#64748b">(replace with your actual pincode)</span>
+            </div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <strong>Set up Webhook (for automatic order status updates)</strong>
+            <p>In Shiprocket → <strong>Settings → API</strong> → Add webhook URL:</p>
+            <div class="link-box">https://ozobath-api.onrender.com/api/v1/shipping/webhook</div>
+            <p style="margin-top:6px;font-size:12px;color:var(--muted);">This URL receives automatic updates when a shipment is picked up, in transit, delivered, etc. — updating your order status in real-time.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">📋</div>
+        How Shipping Works (Admin Workflow)
+      </div>
+      <table>
+        <tr><th>Step</th><th>Action in Admin Panel</th><th>What Happens</th></tr>
+        <tr><td>1</td><td>Customer places order</td><td>Order created with status "pending"</td></tr>
+        <tr><td>2</td><td>Admin confirms payment</td><td>Order moves to "processing"</td></tr>
+        <tr><td>3</td><td>Admin clicks "Create Shipment"</td><td>Order sent to Shiprocket</td></tr>
+        <tr><td>4</td><td>Admin clicks "Assign Courier"</td><td>AWB number generated, label ready</td></tr>
+        <tr><td>5</td><td>Admin clicks "Schedule Pickup"</td><td>Courier notified for pickup</td></tr>
+        <tr><td>6</td><td>Automatic via webhook</td><td>Status updates: in transit → delivered</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 8 — GMAIL SMTP ═══════ -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <div class="section-num" style="background:#ea4335">8</div>
+      <div>
+        <div class="section-title">Gmail SMTP — Free Email Service</div>
+        <div class="section-subtitle">For order confirmations, password resets, and notification emails</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-red">📧</div>
+        Set Up Gmail App Password (2FA Required)
+      </div>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Enable 2-Factor Authentication on your Gmail</strong>
+            <div class="link-box">🔗 <a href="https://myaccount.google.com/security" target="_blank">https://myaccount.google.com/security</a> → "2-Step Verification" → Turn On</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Generate an App Password</strong>
+            <div class="link-box">🔗 <a href="https://myaccount.google.com/apppasswords" target="_blank">https://myaccount.google.com/apppasswords</a></div>
+            <p style="margin-top:6px;">Select app: <strong>"Mail"</strong> → Select device: <strong>"Other (Custom name)"</strong> → Type <strong>"OZOBATH Server"</strong> → Click <strong>"Generate"</strong>.</p>
+            <p style="margin-top:6px;font-size:12px;color:#e94560;">You'll get a 16-character password like: <code>abcd efgh ijkl mnop</code> → Remove spaces: <code>abcdefghijklmnop</code></p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Add to environment variables</strong>
+            <div class="link-box">
+              SMTP_HOST = smtp.gmail.com<br>
+              SMTP_PORT = 587<br>
+              SMTP_USER = your-gmail@gmail.com<br>
+              SMTP_PASS = abcdefghijklmnop<br>
+              EMAIL_FROM = noreply@ozobath.com
+            </div>
+          </div>
+        </li>
+      </ol>
+
+      <div class="alert alert-info">
+        ℹ️ Gmail SMTP free tier allows up to <strong>500 emails/day</strong>. For high-volume production use, consider upgrading to <strong>SendGrid</strong> (100 emails/day free) or <strong>Resend</strong> (3,000 emails/month free).
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 9 — ENV VARS ═══════ -->
+  <div class="section" id="s9">
+    <div class="section-header">
+      <div class="section-num" style="background:#dc2626">9</div>
+      <div>
+        <div class="section-title">Environment Variables — Master Reference</div>
+        <div class="section-subtitle">All variables that must be added to Render before the backend goes live</div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger">
+      🔴 <strong>Critical:</strong> These environment variables MUST be set in Render before deployment. Missing variables will cause the app to crash. Do NOT commit the actual values to GitHub.
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-red">⚙️</div>
+        Render Backend — Environment Variables (apps/server)
+      </div>
+
+      <pre><code><span class="comment"># ─── APP ────────────────────────────────────────────────────</span>
+<span class="key">NODE_ENV</span>=<span class="val">production</span>
+<span class="key">PORT</span>=<span class="val">5000</span>
+<span class="key">CLIENT_URL</span>=<span class="val">https://ozobath.vercel.app</span>         <span class="comment"># Your Vercel client URL</span>
+<span class="key">ADMIN_URL</span>=<span class="val">https://ozobath-admin.vercel.app</span>    <span class="comment"># Your Vercel admin URL</span>
+
+<span class="comment"># ─── MONGODB ─────────────────────────────────────────────────</span>
+<span class="key">MONGODB_URI</span>=<span class="val">mongodb+srv://ozobath-user:PASSWORD@cluster0.xxxxx.mongodb.net/ozobath?retryWrites=true&w=majority</span>
+
+<span class="comment"># ─── JWT SECRETS (generate random strings — use a password manager) ──</span>
+<span class="key">JWT_ACCESS_SECRET</span>=<span class="val">your_super_secret_access_key_min_32_characters</span>
+<span class="key">JWT_REFRESH_SECRET</span>=<span class="val">your_super_secret_refresh_key_min_32_characters</span>
+<span class="key">JWT_ACCESS_EXPIRY</span>=<span class="val">15m</span>
+<span class="key">JWT_REFRESH_EXPIRY</span>=<span class="val">7d</span>
+
+<span class="comment"># ─── CLOUDINARY ──────────────────────────────────────────────</span>
+<span class="key">CLOUDINARY_CLOUD_NAME</span>=<span class="val">your_cloud_name</span>
+<span class="key">CLOUDINARY_API_KEY</span>=<span class="val">123456789012345</span>
+<span class="key">CLOUDINARY_API_SECRET</span>=<span class="val">xxxxxxxxxxxxxxxxxxxxxxxx</span>
+
+<span class="comment"># ─── RAZORPAY ────────────────────────────────────────────────</span>
+<span class="key">RAZORPAY_KEY_ID</span>=<span class="val">rzp_test_XXXXXXXXXXXXXXXX</span>      <span class="comment"># Change to rzp_live_ when going live</span>
+<span class="key">RAZORPAY_KEY_SECRET</span>=<span class="val">XXXXXXXXXXXXXXXXXXXXXXXX</span>
+
+<span class="comment"># ─── EMAIL (GMAIL SMTP) ───────────────────────────────────────</span>
+<span class="key">SMTP_HOST</span>=<span class="val">smtp.gmail.com</span>
+<span class="key">SMTP_PORT</span>=<span class="val">587</span>
+<span class="key">SMTP_USER</span>=<span class="val">youremail@gmail.com</span>
+<span class="key">SMTP_PASS</span>=<span class="val">abcdefghijklmnop</span>                   <span class="comment"># 16-char Gmail App Password (no spaces)</span>
+<span class="key">EMAIL_FROM</span>=<span class="val">noreply@ozobath.com</span>
+
+<span class="comment"># ─── SHIPROCKET ──────────────────────────────────────────────</span>
+<span class="key">SHIPROCKET_EMAIL</span>=<span class="val">your-shiprocket-email@example.com</span>
+<span class="key">SHIPROCKET_PASSWORD</span>=<span class="val">your-shiprocket-password</span>
+<span class="key">PICKUP_PINCODE</span>=<span class="val">560001</span>                         <span class="comment"># Your warehouse pincode</span>
+
+<span class="comment"># ─── SUPER ADMIN (used only for first seed) ──────────────────</span>
+<span class="key">SUPER_ADMIN_NAME</span>=<span class="val">OZOBATH Admin</span>
+<span class="key">SUPER_ADMIN_EMAIL</span>=<span class="val">admin@ozobath.com</span>
+<span class="key">SUPER_ADMIN_PASSWORD</span>=<span class="val">OzoBath@2024!</span>
+<span class="key">SUPER_ADMIN_PHONE</span>=<span class="val">9999999999</span>
+
+<span class="comment"># ─── OPTIONAL (Gemini AI Chatbot) ────────────────────────────</span>
+<span class="key">GEMINI_API_KEY</span>=<span class="val">your_gemini_api_key</span>            <span class="comment"># Optional - leave blank to disable chatbot</span></code></pre>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">🌐</div>
+        Vercel Frontend Variables (Both apps/client and apps/admin)
+      </div>
+      <pre><code><span class="key">VITE_API_URL</span>=<span class="val">https://ozobath-api.onrender.com/api/v1</span>
+
+<span class="comment"># Add VITE_RAZORPAY_KEY_ID to client only (not admin)</span>
+<span class="key">VITE_RAZORPAY_KEY_ID</span>=<span class="val">rzp_test_XXXXXXXXXXXXXXXX</span>   <span class="comment"># apps/client only</span></code></pre>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">In Vercel: Project Settings → Environment Variables → Add these. Then re-deploy.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">🔑</div>
+        How to Generate Secure JWT Secrets
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Run this command in your terminal to generate a secure random string for JWT secrets:</p>
+      <pre><code><span class="comment"># Option 1: Node.js (run anywhere)</span>
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+<span class="comment"># Option 2: Online tool</span>
+<span class="str">https://generate-secret.vercel.app/64</span></code></pre>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">Generate TWO different secrets — one for <code>JWT_ACCESS_SECRET</code> and one for <code>JWT_REFRESH_SECRET</code>.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════ SECTION 10 — CHECKLIST ═══════ -->
+  <div class="section" id="s10">
+    <div class="section-header">
+      <div class="section-num" style="background:#10b981">10</div>
+      <div>
+        <div class="section-title">Post-Deployment Verification Checklist</div>
+        <div class="section-subtitle">Go through every item before announcing the site is live</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">
+          <div class="icon icon-green">🗄️</div>
+          Database &amp; Backend
+        </div>
+        <ul class="checklist">
+          <li>MongoDB Atlas cluster is running (green status)</li>
+          <li>Render service is deployed and green</li>
+          <li>Visit <code>/api/v1/health</code> endpoint — returns 200 OK</li>
+          <li>Super admin seed script has been run</li>
+          <li>Can log in to admin panel with seed credentials</li>
+          <li>IP whitelist includes <code>0.0.0.0/0</code> in Atlas</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="icon icon-blue">🌐</div>
+          Frontend &amp; Admin
+        </div>
+        <ul class="checklist">
+          <li>Customer website loads without errors</li>
+          <li>Admin panel loads without errors</li>
+          <li>Products display correctly with images</li>
+          <li>Search and filtering work</li>
+          <li>Cart add/remove functions correctly</li>
+          <li>User registration and login works</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="icon icon-purple">💳</div>
+          Payments
+        </div>
+        <ul class="checklist">
+          <li>Razorpay test keys are set in Render</li>
+          <li>Razorpay widget appears at checkout</li>
+          <li>Test payment with card <code>4111 1111 1111 1111</code> succeeds</li>
+          <li>Order appears in admin panel after payment</li>
+          <li>COD option is available and creates order</li>
+          <li>Live keys replaced before going public</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="icon icon-orange">📦</div>
+          Shipping &amp; Email
+        </div>
+        <ul class="checklist">
+          <li>Shiprocket account is active and verified</li>
+          <li>Pickup address is configured in Shiprocket</li>
+          <li>Webhook URL is set in Shiprocket dashboard</li>
+          <li>Order confirmation email received on test order</li>
+          <li>Shipping rates appear for a test pincode</li>
+          <li>Admin can create a shipment from the panel</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">📋</div>
+        All Services Summary — Quick Reference Links
+      </div>
+      <table>
+        <tr>
+          <th>Service</th>
+          <th>Purpose</th>
+          <th>Dashboard Link</th>
+          <th>Cost</th>
+        </tr>
+        <tr>
+          <td><strong>MongoDB Atlas</strong></td>
+          <td>Database</td>
+          <td><a href="https://cloud.mongodb.com" target="_blank">cloud.mongodb.com</a></td>
+          <td><span class="badge badge-free">Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>Cloudinary</strong></td>
+          <td>Image Storage</td>
+          <td><a href="https://cloudinary.com/console" target="_blank">cloudinary.com/console</a></td>
+          <td><span class="badge badge-free">Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>Render</strong></td>
+          <td>Backend API</td>
+          <td><a href="https://dashboard.render.com" target="_blank">dashboard.render.com</a></td>
+          <td><span class="badge badge-free">Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>Vercel</strong></td>
+          <td>Frontend + Admin</td>
+          <td><a href="https://vercel.com/dashboard" target="_blank">vercel.com/dashboard</a></td>
+          <td><span class="badge badge-free">Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>Razorpay</strong></td>
+          <td>Payment Gateway</td>
+          <td><a href="https://dashboard.razorpay.com" target="_blank">dashboard.razorpay.com</a></td>
+          <td><span class="badge badge-free">Free (2% per txn)</span></td>
+        </tr>
+        <tr>
+          <td><strong>Shiprocket</strong></td>
+          <td>Shipping</td>
+          <td><a href="https://app.shiprocket.in" target="_blank">app.shiprocket.in</a></td>
+          <td><span class="badge badge-free">Free plan available</span></td>
+        </tr>
+        <tr>
+          <td><strong>Google (Gmail)</strong></td>
+          <td>Email</td>
+          <td><a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com</a></td>
+          <td><span class="badge badge-free">Free</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-orange">📈</div>
+        Upgrade Path — When to Scale Up
+      </div>
+      <table>
+        <tr><th>When</th><th>What to Upgrade</th><th>Cost</th></tr>
+        <tr>
+          <td>Slow first request (30s delay)</td>
+          <td>Render → Starter plan</td>
+          <td>$7/month</td>
+        </tr>
+        <tr>
+          <td>500+ orders/month</td>
+          <td>MongoDB Atlas → M10 cluster</td>
+          <td>$57/month</td>
+        </tr>
+        <tr>
+          <td>500+ emails/day</td>
+          <td>Switch to SendGrid or Resend</td>
+          <td>Free tier available</td>
+        </tr>
+        <tr>
+          <td>Custom domain (e.g. ozobath.com)</td>
+          <td>Buy domain → Point to Vercel</td>
+          <td>~$10/year</td>
+        </tr>
+        <tr>
+          <td>25 GB+ product images</td>
+          <td>Cloudinary → Paid plan</td>
+          <td>$89/month</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════ IMPORTANT NOTICES ═══════ -->
+  <div class="section">
+    <div class="card" style="border-left: 4px solid var(--accent); background: #fff5f5;">
+      <div class="card-title" style="color:var(--accent);">
+        <div class="icon icon-red">⚠️</div>
+        Important Security Notes
+      </div>
+      <ul style="list-style:none;padding:0;font-size:13px;">
+        <li style="padding:8px 0;border-bottom:1px solid #fee2e2;">🔐 <strong>Never</strong> commit <code>.env</code> files or API keys to GitHub. Always use Render/Vercel's environment variable settings.</li>
+        <li style="padding:8px 0;border-bottom:1px solid #fee2e2;">🔑 Change the default <code>SUPER_ADMIN_PASSWORD</code> immediately after first login.</li>
+        <li style="padding:8px 0;border-bottom:1px solid #fee2e2;">💳 Use Razorpay <strong>test keys</strong> during development. Only switch to live keys when the site is ready for real customers.</li>
+        <li style="padding:8px 0;border-bottom:1px solid #fee2e2;">🔒 JWT secrets must be at least 32 characters and truly random. Never use obvious strings like "secret123".</li>
+        <li style="padding:8px 0;">🌍 MongoDB Atlas IP whitelist <code>0.0.0.0/0</code> is fine for Render (dynamic IPs), but in future consider using VPC peering for higher security.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════════════ -->
+<div class="footer">
+  <p style="font-size:16px;font-weight:700;opacity:1;margin-bottom:8px;">OZOBATH E-Commerce Platform</p>
+  <p>Deployment Guide — Generated April 2026</p>
+  <p style="margin-top:8px;">For technical support, contact your developer. For payment/shipping issues, contact Razorpay / Shiprocket support directly.</p>
+</div>
+
+</body>
+</html>
