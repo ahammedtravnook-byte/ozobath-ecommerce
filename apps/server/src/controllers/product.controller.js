@@ -8,6 +8,7 @@ const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const slugify = require('../utils/slugify');
+const { logActivity } = require('./activityLog.controller');
 
 // GET /products - List with filters, sort, pagination, search
 const getProducts = asyncHandler(async (req, res) => {
@@ -87,6 +88,7 @@ const createProduct = asyncHandler(async (req, res) => {
   if (existingSlug) req.body.slug = `${req.body.slug}-${Date.now()}`;
 
   const product = await Product.create(req.body);
+  await logActivity(req, 'create_product', 'Product', product._id, { name: product.name, sku: product.sku });
   sendResponse(res, 201, product, 'Product created');
 });
 
@@ -102,6 +104,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     new: true, runValidators: true,
   });
   if (!product) throw new ApiError(404, 'Product not found.');
+  await logActivity(req, 'update_product', 'Product', product._id, { name: product.name, fields: Object.keys(req.body) });
   sendResponse(res, 200, product, 'Product updated');
 });
 
@@ -109,6 +112,7 @@ const updateProduct = asyncHandler(async (req, res) => {
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findByIdAndDelete(req.params.id);
   if (!product) throw new ApiError(404, 'Product not found.');
+  await logActivity(req, 'delete_product', 'Product', product._id, { name: product.name, sku: product.sku });
   sendResponse(res, 200, null, 'Product deleted');
 });
 

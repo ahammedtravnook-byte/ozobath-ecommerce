@@ -1,75 +1,7 @@
 // ============================================
 // OZOBATH - Admin API Services
 // ============================================
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
-
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 15000,
-  withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-// Request interceptor
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('adminAccessToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// Response interceptor with auto-refresh
-let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(p => error ? p.reject(error) : p.resolve(token));
-  failedQueue = [];
-};
-
-api.interceptors.response.use(
-  (res) => res.data,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(token => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const { data } = await axios.post(`${API_URL}/auth/refresh`, {}, {
-          withCredentials: true,
-        });
-
-        const newToken = data.data.accessToken;
-        localStorage.setItem('adminAccessToken', newToken);
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        processQueue(null, newToken);
-        return api(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        localStorage.removeItem('adminAccessToken');
-        localStorage.removeItem('adminUser');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-
-    return Promise.reject(error.response?.data || error);
-  }
-);
+import api from './axiosInstance';
 
 // ─── Auth ────────────────────────────────────────
 export const authAPI = {
@@ -91,6 +23,12 @@ export const productAPI = {
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),
+  bulkUpload: (file) => {
+    const formData = new FormData();
+    formData.append('excel', file);
+    return api.post('/products/bulk-upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  downloadTemplate: () => api.get('/products/bulk-upload/template', { responseType: 'blob' }),
 };
 
 // ─── Categories ──────────────────────────────────
@@ -135,9 +73,9 @@ export const blogAPI = {
 
 // ─── Reviews ─────────────────────────────────────
 export const reviewAPI = {
-  getAll: (params) => api.get('/reviews', { params }),
-  approve: (id, isApproved) => api.put(`/reviews/${id}/approve`, { isApproved }),
-  delete: (id) => api.delete(`/reviews/${id}`),
+  getAll: (params) => api.get('/reviews/admin/all', { params }),
+  approve: (id, isApproved) => api.put(`/reviews/admin/${id}`, { isApproved }),
+  delete: (id) => api.delete(`/reviews/admin/${id}`),
 };
 
 // ─── Coupons ─────────────────────────────────────
@@ -205,6 +143,14 @@ export const uploadAPI = {
   deleteImage: (publicId) => api.delete(`/upload/image/${publicId}`),
 };
 
+// ─── Admin Notifications ─────────────────────────
+export const adminNotificationAPI = {
+  getAll: (limit = 30) => api.get('/admin-notifications', { params: { limit } }),
+  getUnreadCount: () => api.get('/admin-notifications/unread-count'),
+  markAsRead: (id) => api.put(`/admin-notifications/${id}/read`),
+  markAllRead: () => api.put('/admin-notifications/mark-all-read'),
+};
+
 // ─── Admin Users (SuperAdmin) ────────────────────
 export const adminUserAPI = {
   getAll: () => api.get('/admin/users'),
@@ -212,4 +158,8 @@ export const adminUserAPI = {
   update: (id, data) => api.put(`/admin/users/${id}`, data),
   delete: (id) => api.delete(`/admin/users/${id}`),
   toggleStatus: (id) => api.put(`/admin/users/${id}/toggle-status`),
+};
+
+export const activityLogAPI = {
+  getAll: (params) => api.get('/activity-logs', { params }),
 };

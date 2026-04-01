@@ -46,6 +46,8 @@ export const orderAPI = {
   create: (data) => api.post('/orders', data),
   getMyOrders: (params) => api.get('/orders/my-orders', { params }),
   getMyOrder: (id) => api.get(`/orders/my-orders/${id}`),
+  cancel: (id, reason) => api.post(`/orders/${id}/cancel`, { reason }),
+  track: (orderId) => api.get(`/shipping/track/${orderId}`),
 };
 
 // ─── Content API (Dynamic CMS) ──────────────────
@@ -112,6 +114,7 @@ export const bookingAPI = {
 export const paymentAPI = {
   createOrder: (data) => api.post('/payment/create-order', data),
   verify: (data) => api.post('/payment/verify', data),
+  cod: (data) => api.post('/payment/cod', data),
 };
 
 // ─── Reels API (Instagram) ──────────────────────
@@ -123,4 +126,23 @@ export const reelAPI = {
 export const shippingAPI = {
   getRates: (data) => api.post('/shipping/rates', data),
   track: (orderId) => api.get(`/shipping/track/${orderId}`),
+};
+
+// ─── Notification API ────────────────────────────
+export const notificationAPI = {
+  getAll: (params) => api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllRead: () => api.put('/notifications/mark-all-read'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+};
+
+// ─── Extended Order API ──────────────────────────
+export const orderCancelAPI = {
+  cancel: (id, reason) => api.post(`/orders/${id}/cancel`, { reason }),
+};
+
+// ─── Extended Coupon API ─────────────────────────
+export const couponAutoAPI = {
+  autoApply: (orderAmount) => api.get('/coupons/auto-apply', { params: { orderAmount } }),
 };

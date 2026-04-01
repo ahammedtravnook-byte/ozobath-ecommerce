@@ -47,7 +47,7 @@ const PageLoader = () => (
                 animate={{ scale: [1, 1.05, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             >
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-xl shadow-accent-500/25">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center shadow-xl shadow-primary-600/25">
                     <span className="text-white font-display font-bold text-2xl">O</span>
                 </div>
                 {/* Glow ring */}

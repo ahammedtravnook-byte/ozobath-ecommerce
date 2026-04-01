@@ -35,26 +35,42 @@ body {
 
 @layer components {
     .admin-card {
-        @apply bg-white rounded-xl border border-gray-100 shadow-sm p-6;
+        @apply bg-white rounded-2xl border border-gray-100 shadow-sm p-6;
     }
 
     .admin-btn-primary {
-        @apply px-4 py-2.5 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 transition-colors text-sm;
+        @apply px-4 py-2.5 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 active:scale-95 transition-all text-sm shadow-sm;
     }
 
     .admin-btn-secondary {
-        @apply px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors text-sm;
+        @apply px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all text-sm;
     }
 
     .admin-input {
-        @apply w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all placeholder:text-gray-400;
+        @apply w-full px-4 py-2.5 bg-white border-2 border-gray-200 rounded-xl text-sm text-gray-900 font-medium focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all placeholder:text-gray-400 placeholder:font-normal;
     }
 
     .admin-label {
-        @apply block text-sm font-medium text-gray-700 mb-1.5;
+        @apply block text-sm font-semibold text-gray-700 mb-1.5;
     }
 
     .stat-card {
         @apply admin-card flex flex-col gap-2;
+    }
+
+    .admin-badge {
+        @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    }
+
+    .admin-table th {
+        @apply px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/80;
+    }
+
+    .admin-table td {
+        @apply px-4 py-3 text-sm text-gray-700;
+    }
+
+    .admin-table tr {
+        @apply border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors;
     }
 }

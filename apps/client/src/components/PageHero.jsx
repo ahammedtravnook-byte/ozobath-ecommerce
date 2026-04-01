@@ -18,8 +18,8 @@ const PageHero = ({
 
             {/* Decorative Orbs */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className={`absolute -top-20 -right-20 w-96 h-96 bg-${accentColor}-500/10 rounded-full blur-[120px] animate-pulse`} />
-                <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-primary-500/10 rounded-full blur-[100px]" />
+                <div className={`absolute -top-20 -right-20 w-96 h-96 bg-${accentColor}-500/10 rounded-full blur-3xl animate-pulse`} />
+                <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl" />
                 {/* Grid pattern overlay */}
                 <div
                     className="absolute inset-0 opacity-[0.03]"

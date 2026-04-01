@@ -24,10 +24,50 @@
       <div class="admin-card p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Pricing & Stock</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div><label class="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label><input v-model.number="form.price" type="number" class="admin-input w-full" /></div>
-          <div><label class="block text-sm font-medium text-gray-700 mb-1">MRP (₹)</label><input v-model.number="form.mrp" type="number" class="admin-input w-full" /></div>
-          <div><label class="block text-sm font-medium text-gray-700 mb-1">Cost Price (₹)</label><input v-model.number="form.costPrice" type="number" class="admin-input w-full" /></div>
-          <div><label class="block text-sm font-medium text-gray-700 mb-1">Stock *</label><input v-model.number="form.stock" type="number" class="admin-input w-full" /></div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Selling Price (₹) *</label>
+            <input v-model.number="form.price" type="number" class="admin-input w-full" placeholder="0" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Compare-At Price (₹)</label>
+            <input v-model.number="form.compareAtPrice" type="number" class="admin-input w-full" placeholder="MRP / Original price" />
+            <p v-if="discountPct > 0" class="text-xs text-green-600 font-semibold mt-1">{{ discountPct }}% discount</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cost Price (₹)</label>
+            <input v-model.number="form.costPrice" type="number" class="admin-input w-full" placeholder="Your cost" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+            <input v-model.number="form.stock" type="number" class="admin-input w-full" placeholder="0" />
+          </div>
+        </div>
+        <!-- Discount summary bar -->
+        <div v-if="discountPct > 0" class="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
+          <span class="text-green-600 text-lg">🏷️</span>
+          <div class="text-sm text-green-700">
+            <span class="font-bold">{{ discountPct }}% OFF</span>
+            — Customer saves <span class="font-bold">₹{{ (form.compareAtPrice - form.price).toLocaleString('en-IN') }}</span>
+            (₹{{ form.compareAtPrice?.toLocaleString('en-IN') }} → ₹{{ form.price?.toLocaleString('en-IN') }})
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="admin-card p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-1">Product Badges</h2>
+        <p class="text-xs text-gray-400 mb-4">Badges appear on product cards in the shop. Select all that apply.</p>
+        <div class="flex flex-wrap gap-3">
+          <label v-for="badge in badgeOptions" :key="badge.value"
+            class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all select-none"
+            :class="form.badges.includes(badge.value)
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
+          >
+            <input type="checkbox" :value="badge.value" v-model="form.badges" class="hidden" />
+            <span>{{ badge.icon }}</span>
+            <span class="text-sm font-semibold">{{ badge.label }}</span>
+          </label>
         </div>
       </div>
 
@@ -149,11 +189,29 @@ const route = useRoute(); const router = useRouter(); const toast = useToast();
 const isEdit = computed(() => route.params.id && route.params.id !== 'new');
 const saving = ref(false); const categories = ref([]); const newImageUrl = ref('');
 const allProducts = ref([]);
+
+const badgeOptions = [
+  { value: 'new', label: 'New Arrival', icon: '✨' },
+  { value: 'best-seller', label: 'Best Seller', icon: '🔥' },
+  { value: 'sale', label: 'Sale', icon: '🏷️' },
+  { value: 'featured', label: 'Featured', icon: '⭐' },
+  { value: 'limited', label: 'Limited Stock', icon: '⚡' },
+];
+
 const form = ref({
   name: '', sku: '', brand: 'OZOBATH', shortDescription: '', description: '',
-  price: 0, mrp: 0, costPrice: 0, stock: 0, category: '', tagsStr: '',
-  images: [], variants: [], specifications: [], relatedProducts: [],
+  price: 0, compareAtPrice: 0, costPrice: 0, stock: 0, category: '', tagsStr: '',
+  images: [], variants: [], specifications: [], relatedProducts: [], badges: [],
   metaTitle: '', metaDescription: '', isActive: true, isFeatured: false, isNewArrival: false,
+});
+
+const discountPct = computed(() => {
+  const cap = form.value.compareAtPrice;
+  const price = form.value.price;
+  if (cap > 0 && price > 0 && cap > price) {
+    return Math.round(((cap - price) / cap) * 100);
+  }
+  return 0;
 });
 
 const availableProducts = computed(() => {
@@ -219,7 +277,14 @@ onMounted(async () => {
     try {
       const res = await productAPI.getById(route.params.id);
       const p = res.data;
-      form.value = { ...p, tagsStr: (p.tags || []).join(', '), category: p.category?._id || p.category || '', relatedProducts: (p.relatedProducts || []).map(rp => rp._id || rp) };
+      form.value = {
+        ...p,
+        tagsStr: (p.tags || []).join(', '),
+        category: p.category?._id || p.category || '',
+        relatedProducts: (p.relatedProducts || []).map(rp => rp._id || rp),
+        badges: p.badges || [],
+        compareAtPrice: p.compareAtPrice || p.mrp || 0,
+      };
     } catch (e) { toast.error('Failed to load product'); }
   }
 });

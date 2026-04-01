@@ -68,7 +68,7 @@ const BlogPostPage = () => {
 
     if (loading) {
         return (
-            <div className="bg-[#FAF7F2]">
+            <div className="bg-[#ffffff]">
                 <div className="pt-32 pb-20 bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800">
                     <div className="max-w-3xl mx-auto px-4">
                         <div className="skeleton-shimmer h-4 w-32 rounded-full mb-4" />
@@ -89,7 +89,7 @@ const BlogPostPage = () => {
 
     if (!post) {
         return (
-            <div className="bg-[#FAF7F2]">
+            <div className="bg-[#ffffff]">
                 <PageHero title="Post Not Found" breadcrumbs={[{ label: 'Blog', path: '/blog' }, { label: 'Not Found' }]} compact />
                 <div className="section-wrapper text-center py-20">
                     <div className="w-20 h-20 rounded-full bg-accent-50 flex items-center justify-center mx-auto mb-5">
@@ -104,7 +104,7 @@ const BlogPostPage = () => {
     }
 
     return (
-        <div className="bg-[#FAF7F2]">
+        <div className="bg-[#ffffff]">
             {/* Reading Progress Bar */}
             <div
                 className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-accent-500 via-orange-500 to-primary-500 z-[100] transition-none"
@@ -116,7 +116,7 @@ const BlogPostPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800" />
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <motion.div
-                        className="absolute -top-20 -right-20 w-96 h-96 bg-accent-500/10 rounded-full blur-[120px]"
+                        className="absolute -top-20 -right-20 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl"
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
                     />

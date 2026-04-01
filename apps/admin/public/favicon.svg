@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- White background -->
+  <rect width="64" height="64" rx="10" fill="#ffffff"/>
+  <!-- Shower pipe (vertical) -->
+  <rect x="29" y="3" width="6" height="11" rx="3" fill="#0A3D6B"/>
+  <!-- Shower head (horizontal bar) -->
+  <rect x="12" y="13" width="40" height="6" rx="3" fill="#0A3D6B"/>
+  <!-- Water drops (cyan) -->
+  <rect x="14" y="23" width="3.5" height="9" rx="1.75" fill="#00B4D8"/>
+  <rect x="21" y="23" width="3.5" height="12" rx="1.75" fill="#00B4D8"/>
+  <rect x="28" y="23" width="3.5" height="9" rx="1.75" fill="#00B4D8"/>
+  <rect x="35" y="23" width="3.5" height="12" rx="1.75" fill="#00B4D8"/>
+  <rect x="42" y="23" width="3.5" height="9" rx="1.75" fill="#00B4D8"/>
+  <!-- Ozo text in navy -->
+  <text x="4" y="57" font-size="15" font-family="Arial Black, Arial" font-weight="900" fill="#0A3D6B">Ozo</text>
+  <!-- Bath text in cyan -->
+  <text x="33" y="57" font-size="15" font-family="Arial Black, Arial" font-weight="900" fill="#00B4D8">Bath</text>
+</svg>

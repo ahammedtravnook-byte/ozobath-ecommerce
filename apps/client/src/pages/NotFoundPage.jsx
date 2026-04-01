@@ -4,16 +4,16 @@ import { FiHome, FiShoppingBag, FiSearch, FiArrowRight } from 'react-icons/fi';
 
 const NotFoundPage = () => {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF7F2] px-4 py-20 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-[#ffffff] px-4 py-20 relative overflow-hidden">
             {/* Decorative background elements */}
             <div className="absolute inset-0 pointer-events-none">
                 <motion.div
-                    className="absolute top-20 right-[15%] w-72 h-72 bg-accent-500/5 rounded-full blur-[100px]"
+                    className="absolute top-20 right-[15%] w-72 h-72 bg-accent-500/5 rounded-full blur-3xl"
                     animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
                     transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
                 />
                 <motion.div
-                    className="absolute bottom-20 left-[10%] w-96 h-96 bg-primary-500/5 rounded-full blur-[120px]"
+                    className="absolute bottom-20 left-[10%] w-96 h-96 bg-primary-500/5 rounded-full blur-3xl"
                     animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
                     transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
                 />
@@ -50,10 +50,10 @@ const NotFoundPage = () => {
                 >
                     <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                         {/* Shower head */}
-                        <motion.rect x="70" y="20" width="60" height="12" rx="6" fill="#E88A2D" fillOpacity="0.9" />
+                        <motion.rect x="70" y="20" width="60" height="12" rx="6" fill="#00B4D8" fillOpacity="0.9" />
                         <motion.rect x="95" y="32" width="10" height="35" rx="5" fill="#C4C6CA" />
                         {/* Water drops */}
-                        <motion.circle cx="80" cy="80" r="3" fill="#0084f0" fillOpacity="0.6"
+                        <motion.circle cx="80" cy="80" r="3" fill="#0A3D6B" fillOpacity="0.6"
                             animate={{ y: [0, 40, 80], opacity: [0.8, 0.5, 0] }}
                             transition={{ duration: 2, repeat: Infinity, delay: 0 }}
                         />

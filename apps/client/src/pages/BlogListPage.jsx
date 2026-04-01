@@ -45,7 +45,7 @@ const BlogListPage = () => {
     const filteredBlogs = activeCategory === 'All' ? blogs : blogs.filter(b => b.category === activeCategory);
 
     return (
-        <div className="bg-[#FAF7F2]">
+        <div className="bg-[#ffffff]">
             <PageHero
                 title="Blog & Tips"
                 subtitle="Expert advice on bathroom design, maintenance, and premium solutions"

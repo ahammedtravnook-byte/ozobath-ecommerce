@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@context/AuthContext';
 import { CartProvider } from '@context/CartContext';
 import { WishlistProvider } from '@context/WishlistContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 function App() {
     const location = useLocation();
@@ -39,26 +40,28 @@ function App() {
 
     return (
         <AuthProvider>
-            <CartProvider>
-                <WishlistProvider>
-                    <Toaster
-                        position="top-right"
-                        toastOptions={{
-                            duration: 3000,
-                            style: {
-                                background: '#1a1b1e',
-                                color: '#fff',
-                                borderRadius: '12px',
-                                padding: '16px',
-                                fontSize: '14px',
-                            },
-                        }}
-                    />
-                    <AnimatePresence mode="wait">
-                        <AppRouter key={location.pathname} />
-                    </AnimatePresence>
-                </WishlistProvider>
-            </CartProvider>
+            <NotificationProvider>
+                <CartProvider>
+                    <WishlistProvider>
+                        <Toaster
+                            position="top-right"
+                            toastOptions={{
+                                duration: 3000,
+                                style: {
+                                    background: '#1a1b1e',
+                                    color: '#fff',
+                                    borderRadius: '12px',
+                                    padding: '16px',
+                                    fontSize: '14px',
+                                },
+                            }}
+                        />
+                        <AnimatePresence mode="wait">
+                            <AppRouter key={location.pathname} />
+                        </AnimatePresence>
+                    </WishlistProvider>
+                </CartProvider>
+            </NotificationProvider>
         </AuthProvider>
     );
 }

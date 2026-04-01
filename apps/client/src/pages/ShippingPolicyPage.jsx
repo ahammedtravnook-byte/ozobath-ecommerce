@@ -2,7 +2,7 @@ import PageHero from '@components/PageHero';
 import ScrollReveal from '@components/ScrollReveal';
 
 const ShippingPolicyPage = () => (
-    <div className="bg-[#FAF7F2]">
+    <div className="bg-[#ffffff]">
         <PageHero
             title="Shipping Policy"
             subtitle="Everything you need to know about delivery, shipping charges, and order tracking."

@@ -26,7 +26,7 @@ const B2BEnquiryPage = () => {
     const inputClass = "w-full bg-white border-2 border-dark-100 text-dark-900 text-sm rounded-2xl py-4 px-6 focus:outline-none focus:border-accent-500 transition-all duration-300 placeholder:text-dark-300";
 
     return (
-        <div className="bg-[#FAF7F2]">
+        <div className="bg-[#ffffff]">
             <PageHero
                 title="B2B / Bulk Orders"
                 subtitle="Partner with OZOBATH for premium bathroom solutions at scale. Special pricing for architects, builders, and interior designers."

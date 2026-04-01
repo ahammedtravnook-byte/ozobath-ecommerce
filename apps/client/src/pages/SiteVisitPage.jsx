@@ -25,7 +25,7 @@ const SiteVisitPage = () => {
     const inputClass = "w-full bg-white border-2 border-dark-100 text-dark-900 text-sm rounded-2xl py-4 px-6 focus:outline-none focus:border-accent-500 transition-all duration-300 placeholder:text-dark-300";
 
     return (
-        <div className="bg-[#FAF7F2]">
+        <div className="bg-[#ffffff]">
             <PageHero
                 title="Book a Site Visit"
                 subtitle="Our experts will visit your space to help you choose the perfect bathroom solutions."

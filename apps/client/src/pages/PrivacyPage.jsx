@@ -2,7 +2,7 @@ import PageHero from '@components/PageHero';
 import ScrollReveal from '@components/ScrollReveal';
 
 const PrivacyPage = () => (
-    <div className="bg-[#FAF7F2]">
+    <div className="bg-[#ffffff]">
         <PageHero
             title="Privacy Policy"
             subtitle="Your privacy matters to us. Learn how we collect, use, and protect your information."
