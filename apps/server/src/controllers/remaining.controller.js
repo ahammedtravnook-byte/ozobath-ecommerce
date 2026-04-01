@@ -519,37 +519,43 @@ const createVideoCallSlot = asyncHandler(async (req, res) => {
 
 // Bulk: create slots for selected weekdays + time ranges for next N weeks
 const createBulkVideoCallSlots = asyncHandler(async (req, res) => {
-  // days: [0-6] where 0=Sun,1=Mon,...,6=Sat
-  // timeSlots: [{ startTime: '10:00', endTime: '11:00' }, ...]
-  // weeksAhead: number of weeks to generate (default 4)
   const { days, timeSlots, weeksAhead = 4 } = req.body;
 
   if (!days?.length || !timeSlots?.length) {
     throw new ApiError(400, 'days and timeSlots are required.');
   }
 
-  const slotsToCreate = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const rangeEnd = new Date(today);
+  rangeEnd.setDate(today.getDate() + weeksAhead * 7);
 
-  for (let w = 0; w < weeksAhead; w++) {
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + w * 7 + d);
-      const weekday = date.getDay(); // 0=Sun,1=Mon,...
-      if (!days.includes(weekday)) continue;
+  // Single query — fetch all existing slots in range
+  const existing = await VideoCallSlot.find({
+    date: { $gte: today, $lt: rangeEnd },
+  }).select('date startTime').lean();
 
-      for (const ts of timeSlots) {
-        // Skip if slot already exists for this date+time
-        const exists = await VideoCallSlot.findOne({
-          date: { $gte: date, $lt: new Date(date.getTime() + 86400000) },
-          startTime: ts.startTime,
-        }).lean();
-        if (!exists) {
-          slotsToCreate.push({ date, startTime: ts.startTime, endTime: ts.endTime, isActive: true });
-        }
+  // Build a Set of "dateString|startTime" for O(1) lookup
+  const existingKeys = new Set(
+    existing.map(s => `${new Date(s.date).toISOString().slice(0, 10)}|${s.startTime}`)
+  );
+
+  const slotsToCreate = [];
+  for (let i = 0; i < weeksAhead * 7; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    if (!days.includes(date.getDay())) continue;
+
+    const dateKey = date.toISOString().slice(0, 10);
+    for (const ts of timeSlots) {
+      if (!existingKeys.has(`${dateKey}|${ts.startTime}`)) {
+        slotsToCreate.push({ date, startTime: ts.startTime, endTime: ts.endTime, isActive: true });
       }
     }
+  }
+
+  if (slotsToCreate.length === 0) {
+    return sendResponse(res, 200, { count: 0 }, 'All slots already exist, nothing new created');
   }
 
   const created = await VideoCallSlot.insertMany(slotsToCreate);
