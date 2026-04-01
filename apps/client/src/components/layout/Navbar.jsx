@@ -389,107 +389,129 @@ const NotificationBell = () => {
     }, []);
 
     const handleNotifClick = async (notif) => {
-        // Mark as read
         if (!notif.isRead) await markAsRead(notif._id);
-        // Navigate to relevant page
         const link = getNotificationLink(notif);
-        if (link) {
-            setIsOpen(false);
-            navigate(link);
-        }
+        setIsOpen(false);
+        if (link) navigate(link);
     };
+
+    const preview = notifications.slice(0, 4);
 
     return (
         <div className="relative" ref={dropdownRef}>
+            {/* Bell button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="p-2.5 hover:bg-yellow-50 rounded-full relative transition-colors duration-200"
+                className="p-2.5 hover:bg-accent-50 rounded-full relative transition-colors duration-200"
                 aria-label="Notifications"
             >
-                <FiBell className="w-[18px] h-[18px] text-dark-700" />
-                {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold shadow-sm animate-pulse">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                )}
+                <motion.div animate={unreadCount > 0 && !isOpen ? { rotate: [0, -15, 15, -10, 10, 0] } : {}} transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 4 }}>
+                    <FiBell className="w-[18px] h-[18px] text-dark-700" />
+                </motion.div>
+                <AnimatePresence>
+                    {unreadCount > 0 && (
+                        <motion.span
+                            key="badge"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-accent-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold shadow-sm"
+                        >
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </motion.span>
+                    )}
+                </AnimatePresence>
             </button>
 
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-dark-100/20 overflow-hidden z-50"
-                        initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                        className="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-2xl shadow-2xl border border-dark-100/30 overflow-hidden z-50"
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-dark-50">
+                        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-dark-900 to-dark-800">
                             <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-dark-900 text-sm">Notifications</h3>
+                                <span className="text-base">🔔</span>
+                                <h3 className="font-bold text-white text-sm">Notifications</h3>
                                 {unreadCount > 0 && (
-                                    <span className="text-[10px] bg-red-100 text-red-600 font-bold px-1.5 py-0.5 rounded-full">
+                                    <span className="text-[10px] bg-accent-500 text-white font-bold px-1.5 py-0.5 rounded-full">
                                         {unreadCount} new
                                     </span>
                                 )}
                             </div>
                             {unreadCount > 0 && (
-                                <button onClick={markAllRead} className="text-[11px] text-accent-500 font-semibold hover:text-accent-600">
+                                <button
+                                    onClick={e => { e.stopPropagation(); markAllRead(); }}
+                                    className="text-[11px] text-white/60 hover:text-white font-medium transition-colors"
+                                >
                                     Mark all read
                                 </button>
                             )}
                         </div>
 
-                        {/* List */}
-                        <div className="max-h-80 overflow-y-auto">
+                        {/* List — fixed height, NO page scroll */}
+                        <div className="overflow-hidden">
                             {loading ? (
-                                <div className="flex items-center justify-center py-8">
+                                <div className="flex items-center justify-center py-10">
                                     <div className="w-6 h-6 border-2 border-accent-200 border-t-accent-500 rounded-full animate-spin" />
                                 </div>
-                            ) : notifications.length === 0 ? (
+                            ) : preview.length === 0 ? (
                                 <div className="text-center py-10 px-4">
-                                    <p className="text-2xl mb-2">🔔</p>
-                                    <p className="text-sm text-dark-400">No notifications yet</p>
+                                    <p className="text-2xl mb-2">🔕</p>
+                                    <p className="text-sm text-dark-400 font-medium">No notifications yet</p>
+                                    <p className="text-xs text-dark-300 mt-1">Order updates will appear here</p>
                                 </div>
                             ) : (
-                                notifications.map(notif => {
-                                    const link = getNotificationLink(notif);
-                                    return (
-                                        <div
-                                            key={notif._id}
-                                            onClick={() => handleNotifClick(notif)}
-                                            className={`flex items-start gap-3 px-4 py-3 border-b border-dark-50 last:border-0 transition-colors
-                                                ${link ? 'cursor-pointer hover:bg-accent-50/60' : 'cursor-default hover:bg-dark-50/40'}
-                                                ${!notif.isRead ? 'bg-accent-50/30' : ''}`}
-                                        >
-                                            <span className="text-xl shrink-0 mt-0.5">{NOTIF_ICONS[notif.type] || '🔔'}</span>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`text-xs font-semibold truncate ${!notif.isRead ? 'text-dark-900' : 'text-dark-600'}`}>
-                                                    {notif.title}
-                                                </p>
-                                                <p className="text-[11px] text-dark-400 mt-0.5 line-clamp-2">{notif.message}</p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <p className="text-[10px] text-dark-300">{formatRelTime(notif.createdAt)}</p>
-                                                    {link && <p className="text-[10px] text-accent-400 font-medium">Tap to view →</p>}
+                                <AnimatePresence initial={false}>
+                                    {preview.map((notif, i) => {
+                                        const link = getNotificationLink(notif);
+                                        const emoji = NOTIF_ICONS[notif.type] || '🔔';
+                                        return (
+                                            <motion.div
+                                                key={notif._id}
+                                                initial={{ opacity: 0, x: -12 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.05, duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                                                onClick={() => handleNotifClick(notif)}
+                                                className={`flex items-start gap-3 px-4 py-3 border-b border-dark-50 last:border-0 cursor-pointer transition-colors duration-150
+                                                    ${!notif.isRead ? 'bg-accent-50/50 hover:bg-accent-50/80' : 'hover:bg-dark-50/60'}`}
+                                            >
+                                                <span className="text-lg shrink-0 mt-0.5 leading-none">{emoji}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <p className={`text-xs font-semibold leading-snug truncate ${!notif.isRead ? 'text-dark-900' : 'text-dark-600'}`}>
+                                                            {notif.title}
+                                                        </p>
+                                                        <span className="text-[10px] text-dark-300 shrink-0">{formatRelTime(notif.createdAt)}</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-dark-400 mt-0.5 line-clamp-1">{notif.message}</p>
+                                                    {link && <p className="text-[10px] text-accent-500 font-semibold mt-1">Tap to view →</p>}
                                                 </div>
-                                            </div>
-                                            {!notif.isRead && (
-                                                <div className="w-2 h-2 bg-accent-500 rounded-full shrink-0 mt-1.5" />
-                                            )}
-                                        </div>
-                                    );
-                                })
+                                                {!notif.isRead && (
+                                                    <div className="w-1.5 h-1.5 bg-accent-500 rounded-full shrink-0 mt-1.5" />
+                                                )}
+                                            </motion.div>
+                                        );
+                                    })}
+                                </AnimatePresence>
                             )}
                         </div>
 
-                        {notifications.length > 0 && (
-                            <div className="px-4 py-2.5 border-t border-dark-50 flex items-center justify-between">
-                                <p className="text-[10px] text-dark-300">Last 20 notifications</p>
-                                <Link to="/orders" onClick={() => setIsOpen(false)} className="text-[10px] text-accent-500 font-semibold hover:text-accent-600">
-                                    View orders →
-                                </Link>
-                            </div>
-                        )}
+                        {/* Footer — View all */}
+                        <div className="px-4 py-3 bg-dark-50/50 border-t border-dark-100/50">
+                            <Link
+                                to="/notifications"
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center justify-center gap-1.5 text-xs font-bold text-dark-700 hover:text-accent-600 transition-colors"
+                            >
+                                View all notifications
+                                <span className="text-accent-500">→</span>
+                            </Link>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

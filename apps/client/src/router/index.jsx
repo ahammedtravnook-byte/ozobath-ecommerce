@@ -30,6 +30,7 @@ const TermsPage = lazy(() => import('@pages/TermsPage'));
 const PrivacyPage = lazy(() => import('@pages/PrivacyPage'));
 const ShippingPolicyPage = lazy(() => import('@pages/ShippingPolicyPage'));
 const WarrantyPage = lazy(() => import('@pages/WarrantyPage'));
+const NotificationsPage = lazy(() => import('@pages/NotificationsPage'));
 const NotFoundPage = lazy(() => import('@pages/NotFoundPage'));
 
 // ─── Premium Page Loading Fallback ──────────────
@@ -96,6 +97,7 @@ const AppRouter = () => {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/orders" element={<OrdersPage />} />
                     <Route path="/wishlist" element={<WishlistPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
 
                     {/* Info Pages */}
                     <Route path="/about" element={<AboutPage />} />
