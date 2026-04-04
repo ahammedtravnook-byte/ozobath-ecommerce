@@ -186,6 +186,7 @@ const HomePage = () => {
     const [categories, setCategories] = useState([]);
     const [activeTab, setActiveTab] = useState('all');
     const [promoBanners, setPromoBanners] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     // Parallax for hero
     const { scrollYProgress } = useScroll({
@@ -198,37 +199,54 @@ const HomePage = () => {
     // Fetch dynamic content
     useEffect(() => {
         const fetchHomeData = async () => {
+            setLoading(true);
             try {
-                const prodRes = await productAPI.getAll({ limit: 10 });
-                if (prodRes.data?.products?.length > 0) {
-                    setTrending(prodRes.data.products.slice(0, 4));
-                    setProducts(prodRes.data.products.slice(0, 6));
-                } else {
+                // 1. Fetch Products
+                try {
+                    const prodRes = await productAPI.getAll({ limit: 10 });
+                    // Handle both { data: { products: [] } } and direct payload
+                    const allProds = prodRes?.data?.products || prodRes?.products || [];
+                    if (allProds.length > 0) {
+                        setTrending(allProds.slice(0, 4));
+                        setProducts(allProds.slice(0, 6));
+                    } else {
+                        setTrending(fallbackProducts);
+                        setProducts(fallbackProducts);
+                    }
+                } catch (e) {
+                    console.warn("Product fetch failed, using fallbacks");
                     setTrending(fallbackProducts);
                     setProducts(fallbackProducts);
                 }
 
-                const catRes = await categoryAPI.getAll();
-                if (catRes.data?.length > 0) {
-                    setCategories(catRes.data.slice(0, 3));
-                }
-
+                // 2. Fetch Categories
                 try {
-                    const blogRes = await axios.get(`${API_URL}/blogs?limit=3`);
-                    if (blogRes.data?.data?.length > 0) setBlogs(blogRes.data.data.slice(0, 3));
+                    const catRes = await categoryAPI.getAll();
+                    const cats = catRes?.data || catRes || [];
+                    if (cats.length > 0) setCategories(cats.slice(0, 4));
+                } catch (e) { /* silent fail */ }
+
+                // 3. Fetch Blogs
+                try {
+                    const blogRes = await axios.get(`${API_URL}/blogs?limit=3`, { timeout: 8000 });
+                    const blogData = blogRes.data?.data || blogRes.data || [];
+                    if (blogData.length > 0) setBlogs(blogData.slice(0, 3));
                     else setBlogs(fallbackBlogs);
                 } catch (e) { setBlogs(fallbackBlogs); }
 
+                // 4. Fetch Banners
                 try {
                     const bannerRes = await bannerAPI.get({ page: 'home', position: 'promo' });
-                    if (bannerRes?.data?.length > 0) setPromoBanners(bannerRes.data.slice(0, 2));
-                } catch (e) { /* keep empty, will use hardcoded fallback */ }
+                    const banners = bannerRes?.data || bannerRes || [];
+                    if (banners.length > 0) setPromoBanners(banners.slice(0, 2));
+                } catch (e) { /* keep empty */ }
 
             } catch (error) {
-                console.error("Using fallback content");
+                console.error("Home data fetch error:", error);
                 setTrending(fallbackProducts);
                 setProducts(fallbackProducts);
-                setBlogs(fallbackBlogs);
+            } finally {
+                setLoading(false);
             }
         };
         fetchHomeData();
@@ -540,117 +558,133 @@ const HomePage = () => {
                 </motion.div>
 
                 {/* Mobile: horizontal snap scroll; Desktop: 4-col grid */}
-                <div className="sm:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 no-scrollbar">
-                    {trending.map((item, i) => (
-                        <div key={item._id || i} className="snap-start shrink-0 w-[72vw] group cursor-pointer flex flex-col">
-                            <div className="bg-white rounded-[2rem] mb-4 relative overflow-hidden border border-dark-100/50 shadow-sm active:shadow-lg transition-all duration-300">
-                                <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
-                                <div className="image-fit-container rounded-[1.8rem] p-4 bg-warm-gray/30">
-                                    <img src={item.images?.[0]?.url || '/images/product_shower_1.png'} alt={item.name} className="w-full h-full object-contain" />
-                                </div>
-                                {item.mrp > item.price && (
-                                    <div className="absolute top-3 left-3 bg-accent-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent-500/20 z-20">
-                                        -{Math.round(((item.mrp - item.price) / item.mrp) * 100)}%
+                {loading ? (
+                    <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="shrink-0 w-[72vw] h-[350px] bg-dark-50 animate-pulse rounded-[2rem]" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="sm:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 no-scrollbar">
+                        {trending.map((item, i) => (
+                            <div key={item._id || i} className="snap-start shrink-0 w-[72vw] group cursor-pointer flex flex-col">
+                                <div className="bg-white rounded-[2rem] mb-4 relative overflow-hidden border border-dark-100/50 shadow-sm active:shadow-lg transition-all duration-300">
+                                    <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
+                                    <div className="image-fit-container rounded-[1.8rem] p-4 bg-warm-gray/30">
+                                        <img src={item.images?.[0]?.url || '/images/product_shower_1.png'} alt={item.name} className="w-full h-full object-contain" />
                                     </div>
-                                )}
-                                <button
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
-                                    className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-xl flex items-center justify-center transition-all shadow-sm
-                                        ${isInWishlist(item._id) ? 'bg-red-500 text-white' : 'bg-white/80 backdrop-blur-md text-dark-400'}`}
-                                >
-                                    <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
-                                </button>
-                            </div>
-                            <div className="px-2 text-center">
-                                <p className="text-accent-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{item.category?.name || 'Collection'}</p>
-                                <h3 className="font-bold text-dark-900 text-sm mb-2 line-clamp-2 leading-snug">{item.name}</h3>
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className="flex text-accent-500 text-[10px] gap-0.5">
-                                        {[...Array(5)].map((_, star) => <FiStar key={star} className={star < (item.avgRating || 5) ? 'fill-current' : 'text-dark-100'} />)}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {item.mrp > item.price && <span className="text-dark-300 text-xs line-through">₹{item.mrp?.toLocaleString()}</span>}
-                                        <span className="font-black text-dark-900 text-base">₹{item.price?.toLocaleString() || '0'}</span>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
-                                    className="mt-3 w-full bg-dark-900 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
-                                >
-                                    <FiShoppingCart className="w-3.5 h-3.5" /> Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <motion.div
-                    className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-6"
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-80px" }}
-                    variants={stagger}
-                >
-                    {trending.map((item, i) => (
-                        <motion.div key={item._id || i} variants={fadeInUp} className="group cursor-pointer flex flex-col h-full">
-                            <div className="bg-white rounded-[2.5rem] mb-5 relative overflow-hidden transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-dark-900/10 border border-dark-100/50 group-hover:border-accent-200 group-hover:-translate-y-2">
-                                <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
-
-                                {/* Image Container with "Curve Feel" */}
-                                <div className="image-fit-container rounded-[2rem] p-4 bg-warm-gray/30">
-                                    <img
-                                        src={item.images?.[0]?.url || '/images/product_shower_1.png'}
-                                        alt={item.name}
-                                        className="w-full h-full object-contain"
-                                    />
-                                </div>
-
-                                {/* Quick Add Button — Enhanced */}
-                                <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-20">
+                                    {item.mrp > item.price && (
+                                        <div className="absolute top-3 left-3 bg-accent-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent-500/20 z-20">
+                                            -{Math.round(((item.mrp - item.price) / item.mrp) * 100)}%
+                                        </div>
+                                    )}
                                     <button
-                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(item); }}
-                                        className="w-full bg-dark-900/90 backdrop-blur-md hover:bg-accent-500 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
+                                        className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-xl flex items-center justify-center transition-all shadow-sm
+                                            ${isInWishlist(item._id) ? 'bg-red-500 text-white' : 'bg-white/80 backdrop-blur-md text-dark-400'}`}
                                     >
-                                        <FiShoppingCart className="w-4 h-4" /> Add to cart
+                                        <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
+                                    </button>
+                                </div>
+                                <div className="px-2 text-center">
+                                    <p className="text-accent-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{item.category?.name || 'Collection'}</p>
+                                    <h3 className="font-bold text-dark-900 text-sm mb-2 line-clamp-2 leading-snug">{item.name}</h3>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="flex text-accent-500 text-[10px] gap-0.5">
+                                            {[...Array(5)].map((_, star) => <FiStar key={star} className={star < (item.avgRating || 5) ? 'fill-current' : 'text-dark-100'} />)}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {item.mrp > item.price && <span className="text-dark-300 text-xs line-through">₹{item.mrp?.toLocaleString()}</span>}
+                                            <span className="font-black text-dark-900 text-base">₹{item.price?.toLocaleString() || '0'}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                                        className="mt-3 w-full bg-dark-900 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
+                                    >
+                                        <FiShoppingCart className="w-3.5 h-3.5" /> Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {loading ? (
+                    <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="h-[400px] bg-dark-50 animate-pulse rounded-[2.5rem]" />
+                        ))}
+                    </div>
+                ) : (
+                    <motion.div
+                        className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-6"
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: "-80px" }}
+                        variants={stagger}
+                    >
+                        {trending.map((item, i) => (
+                            <motion.div key={item._id || i} variants={fadeInUp} className="group cursor-pointer flex flex-col h-full">
+                                <div className="bg-white rounded-[2.5rem] mb-5 relative overflow-hidden transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-dark-900/10 border border-dark-100/50 group-hover:border-accent-200 group-hover:-translate-y-2">
+                                    <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
+
+                                    {/* Image Container with "Curve Feel" */}
+                                    <div className="image-fit-container rounded-[2rem] p-4 bg-warm-gray/30">
+                                        <img
+                                            src={item.images?.[0]?.url || '/images/product_shower_1.png'}
+                                            alt={item.name}
+                                            className="w-full h-full object-contain"
+                                        />
+                                    </div>
+
+                                    {/* Quick Add Button — Enhanced */}
+                                    <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-20">
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(item); }}
+                                            className="w-full bg-dark-900/90 backdrop-blur-md hover:bg-accent-500 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
+                                        >
+                                            <FiShoppingCart className="w-4 h-4" /> Add to cart
+                                        </button>
+                                    </div>
+
+                                    {/* Discount badge — Premium Style */}
+                                    {item.mrp > item.price && (
+                                        <div className="absolute top-5 left-5 bg-accent-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent-500/20 z-20">
+                                            -{Math.round(((item.mrp - item.price) / item.mrp) * 100)}%
+                                        </div>
+                                    )}
+
+                                    {/* Wishlist Heart Icon */}
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
+                                        className={`absolute top-5 right-5 z-20 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm hover:scale-110 active:scale-90
+                                        ${isInWishlist(item._id) ? 'bg-red-500 text-white shadow-red-500/30' : 'bg-white/80 backdrop-blur-md text-dark-400 hover:text-red-500 hover:bg-white'}`}
+                                        aria-label="Add to wishlist"
+                                    >
+                                        <FiHeart className={`w-4 h-4 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
                                     </button>
                                 </div>
 
-                                {/* Discount badge — Premium Style */}
-                                {item.mrp > item.price && (
-                                    <div className="absolute top-5 left-5 bg-accent-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent-500/20 z-20">
-                                        -{Math.round(((item.mrp - item.price) / item.mrp) * 100)}%
-                                    </div>
-                                )}
-
-                                {/* Wishlist Heart Icon */}
-                                <button
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
-                                    className={`absolute top-5 right-5 z-20 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm hover:scale-110 active:scale-90
-                                        ${isInWishlist(item._id) ? 'bg-red-500 text-white shadow-red-500/30' : 'bg-white/80 backdrop-blur-md text-dark-400 hover:text-red-500 hover:bg-white'}`}
-                                    aria-label="Add to wishlist"
-                                >
-                                    <FiHeart className={`w-4 h-4 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
-                                </button>
-                            </div>
-
-                            <div className="flex flex-col flex-1 px-4 text-center">
-                                <p className="text-accent-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{item.category?.name || 'Collection'}</p>
-                                <h3 className="font-bold text-dark-900 text-sm mb-3 group-hover:text-accent-500 transition-colors line-clamp-2 leading-snug">{item.name}</h3>
-                                <div className="flex flex-col items-center gap-2 mt-auto pb-2">
-                                    <div className="flex text-accent-500 text-[10px] gap-0.5">
-                                        {[...Array(5)].map((_, star) => (
-                                            <FiStar key={star} className={star < (item.avgRating || 5) ? 'fill-current' : 'text-dark-100'} />
-                                        ))}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {item.mrp > item.price && <span className="text-dark-300 text-xs line-through font-medium">₹{item.mrp?.toLocaleString()}</span>}
-                                        <span className="font-black text-dark-900 text-lg">₹{item.price?.toLocaleString() || '0'}</span>
+                                <div className="flex flex-col flex-1 px-4 text-center">
+                                    <p className="text-accent-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{item.category?.name || 'Collection'}</p>
+                                    <h3 className="font-bold text-dark-900 text-sm mb-3 group-hover:text-accent-500 transition-colors line-clamp-2 leading-snug">{item.name}</h3>
+                                    <div className="flex flex-col items-center gap-2 mt-auto pb-2">
+                                        <div className="flex text-accent-500 text-[10px] gap-0.5">
+                                            {[...Array(5)].map((_, star) => (
+                                                <FiStar key={star} className={star < (item.avgRating || 5) ? 'fill-current' : 'text-dark-100'} />
+                                            ))}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {item.mrp > item.price && <span className="text-dark-300 text-xs line-through font-medium">₹{item.mrp?.toLocaleString()}</span>}
+                                            <span className="font-black text-dark-900 text-lg">₹{item.price?.toLocaleString() || '0'}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </motion.div>
-                    ))}
-                </motion.div>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                )}
             </section>
 
             {/* ═══════════════════════════════════════════
@@ -713,57 +747,67 @@ const HomePage = () => {
                         </motion.div>
 
                         {/* Grid of smaller products */}
-                        <motion.div
-                            className="lg:w-[62%] grid grid-cols-2 md:grid-cols-3 gap-4"
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ once: true }}
-                            variants={staggerFast}
-                        >
-                            {products.map((item, i) => (
+                        <div className="lg:w-[62%]">
+                            {loading ? (
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {[1, 2, 3, 4, 5, 6].map(i => (
+                                        <div key={i} className="h-[220px] bg-dark-50 animate-pulse rounded-[1.8rem]" />
+                                    ))}
+                                </div>
+                            ) : (
                                 <motion.div
-                                    key={item._id || i}
-                                    variants={fadeInUp}
-                                    className="group"
+                                    className="grid grid-cols-2 md:grid-cols-3 gap-4"
+                                    initial="hidden"
+                                    whileInView="visible"
+                                    viewport={{ once: true }}
+                                    variants={staggerFast}
                                 >
-                                    <div className="bg-white border-2 border-transparent hover:border-accent-200 rounded-[2rem] mb-3 relative overflow-hidden hover:shadow-2xl transition-all duration-500 group-hover:-translate-y-1">
-                                        <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
-
-                                        {/* Image Container with "Curve Feel" */}
-                                        <div className="image-fit-container rounded-[1.8rem] bg-warm-gray/20">
-                                            <img
-                                                src={item.images?.[0]?.url || '/images/product_shower_1.png'}
-                                                alt={item.name}
-                                                className="w-full h-full object-contain p-4 group-hover:scale-110"
-                                            />
-                                        </div>
-
-                                        {/* Price Floating Overlay */}
-                                        <div className="absolute top-3 right-3 z-20">
-                                            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-sm">
-                                                <span className="font-black text-dark-900 text-xs">₹{item.price?.toLocaleString()}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Wishlist Heart Icon */}
-                                        <button
-                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
-                                            className={`absolute top-3 left-3 z-20 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90
-                                                ${isInWishlist(item._id) ? 'bg-red-500 text-white shadow-sm shadow-red-500/30' : 'bg-white/70 backdrop-blur-sm text-dark-300 hover:text-red-500 hover:bg-white'}`}
-                                            aria-label="Add to wishlist"
+                                    {products.map((item, i) => (
+                                        <motion.div
+                                            key={item._id || i}
+                                            variants={fadeInUp}
+                                            className="group"
                                         >
-                                            <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
-                                        </button>
-                                    </div>
-                                    <div className="px-2">
-                                        <h4 className="font-bold text-dark-950 text-[11px] uppercase tracking-wider truncate mb-1" title={item.name}>
-                                            {item.name}
-                                        </h4>
-                                        <div className="w-6 h-0.5 bg-accent-500/30 rounded-full group-hover:w-full transition-all duration-500" />
-                                    </div>
+                                            <div className="bg-white border-2 border-transparent hover:border-accent-200 rounded-[2rem] mb-3 relative overflow-hidden hover:shadow-2xl transition-all duration-500 group-hover:-translate-y-1">
+                                                <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
+
+                                                {/* Image Container with "Curve Feel" */}
+                                                <div className="image-fit-container rounded-[1.8rem] bg-warm-gray/20">
+                                                    <img
+                                                        src={item.images?.[0]?.url || '/images/product_shower_1.png'}
+                                                        alt={item.name}
+                                                        className="w-full h-full object-contain p-4 group-hover:scale-110"
+                                                    />
+                                                </div>
+
+                                                {/* Price Floating Overlay */}
+                                                <div className="absolute top-3 right-3 z-20">
+                                                    <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-sm">
+                                                        <span className="font-black text-dark-900 text-xs">₹{item.price?.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Wishlist Heart Icon */}
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(item._id) ? removeFromWishlist(item._id) : addToWishlist(item._id); }}
+                                                    className={`absolute top-3 left-3 z-20 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90
+                                                        ${isInWishlist(item._id) ? 'bg-red-500 text-white shadow-sm shadow-red-500/30' : 'bg-white/70 backdrop-blur-sm text-dark-300 hover:text-red-500 hover:bg-white'}`}
+                                                    aria-label="Add to wishlist"
+                                                >
+                                                    <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(item._id) ? 'fill-current' : ''}`} />
+                                                </button>
+                                            </div>
+                                            <div className="px-2">
+                                                <h4 className="font-bold text-dark-950 text-[11px] uppercase tracking-wider truncate mb-1" title={item.name}>
+                                                    {item.name}
+                                                </h4>
+                                                <div className="w-6 h-0.5 bg-accent-500/30 rounded-full group-hover:w-full transition-all duration-500" />
+                                            </div>
+                                        </motion.div>
+                                    ))}
                                 </motion.div>
-                            ))}
-                        </motion.div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </section>
