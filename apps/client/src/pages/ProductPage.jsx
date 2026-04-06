@@ -189,6 +189,13 @@ const ProductPage = () => {
     };
 
     const handleBuyNow = () => {
+        if (!product) return;
+        const isShowerEnclosure = product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower');
+        if (isShowerEnclosure) {
+            navigate('/book-site-visit?reason=shower-enclosure');
+            return;
+        }
+
         handleAddToCart();
         if (isAuthenticated) navigate('/checkout');
         else navigate('/login?redirect=/checkout');
@@ -624,7 +631,7 @@ const ProductPage = () => {
                                         onClick={handleBuyNow}
                                         className="flex-1 bg-accent-500 hover:bg-accent-400 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all duration-300 shadow-md shadow-accent-500/20 hover:shadow-accent-500/40"
                                     >
-                                        Buy Now
+                                        {(product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower')) ? 'Book Site Visit' : 'Buy Now'}
                                     </button>
                                 </div>
                             )}

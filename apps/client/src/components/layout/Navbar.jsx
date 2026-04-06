@@ -24,6 +24,7 @@ const clearRecentSearches = () => localStorage.removeItem(RECENT_SEARCHES_KEY);
 const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Products', path: '/shop' },
+    { label: 'Shower Enclosure', path: '/shop/shower-enclosures' },
     { label: 'Experience', path: '/experience-centre' },
     { label: 'B2B', path: '/b2b-enquiry' },
     { label: 'Contact', path: '/contact' },

@@ -14,6 +14,7 @@ const siteVisitBookingSchema = new mongoose.Schema({
   state: String,
   pincode: String,
   message: String,
+  numberOfBathrooms: Number,
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'completed', 'cancelled'],

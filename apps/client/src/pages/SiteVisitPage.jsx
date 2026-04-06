@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiSend, FiMapPin, FiClipboard, FiDollarSign, FiCheckCircle } from 'react-icons/fi';
 import { bookingAPI } from '@api/services';
@@ -13,13 +14,16 @@ const steps = [
 ];
 
 const SiteVisitPage = () => {
-    const [form, setForm] = useState({ customerName: '', email: '', phone: '', city: '', preferredDate: '', preferredTime: '', message: '' });
+    const [searchParams] = useSearchParams();
+    const isShowerEnclosure = searchParams.get('reason') === 'shower-enclosure';
+
+    const [form, setForm] = useState({ customerName: '', email: '', phone: '', city: '', preferredDate: '', preferredTime: '', message: isShowerEnclosure ? 'I am interested in a Shower Enclosure and would like to request a site visit.' : '', numberOfBathrooms: '' });
     const [sending, setSending] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!form.customerName || !form.email || !form.phone || !form.preferredDate) { toast.error('Please fill required fields'); return; }
-        try { setSending(true); await bookingAPI.bookSiteVisit(form); toast.success("Site visit booked! We'll confirm your appointment shortly. 📐"); setForm({ customerName: '', email: '', phone: '', city: '', preferredDate: '', preferredTime: '', message: '' }); } catch (e) { toast.error('Booking failed'); } finally { setSending(false); }
+        try { setSending(true); await bookingAPI.bookSiteVisit(form); toast.success("Site visit booked! We'll confirm your appointment shortly. \uD83D\uDCD0"); setForm({ customerName: '', email: '', phone: '', city: '', preferredDate: '', preferredTime: '', message: '', numberOfBathrooms: '' }); } catch (e) { toast.error('Booking failed'); } finally { setSending(false); }
     };
 
     const inputClass = "w-full bg-white border-2 border-dark-100 text-dark-900 text-sm rounded-2xl py-4 px-6 focus:outline-none focus:border-accent-500 transition-all duration-300 placeholder:text-dark-300";
@@ -65,7 +69,10 @@ const SiteVisitPage = () => {
                                 <div><label className="block text-xs font-bold text-dark-500 uppercase tracking-widest mb-2">Phone *</label><input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className={inputClass} placeholder="+91 XXXXX XXXXX" /></div>
                             </div>
                             <div><label className="block text-xs font-bold text-dark-500 uppercase tracking-widest mb-2">Email *</label><input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} type="email" className={inputClass} placeholder="your@email.com" /></div>
-                            <div><label className="block text-xs font-bold text-dark-500 uppercase tracking-widest mb-2">City</label><input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className={inputClass} placeholder="Your city" /></div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div><label className="block text-xs font-bold text-dark-500 uppercase tracking-widest mb-2">City</label><input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className={inputClass} placeholder="Your city" /></div>
+                                <div><label className="block text-xs font-bold text-dark-500 uppercase tracking-widest mb-2">No. of Bathrooms</label><input value={form.numberOfBathrooms} onChange={e => setForm({ ...form, numberOfBathrooms: e.target.value })} type="number" min="1" className={inputClass} placeholder="e.g. 2" /></div>
+                            </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div><label className="block text-xs font-bold text-dark-500 uppercase tracking-widest mb-2">Preferred Date *</label><input value={form.preferredDate} onChange={e => setForm({ ...form, preferredDate: e.target.value })} type="date" className={inputClass} min={new Date().toISOString().slice(0, 10)} /></div>
                                 <div><label className="block text-xs font-bold text-dark-500 uppercase tracking-widest mb-2">Preferred Time</label><input value={form.preferredTime} onChange={e => setForm({ ...form, preferredTime: e.target.value })} type="time" className={inputClass} /></div>
