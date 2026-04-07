@@ -78,12 +78,12 @@ const WishlistPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#ffffff] pt-28 pb-20">
+        <div className="min-h-screen bg-[#ffffff] pt-20 sm:pt-28 pb-16 sm:pb-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between mb-10"
+                    className="flex items-center justify-between mb-6 sm:mb-10"
                 >
                     <div>
                         <h1 className="text-3xl md:text-4xl font-display font-bold text-dark-900">My Wishlist</h1>
@@ -127,30 +127,31 @@ const WishlistPage = () => {
                                     exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
                                     className="bg-white rounded-3xl overflow-hidden border border-dark-100/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group"
                                 >
-                                    <Link to={`/product/${product.slug}`} className="block relative">
-                                        <div className="aspect-square bg-white p-6 flex items-center justify-center overflow-hidden">
-                                            <img src={product.images?.[0]?.url || '/images/product_shower_1.png'} alt={product.name} className="w-[85%] h-[85%] object-contain transition-transform duration-700 group-hover:scale-110" />
-                                        </div>
-                                    </Link>
+                                    <div className="relative group">
+                                        <Link to={`/product/${product.slug}`} className="block relative">
+                                            <div className="aspect-square bg-white p-6 flex items-center justify-center overflow-hidden">
+                                                <img src={product.images?.[0]?.url || '/images/product_shower_1.png'} alt={product.name} className="w-[85%] h-[85%] object-contain transition-transform duration-700 group-hover:scale-110" />
+                                            </div>
+                                        </Link>
+                                        <button
+                                            onClick={() => removeFromWishlist(product._id)}
+                                            className="absolute top-3 right-3 z-20 w-8 h-8 bg-white/80 backdrop-blur-sm text-dark-300 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm border border-dark-100"
+                                            aria-label="Remove from wishlist"
+                                        >
+                                            <FiTrash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
                                     <div className="p-4 border-t border-dark-50">
                                         <Link to={`/product/${product.slug}`}>
-                                            <h3 className="text-sm font-bold text-dark-900 line-clamp-1 mb-2 group-hover:text-accent-500 transition-colors">{product.name}</h3>
+                                            <h3 className="text-sm font-bold text-dark-900 line-clamp-1 mb-1 group-hover:text-accent-500 transition-colors uppercase tracking-tight">{product.name}</h3>
                                         </Link>
-                                        <p className="text-lg font-extrabold text-dark-900 mb-4">₹{product.price?.toLocaleString()}</p>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => moveToCart(product)}
-                                                className="flex-1 py-2.5 bg-dark-900 hover:bg-accent-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors"
-                                            >
-                                                <FiShoppingCart className="w-3.5 h-3.5" /> Move to Cart
-                                            </button>
-                                            <button
-                                                onClick={() => removeFromWishlist(product._id)}
-                                                className="p-2.5 bg-dark-50 text-dark-400 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all"
-                                            >
-                                                <FiTrash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                        <p className="text-lg font-extrabold text-dark-900 mb-3">₹{product.price?.toLocaleString()}</p>
+                                        <button
+                                            onClick={() => moveToCart(product)}
+                                            className="w-full py-3 bg-dark-900 hover:bg-accent-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+                                        >
+                                            <FiShoppingCart className="w-3.5 h-3.5" /> MOVE TO CART
+                                        </button>
                                     </div>
                                 </motion.div>
                             ))}

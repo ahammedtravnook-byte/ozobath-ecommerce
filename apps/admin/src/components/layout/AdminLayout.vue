@@ -1,147 +1,177 @@
 <template>
-  <div class="min-h-screen flex bg-gray-50">
+  <div class="min-h-screen flex bg-[#F8FAFC]">
+    <!-- Mobile Sidebar Backdrop -->
+    <Transition name="fade">
+      <div
+        v-if="sidebarOpen"
+        class="fixed inset-0 bg-dark-900/60 backdrop-blur-sm z-[40] lg:hidden"
+        @click="sidebarOpen = false"
+      />
+    </Transition>
+
     <!-- Sidebar -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-30 w-64 bg-sidebar-bg text-white transition-transform duration-300 lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-[50] w-72 bg-[#0F172A] text-white transition-all duration-500 ease-[0.16,1,0.3,1] lg:translate-x-0 border-r border-white/5',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       ]"
     >
-      <!-- Logo -->
-      <div class="h-16 flex items-center px-6 border-b border-sidebar-border">
-        <h1 class="text-xl font-extrabold tracking-tight">
-          OZO<span class="text-blue-400">BATH</span>
-          <span class="text-xs font-normal text-gray-400 ml-2">Admin</span>
-        </h1>
+      <!-- Brand Logo -->
+      <div class="h-20 flex items-center px-8 border-b border-white/5 bg-[#0F172A]/50 backdrop-blur-md sticky top-0 z-10">
+        <router-link to="/" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
+            <img src="/images/logo.png" alt="OZO" class="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h1 class="text-lg font-black tracking-tight leading-none">
+              OZO<span class="text-blue-400">BATH</span>
+            </h1>
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Control Panel</span>
+          </div>
+        </router-link>
       </div>
 
       <!-- Navigation -->
-      <nav class="mt-4 px-3 space-y-1 overflow-y-auto h-[calc(100vh-4rem)]">
+      <nav class="mt-4 px-4 pb-10 space-y-1.5 overflow-y-auto h-[calc(100vh-5rem)] custom-scrollbar">
         <template v-for="group in menuGroups" :key="group.label">
-          <p class="px-3 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            {{ group.label }}
-          </p>
+          <div class="px-4 pt-6 pb-2">
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] opacity-80">{{ group.label }}</span>
+          </div>
           <router-link
             v-for="item in group.items"
             :key="item.path"
             :to="item.path"
+            @click="sidebarOpen = false"
             :class="[
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+              'flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[13px] font-semibold transition-all duration-300 group relative overflow-hidden',
               $route.path === item.path
-                ? 'bg-sidebar-active text-white'
-                : 'text-gray-400 hover:bg-sidebar-hover hover:text-white'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-600/20'
+                : 'text-gray-400 hover:bg-white/5 hover:text-white'
             ]"
           >
-            <span class="text-lg">{{ item.icon }}</span>
-            <span>{{ item.label }}</span>
+            <span :class="['text-xl transition-transform duration-300 group-hover:scale-110', $route.path === item.path ? 'scale-110' : '']">
+              {{ item.icon }}
+            </span>
+            <span class="flex-1">{{ item.label }}</span>
+            <div 
+              v-if="$route.path === item.path"
+              class="absolute right-3 w-1.5 h-1.5 bg-white rounded-full animate-pulse"
+            />
           </router-link>
         </template>
       </nav>
     </aside>
 
-    <!-- Main Content -->
-    <div class="flex-1 lg:ml-64">
-      <!-- Top Bar -->
-      <header class="sticky top-0 z-20 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 shadow-sm">
-        <button
-          class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          @click="sidebarOpen = !sidebarOpen"
-        >
-          <span class="text-xl">☰</span>
-        </button>
+    <!-- Main Content Area -->
+    <div class="flex-1 lg:ml-72 flex flex-col min-w-0">
+      <!-- Enhanced Top Bar -->
+      <header class="sticky top-0 z-[30] h-20 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 sm:px-8">
+        <div class="flex items-center gap-4">
+          <button
+            class="lg:hidden w-11 h-11 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-100 transition-all text-gray-600"
+            @click="sidebarOpen = !sidebarOpen"
+          >
+            <span class="text-2xl" v-if="!sidebarOpen">☰</span>
+            <span class="text-2xl" v-else>✕</span>
+          </button>
+          
+          <div class="hidden md:block">
+            <h2 class="text-sm font-bold text-gray-900 tracking-tight">{{ currentPathLabel }}</h2>
+            <p class="text-[11px] text-gray-400 font-medium">Welcome back, {{ authStore.user?.name || 'Admin' }}</p>
+          </div>
+        </div>
 
-        <div class="flex items-center gap-3 ml-auto">
-          <!-- Pending Alerts -->
-          <div v-if="!alertsLoading && (pendingOrders > 0 || lowStockCount > 0)" class="flex items-center gap-2">
+        <div class="flex items-center gap-2 sm:gap-4">
+          <!-- Pending Status Pills (Optimized for Mobile) -->
+          <div v-if="!alertsLoading" class="hidden sm:flex items-center gap-2">
             <router-link
               v-if="pendingOrders > 0"
               to="/orders"
-              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 transition-colors"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100 transition-all"
             >
               <span class="text-xs">🛒</span>
-              <span class="text-xs font-semibold">{{ pendingOrders }} pending</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider">{{ pendingOrders }}</span>
             </router-link>
             <router-link
               v-if="lowStockCount > 0"
               to="/inventory"
-              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-700 border border-red-100 hover:bg-red-100 transition-all"
             >
               <span class="text-xs">⚠️</span>
-              <span class="text-xs font-semibold">{{ lowStockCount }} low stock</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider">{{ lowStockCount }}</span>
             </router-link>
           </div>
 
-          <!-- Notification Bell -->
+          <!-- Divider -->
+          <div class="hidden sm:block w-px h-6 bg-gray-100 mx-1" />
+
+          <!-- Notification Center -->
           <div class="relative" ref="notifDropdownRef">
             <button
               @click="toggleNotifications"
-              class="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
-              title="Notifications"
+              class="relative w-11 h-11 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-100 transition-all group"
             >
-              <span class="text-xl leading-none">🔔</span>
+              <span class="text-xl group-hover:scale-110 transition-transform">🔔</span>
               <span
                 v-if="notifUnreadCount > 0"
-                class="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center"
+                class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm"
               >
                 {{ notifUnreadCount > 9 ? '9+' : notifUnreadCount }}
               </span>
             </button>
 
-            <!-- Dropdown -->
-            <Transition name="notif-dropdown">
+            <!-- Modern Dropdown -->
+            <Transition name="slide-down">
               <div
                 v-if="notifOpen"
-                class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
+                class="fixed sm:absolute inset-x-4 sm:inset-auto sm:right-0 top-24 sm:top-full sm:mt-3 sm:w-96 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
               >
-                <!-- Header -->
-                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-50">
-                  <div class="flex items-center gap-2">
-                    <h3 class="text-sm font-bold text-gray-900">Notifications</h3>
-                    <span v-if="notifUnreadCount > 0" class="text-[10px] bg-red-100 text-red-600 font-bold px-1.5 py-0.5 rounded-full">
-                      {{ notifUnreadCount }} new
-                    </span>
+                <div class="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                      <span class="text-xl">🔔</span>
+                      <h3 class="text-sm font-black text-white uppercase tracking-widest">Inbox</h3>
+                    </div>
+                    <button
+                      v-if="notifUnreadCount > 0"
+                      @click="markAllNotificationsRead"
+                      class="text-[10px] text-blue-400 font-black uppercase tracking-widest hover:text-blue-300"
+                    >
+                      Clear all
+                    </button>
                   </div>
-                  <button
-                    v-if="notifUnreadCount > 0"
-                    @click="markAllNotificationsRead"
-                    class="text-[11px] text-blue-500 font-semibold hover:text-blue-600"
-                  >
-                    Mark all read
-                  </button>
                 </div>
 
-                <!-- List -->
-                <div class="max-h-80 overflow-y-auto">
-                  <div v-if="notifLoading" class="flex items-center justify-center py-8">
-                    <div class="w-6 h-6 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+                <div class="max-h-[60vh] overflow-y-auto bg-gray-50/50">
+                  <div v-if="notifLoading" class="flex items-center justify-center py-12">
+                    <div class="w-8 h-8 border-2 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
                   </div>
-                  <div v-else-if="notifications.length === 0" class="text-center py-10 px-4">
-                    <p class="text-2xl mb-2">🔔</p>
-                    <p class="text-sm text-gray-400">No notifications yet</p>
+                  <div v-else-if="notifications.length === 0" class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-3xl mb-4">🔕</div>
+                    <p class="text-sm font-bold text-gray-900">All caught up!</p>
+                    <p class="text-[11px] text-gray-400 mt-1 font-medium">No new notifications at the moment.</p>
                   </div>
-                  <div v-else>
+                  <div v-else class="divide-y divide-gray-50">
                     <div
                       v-for="notif in notifications"
                       :key="notif._id"
                       @click="handleNotifClick(notif)"
                       :class="[
-                        'flex items-start gap-3 px-4 py-3 border-b border-gray-50 last:border-0 transition-colors',
-                        notif.link ? 'cursor-pointer hover:bg-blue-50/60' : 'cursor-default hover:bg-gray-50',
-                        !isNotifRead(notif) ? 'bg-blue-50/30' : ''
+                        'flex items-start gap-4 px-6 py-4 transition-all duration-300 hover:bg-blue-50/30',
+                        !isNotifRead(notif) ? 'bg-blue-50/20' : ''
                       ]"
                     >
-                      <span class="text-lg shrink-0 mt-0.5">{{ getNotifIcon(notif.type) }}</span>
-                      <div class="flex-1 min-w-0">
-                        <p :class="['text-xs font-semibold truncate', !isNotifRead(notif) ? 'text-gray-900' : 'text-gray-500']">
+                      <div :class="['w-10 h-10 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-sm', !isNotifRead(notif) ? 'bg-white ring-2 ring-blue-100' : 'bg-gray-100']">
+                        {{ getNotifIcon(notif.type) }}
+                      </div>
+                      <div class="flex-1 min-w-0 pt-0.5">
+                        <p :class="['text-xs font-bold leading-tight', !isNotifRead(notif) ? 'text-gray-900' : 'text-gray-500']">
                           {{ notif.title }}
                         </p>
-                        <p class="text-[11px] text-gray-400 mt-0.5 line-clamp-2">{{ notif.message }}</p>
-                        <div class="flex items-center gap-2 mt-1">
-                          <p class="text-[10px] text-gray-300">{{ formatNotifTime(notif.createdAt) }}</p>
-                          <p v-if="notif.link" class="text-[10px] text-blue-400 font-medium">Click to view →</p>
-                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1 font-medium leading-relaxed line-clamp-2">{{ notif.message }}</p>
+                        <p class="text-[9px] font-bold text-blue-500 uppercase tracking-widest mt-2">{{ formatNotifTime(notif.createdAt) }}</p>
                       </div>
-                      <div v-if="!isNotifRead(notif)" class="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1.5" />
+                      <div v-if="!isNotifRead(notif)" class="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-2" />
                     </div>
                   </div>
                 </div>
@@ -149,35 +179,36 @@
             </Transition>
           </div>
 
-          <div class="w-px h-5 bg-gray-200" />
-
-          <span class="text-sm text-gray-500 hidden sm:block">
-            {{ authStore.user?.name || 'Admin' }}
-          </span>
-          <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
-            {{ (authStore.user?.name || 'A').charAt(0).toUpperCase() }}
+          <!-- User Profile -->
+          <div class="flex items-center gap-2 group cursor-pointer" @click="$router.push('/profile')">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center text-sm font-black shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform border-4 border-white">
+              {{ (authStore.user?.name || 'A').charAt(0).toUpperCase() }}
+            </div>
+            <div class="hidden xl:block">
+              <p class="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none">{{ authStore.user?.name || 'Admin' }}</p>
+              <p class="text-[10px] text-emerald-500 font-bold mt-1 leading-none">Super Admin</p>
+            </div>
           </div>
+
           <button
             @click="handleLogout"
-            class="text-sm text-gray-500 hover:text-red-500 transition-colors"
+            class="w-11 h-11 flex items-center justify-center rounded-xl bg-red-50 hover:bg-red-100 text-red-500 border border-red-50 transition-colors"
+            title="Sign Out"
           >
-            Logout
+            <span class="text-xl">🚪</span>
           </button>
         </div>
       </header>
 
-      <!-- Page Content -->
-      <main class="p-6">
-        <router-view />
+      <!-- Dynamic Page Content -->
+      <main class="p-4 sm:p-8 flex-1 animate-fade-in relative overflow-x-hidden">
+        <router-view v-slot="{ Component }">
+          <transition name="page-fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </main>
     </div>
-
-    <!-- Mobile Overlay -->
-    <div
-      v-if="sidebarOpen"
-      class="fixed inset-0 bg-black/50 z-20 lg:hidden"
-      @click="sidebarOpen = false"
-    />
   </div>
 </template>
 
@@ -190,6 +221,15 @@ import { analyticsAPI, adminNotificationAPI } from '@/api/services';
 const sidebarOpen = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
+
+const currentPathLabel = computed(() => {
+  const path = router.currentRoute.value.path;
+  for (const group of menuGroups.value) {
+    const item = group.items.find(i => i.path === path);
+    if (item) return item.label;
+  }
+  return 'Dashboard';
+});
 
 // ── Pending alerts ──────────────────────────────
 const pendingOrders = ref(0);
@@ -382,14 +422,53 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
-.notif-dropdown-enter-active,
-.notif-dropdown-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+<style>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
 }
-.notif-dropdown-enter-from,
-.notif-dropdown-leave-to {
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Page Transitions */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.page-fade-enter-from {
   opacity: 0;
-  transform: translateY(-6px) scale(0.97);
+  transform: translateY(10px);
+}
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Slide Down Transition */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+/* Fade Transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

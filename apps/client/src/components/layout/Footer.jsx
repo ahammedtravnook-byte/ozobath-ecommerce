@@ -103,9 +103,9 @@ const Footer = () => {
             <div className="absolute top-32 right-0 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary-500/5 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-12 relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8 sm:pt-12 sm:pb-12 relative z-10">
                 <motion.div
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-8 mb-10 lg:mb-16"
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-50px" }}
@@ -141,7 +141,7 @@ const Footer = () => {
                     </motion.div>
 
                     {/* Links Columns */}
-                    <motion.div variants={fadeInUp} className="lg:col-span-4 grid grid-cols-2 sm:grid-cols-3 gap-8">
+                    <motion.div variants={fadeInUp} className="lg:col-span-4 grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-8">
                         {['shop', 'company', 'support'].map((key) => (
                             <div key={key}>
                                 <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-5">{key}</h3>
@@ -164,7 +164,7 @@ const Footer = () => {
 
                     {/* Newsletter Column */}
                     <motion.div variants={fadeInUp} className="lg:col-span-4">
-                        <div className="bg-gradient-to-br from-dark-900 to-dark-950 p-8 rounded-3xl border border-dark-800/50 relative overflow-hidden">
+                        <div className="bg-gradient-to-br from-dark-900 to-dark-950 p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-dark-800/50 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-40 h-40 bg-accent-500/10 rounded-full blur-3xl" />
                             <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary-500/10 rounded-full blur-2xl" />
 
@@ -173,13 +173,13 @@ const Footer = () => {
                                 Get the latest design inspiration, exclusive deals & new arrivals in your inbox.
                             </p>
                             <form className="relative z-10" onSubmit={(e) => e.preventDefault()}>
-                                <div className="flex items-center gap-2 bg-dark-950/80 border border-dark-700 rounded-2xl pr-2 focus-within:border-accent-500 transition-all duration-300">
+                                <div className="flex items-center gap-2 bg-dark-950 border-2 border-white/10 rounded-2xl pr-2 focus-within:border-accent-500 transition-all duration-300 overflow-hidden">
                                     <input
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="Email address..."
-                                        className="flex-1 bg-transparent text-white text-sm py-4 pl-5 focus:outline-none placeholder:text-dark-500 min-w-0"
+                                        className="flex-1 bg-transparent text-white text-sm py-4 pl-5 focus:outline-none focus:ring-0 border-none appearance-none placeholder:text-dark-500 min-w-0"
                                         required
                                     />
                                     <motion.button
@@ -198,7 +198,7 @@ const Footer = () => {
 
                 {/* Bottom Bar */}
                 <div className="pt-8 border-t border-dark-800/50">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
                         <div className="flex flex-wrap justify-center gap-6">
                             {footerLinks.legal.map((link) => (
                                 <Link key={link.path} to={link.path} className="text-xs text-dark-500 hover:text-accent-400 transition-colors font-medium">

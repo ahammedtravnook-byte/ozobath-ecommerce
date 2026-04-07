@@ -79,6 +79,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
   html.lenis,
@@ -258,7 +259,7 @@
 
   /* Section Wrapper */
   .section-wrapper {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 md:py-24;
   }
 
   /* Section Title */
@@ -623,6 +624,23 @@
 
 .glass-morph:hover {
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Mobile touch: disable hover transforms ─ */
+@media (hover: none) {
+  .glass-morph:hover {
+    transform: none;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+  }
+
+  .hover-lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .premium-card:hover {
+    transform: none;
+  }
 }
 
 /* ─── Skeleton Shimmer ──────────────────── */

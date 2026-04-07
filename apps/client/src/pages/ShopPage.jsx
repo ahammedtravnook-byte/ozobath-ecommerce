@@ -98,7 +98,7 @@ const ShopPage = () => {
     return (
         <div className="min-h-screen bg-[#ffffff]">
             {/* Hero Banner */}
-            <section className="relative bg-dark-900 text-white pt-28 sm:pt-32 pb-10 sm:pb-16 overflow-hidden">
+            <section className="relative bg-dark-900 text-white pt-8 sm:pt-16 md:pt-20 pb-8 sm:pb-10 md:pb-16 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-dark-950 via-dark-900 to-dark-800" />
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-10 right-20 w-72 h-72 bg-accent-500 rounded-full blur-3xl" />
@@ -358,16 +358,24 @@ const ShopPage = () => {
                                             {[...Array(5)].map((_, s) => <FiStar key={s} className={`w-2.5 h-2.5 text-accent-400 ${s < (product.avgRating || 0) ? 'fill-current' : 'text-dark-200'}`} />)}
                                             {product.reviewCount > 0 && <span className="text-[9px] text-dark-300 ml-1">({product.reviewCount})</span>}
                                         </div>
-                                        <div className="flex items-center justify-between mt-auto">
-                                            <div>
-                                                <span className="text-sm sm:text-base font-extrabold text-dark-900">₹{product.price?.toLocaleString()}</span>
-                                                {product.mrp > product.price && <span className="text-[10px] text-dark-300 line-through ml-1.5">₹{product.mrp?.toLocaleString()}</span>}
+                                        <div className="flex flex-col gap-2.5 mt-auto">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <span className="text-sm sm:text-base font-extrabold text-dark-900">₹{product.price?.toLocaleString()}</span>
+                                                    {product.mrp > product.price && <span className="text-[10px] text-dark-300 line-through ml-1.5">₹{product.mrp?.toLocaleString()}</span>}
+                                                </div>
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
+                                                    className="w-9 h-9 bg-dark-900 hover:bg-accent-500 text-white rounded-xl sm:flex hidden items-center justify-center transition-all duration-300 active:scale-95 shadow-md shrink-0"
+                                                >
+                                                    <FiShoppingCart className="w-4 h-4" />
+                                                </button>
                                             </div>
                                             <button
                                                 onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
-                                                className="w-9 h-9 bg-dark-900 hover:bg-accent-500 text-white rounded-xl flex items-center justify-center transition-all duration-300 active:scale-90 shadow-md"
+                                                className="w-full py-2.5 bg-dark-900 hover:bg-accent-500 text-white rounded-xl sm:hidden flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-[0.97] shadow-sm"
                                             >
-                                                <FiShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                                <FiShoppingCart className="w-3.5 h-3.5" /> ADD TO CART
                                             </button>
                                         </div>
                                     </div>
@@ -381,45 +389,55 @@ const ShopPage = () => {
                             <motion.div
                                 key={product._id}
                                 variants={fadeInUp}
-                                className="bg-white rounded-2xl border border-dark-100/30 flex items-center gap-4 md:gap-6 p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-500 group"
+                                className="bg-white rounded-2xl border border-dark-100/20 flex flex-row items-center gap-4 sm:gap-6 p-4 md:p-6 hover:shadow-xl hover:border-accent-500/20 transition-all duration-500 group relative overflow-hidden"
                             >
                                 <Link to={`/product/${product.slug}`} className="shrink-0">
-                                    <div className="w-24 h-24 md:w-36 md:h-36 rounded-2xl bg-white border border-dark-50 flex items-center justify-center overflow-hidden">
-                                        <img src={product.images?.[0]?.url || '/images/product_shower_1.png'} alt={product.name} className="w-[80%] h-[80%] object-contain group-hover:scale-105 transition-transform duration-500" />
+                                    <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl bg-dark-50/50 border border-dark-100/10 flex items-center justify-center overflow-hidden">
+                                        <img src={product.images?.[0]?.url || '/images/product_shower_1.png'} alt={product.name} className="w-[85%] h-[85%] object-contain group-hover:scale-110 transition-transform duration-700" />
                                     </div>
                                 </Link>
-                                <div className="flex-1 min-w-0 relative">
-                                    {/* List View Wishlist Heart */}
-                                    <button
-                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(product._id) ? removeFromWishlist(product._id) : addToWishlist(product._id); }}
-                                        className={`absolute top-0 right-0 z-20 w-8 h-8 rounded-lg flex md:hidden sm:flex lg:flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90
-                                            ${isInWishlist(product._id) ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-dark-50 text-dark-400 hover:text-red-500 hover:bg-red-50'}`}
-                                        aria-label="Add to wishlist"
-                                    >
-                                        <FiHeart className={`w-3.5 h-3.5 ${isInWishlist(product._id) ? 'fill-current' : ''}`} />
-                                    </button>
 
-                                    <Link to={`/product/${product.slug}`}>
-                                        <p className="text-[10px] text-accent-500 font-bold uppercase tracking-widest">{product.category?.name}</p>
-                                        <h3 className="text-base md:text-lg font-bold text-dark-900 mb-1 group-hover:text-accent-500 transition-colors">{product.name}</h3>
-                                    </Link>
-                                    <div className="flex items-center gap-1 mb-2">
-                                        <div className="flex text-accent-400 text-xs gap-0.5">
-                                            {[...Array(5)].map((_, s) => <FiStar key={s} className={`w-3 h-3 ${s < (product.avgRating || 0) ? 'fill-current' : 'text-dark-200'}`} />)}
+                                <div className="flex-1 min-w-0 py-1">
+                                    <div className="flex items-start justify-between mb-1">
+                                        <div>
+                                            <p className="text-[10px] sm:text-[11px] text-accent-500 font-bold uppercase tracking-[0.15em] mb-1 sm:mb-1.5">{product.category?.name || 'Sanitary & Accessories'}</p>
+                                            <Link to={`/product/${product.slug}`}>
+                                                <h3 className="text-sm sm:text-base md:text-xl font-bold text-dark-900 leading-tight group-hover:text-accent-500 transition-colors line-clamp-2">{product.name}</h3>
+                                            </Link>
                                         </div>
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); isInWishlist(product._id) ? removeFromWishlist(product._id) : addToWishlist(product._id); }}
+                                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90 shrink-0 ml-4
+                                                ${isInWishlist(product._id) ? 'bg-red-50 text-red-500' : 'bg-dark-50 text-dark-300 hover:text-red-500 hover:bg-red-50'}`}
+                                            aria-label="Add to wishlist"
+                                        >
+                                            <FiHeart className={`w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] ${isInWishlist(product._id) ? 'fill-current' : ''}`} />
+                                        </button>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xl font-extrabold text-dark-900">₹{product.price?.toLocaleString()}</span>
-                                        {product.mrp > product.price && <span className="text-sm text-dark-300 line-through">₹{product.mrp?.toLocaleString()}</span>}
-                                        {discount(product) > 0 && <span className="bg-red-50 text-red-600 text-xs font-bold px-2 py-0.5 rounded-lg">{discount(product)}% OFF</span>}
+
+                                    <div className="flex items-center gap-1.5 mb-3">
+                                        <div className="flex text-accent-400 text-xs gap-0.5">
+                                            {[...Array(5)].map((_, s) => <FiStar key={s} className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${s < (product.avgRating || 0) ? 'fill-current' : 'text-dark-200'}`} />)}
+                                        </div>
+                                        {product.reviewCount > 0 && <span className="text-[10px] sm:text-[11px] text-dark-300 font-medium ml-1">({product.reviewCount})</span>}
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mt-auto">
+                                        <div className="flex items-baseline gap-2 sm:gap-3">
+                                            <span className="text-base sm:text-xl md:text-2xl font-black text-dark-900 tracking-tight">₹{product.price?.toLocaleString()}</span>
+                                            {product.mrp > product.price && <span className="text-[11px] sm:text-sm text-dark-300 line-through opacity-70">₹{product.mrp?.toLocaleString()}</span>}
+                                            {discount(product) > 0 && <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 sm:bg-emerald-50 sm:px-2 sm:py-0.5 rounded-lg">{discount(product)}% OFF</span>}
+                                        </div>
+
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
+                                            className="bg-dark-900 hover:bg-accent-500 text-white h-10 sm:h-12 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-dark-900/10 hover:shadow-accent-500/20 active:scale-95 group/btn"
+                                        >
+                                            <FiShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:-translate-y-0.5 transition-transform" />
+                                            <span>ADD TO CART</span>
+                                        </button>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => handleAddToCart(product)}
-                                    className="shrink-0 bg-dark-900 hover:bg-accent-500 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all duration-300 hidden sm:flex items-center gap-2"
-                                >
-                                    <FiShoppingCart className="w-4 h-4" /> Add to Cart
-                                </button>
                             </motion.div>
                         ))}
                     </motion.div>

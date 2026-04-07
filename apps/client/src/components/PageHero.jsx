@@ -12,7 +12,7 @@ const PageHero = ({
     illustration = null,
 }) => {
     return (
-        <section className={`relative overflow-hidden ${compact ? 'pt-28 pb-12' : 'pt-32 pb-20'}`}>
+        <section className={`relative overflow-hidden ${compact ? 'pt-24 pb-8 md:pt-28 md:pb-12' : 'pt-28 pb-12 md:pt-32 md:pb-20'}`}>
             {/* Background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
 
@@ -72,7 +72,7 @@ const PageHero = ({
 
                         {/* Title */}
                         <motion.h1
-                            className={`${compact ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl lg:text-6xl'} font-display font-bold text-white mb-3 tracking-tight`}
+                            className={`${compact ? 'text-2xl sm:text-3xl md:text-4xl' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl'} font-display font-bold text-white mb-3 tracking-tight`}
                             initial={{ opacity: 0, y: 25 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}

@@ -87,7 +87,7 @@ const OrdersPage = () => {
   return (
     <div className="min-h-screen bg-dark-50/40">
       {/* Page Header */}
-      <div className="bg-white border-b border-dark-100/40 sticky top-[64px] z-30">
+      <div className="bg-white border-b border-dark-100/40 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-20 sm:pt-6 flex items-center justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl font-display font-bold text-dark-900">My Orders</h1>

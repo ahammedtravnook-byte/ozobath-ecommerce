@@ -20,7 +20,7 @@ const WarrantyPage = () => (
         />
         <section className="section-wrapper">
             <ScrollReveal className="max-w-3xl mx-auto">
-                <div className="glass-morph p-8 md:p-12">
+                <div className="glass-morph p-5 sm:p-8 md:p-12">
                     <div className="prose prose-lg prose-gray max-w-none prose-headings:font-display prose-headings:font-bold prose-headings:text-dark-900 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-3 prose-p:text-dark-500 prose-p:leading-relaxed">
                         <section><h2>Product Warranty</h2><p>All OZOBATH products come with a manufacturer's warranty against defects in materials and workmanship. The warranty period varies by product category.</p></section>
 

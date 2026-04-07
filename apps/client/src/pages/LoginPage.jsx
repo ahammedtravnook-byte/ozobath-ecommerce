@@ -151,7 +151,7 @@ const LoginPage = () => {
             </div>
 
             {/* Right Panel — Form */}
-            <div className="flex-1 flex items-center justify-center px-6 py-16 relative z-10">
+            <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16 relative z-10">
                 {/* Back Button */}
                 <Link to="/" className="absolute top-6 left-6 lg:top-8 lg:left-8 flex items-center gap-2 text-dark-400 hover:text-accent-500 font-bold text-sm tracking-widest uppercase transition-all duration-300 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full border border-dark-100/50 shadow-sm hover:shadow-md">
                     <FiArrowLeft className="w-4 h-4" /> Back to Home
@@ -169,7 +169,7 @@ const LoginPage = () => {
                         </Link>
                     </div>
 
-                    <div className="glass-morph p-8 md:p-10">
+                    <div className="glass-morph p-5 sm:p-8 md:p-10">
                         <div className="mb-8">
                             <h2 className="text-2xl font-display font-bold text-dark-900 mb-1">
                                 {isNewUser ? 'Create Account' : 'Welcome Back'}

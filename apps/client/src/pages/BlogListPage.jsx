@@ -55,7 +55,7 @@ const BlogListPage = () => {
 
             <section className="section-wrapper">
                 {/* Category Filter Chips */}
-                <ScrollReveal className="flex flex-wrap justify-center gap-2 mb-12">
+                <ScrollReveal className="flex flex-wrap justify-center gap-2 mb-8 md:mb-12">
                     {categories.map((cat) => (
                         <button
                             key={cat}
@@ -73,7 +73,7 @@ const BlogListPage = () => {
 
                 {loading ? (
                     /* Skeleton Loading */
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
                         {[...Array(6)].map((_, i) => (
                             <div key={i} className="rounded-3xl overflow-hidden">
                                 <div className="skeleton-shimmer aspect-video" />
@@ -98,7 +98,7 @@ const BlogListPage = () => {
                     <>
                         {/* Featured First Post */}
                         {filteredBlogs.length > 0 && (
-                            <ScrollReveal className="mb-12">
+                            <ScrollReveal className="mb-8 sm:mb-12">
                                 <Link to={`/blog/${filteredBlogs[0].slug}`} className="block group">
                                     <div className="bg-white rounded-3xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-500 grid grid-cols-1 lg:grid-cols-2 gap-0">
                                         <div className="aspect-video lg:aspect-auto overflow-hidden">
@@ -108,7 +108,7 @@ const BlogListPage = () => {
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                             />
                                         </div>
-                                        <div className="p-8 lg:p-12 flex flex-col justify-center">
+                                        <div className="p-5 sm:p-8 lg:p-12 flex flex-col justify-center">
                                             <div className="flex items-center gap-3 mb-4">
                                                 <span className="bg-accent-50 text-accent-600 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
                                                     {filteredBlogs[0].category || 'Featured'}
@@ -138,7 +138,7 @@ const BlogListPage = () => {
                         )}
 
                         {/* Blog Grid */}
-                        <ScrollReveal stagger staggerDelay={0.08} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <ScrollReveal stagger staggerDelay={0.08} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
                             {filteredBlogs.slice(1).map((blog, i) => (
                                 <ScrollRevealItem key={blog._id}>
                                     <Link to={`/blog/${blog.slug}`} className="block group h-full">

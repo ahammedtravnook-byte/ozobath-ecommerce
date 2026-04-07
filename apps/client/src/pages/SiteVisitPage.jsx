@@ -42,7 +42,7 @@ const SiteVisitPage = () => {
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
                         {steps.map((step, i) => (
                             <div key={i} className="flex items-center gap-4 md:gap-6">
-                                <motion.div className="glass-morph p-5 flex items-center gap-4 group cursor-default min-w-[200px]" whileHover={{ y: -2 }}>
+                                <motion.div className="glass-morph p-4 sm:p-5 flex items-center gap-4 group cursor-default w-full sm:min-w-[200px]" whileHover={{ y: -2 }}>
                                     <div className={`w-11 h-11 rounded-xl bg-${step.color}-50 flex items-center justify-center shrink-0 group-hover:bg-${step.color}-500 transition-all duration-300`}>
                                         <step.icon className={`w-5 h-5 text-${step.color}-500 group-hover:text-white transition-colors duration-300`} />
                                     </div>
@@ -59,7 +59,7 @@ const SiteVisitPage = () => {
 
                 {/* Form */}
                 <ScrollReveal className="max-w-2xl mx-auto">
-                    <div className="glass-morph p-8 md:p-10">
+                    <div className="glass-morph p-5 sm:p-8 md:p-10">
                         <h2 className="text-2xl font-display font-bold text-dark-900 mb-2">Schedule Your Visit</h2>
                         <p className="text-dark-400 text-sm mb-8">Fill in your details and we'll confirm your appointment within 24 hours.</p>
 

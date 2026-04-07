@@ -29,7 +29,7 @@ const ServiceRequestPage = () => {
 
             <section className="section-wrapper">
                 {/* Trust badges */}
-                <ScrollReveal stagger staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+                <ScrollReveal stagger staggerDelay={0.1} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 md:mb-16">
                     {[
                         { icon: FiShield, title: '5-Year Warranty', desc: 'Comprehensive coverage on all products', color: 'accent' },
                         { icon: FiClock, title: '24-Hour Response', desc: 'Our team responds within one business day', color: 'primary' },
@@ -49,7 +49,7 @@ const ServiceRequestPage = () => {
 
                 {/* Form */}
                 <ScrollReveal className="max-w-2xl mx-auto">
-                    <div className="glass-morph p-8 md:p-10">
+                    <div className="glass-morph p-5 sm:p-8 md:p-10">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 rounded-xl bg-accent-50 flex items-center justify-center"><FiTool className="w-5 h-5 text-accent-500" /></div>
                             <div>

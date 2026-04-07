@@ -11,7 +11,7 @@ const PrivacyPage = () => (
         />
         <section className="section-wrapper">
             <ScrollReveal className="max-w-3xl mx-auto">
-                <div className="glass-morph p-8 md:p-12">
+                <div className="glass-morph p-5 sm:p-8 md:p-12">
                     <div className="prose prose-lg prose-gray max-w-none prose-headings:font-display prose-headings:font-bold prose-headings:text-dark-900 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-3 prose-p:text-dark-500 prose-p:leading-relaxed">
                         <section><h2>Information We Collect</h2><p>We collect personal information you provide, including name, email, phone number, shipping address, and payment details. We also collect browsing data through cookies.</p></section>
                         <section><h2>How We Use Your Information</h2><p>Your information is used to process orders, send order updates, improve our services, and personalize your shopping experience. We never sell your data to third parties.</p></section>

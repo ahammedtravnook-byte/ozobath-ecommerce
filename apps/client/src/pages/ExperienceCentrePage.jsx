@@ -22,7 +22,7 @@ const ExperienceCentrePage = () => (
         />
 
         <section className="section-wrapper">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start mb-20">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start mb-12 md:mb-20">
                 {/* Features */}
                 <ScrollReveal direction="left">
                     <span className="text-accent-500 font-bold uppercase tracking-[0.2em] text-xs mb-4 block">What to Expect</span>
@@ -77,9 +77,9 @@ const ExperienceCentrePage = () => (
         </section>
 
         {/* Video CTA */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 sm:pb-20">
             <ScrollReveal>
-                <div className="relative bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 rounded-[2.5rem] p-12 md:p-16 text-center overflow-hidden">
+                <div className="relative bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-12 md:p-16 text-center overflow-hidden">
                     <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl" />
                     <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl" />
                     <div className="relative z-10">

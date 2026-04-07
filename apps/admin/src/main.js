@@ -11,7 +11,7 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 app.use(Toast, {
-  position: 'top-right',
+  position: window.innerWidth < 640 ? 'top-center' : 'top-right',
   timeout: 3000,
   closeOnClick: true,
   pauseOnHover: true,

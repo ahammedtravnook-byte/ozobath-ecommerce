@@ -240,7 +240,7 @@ const CheckoutPage = () => {
                 </motion.h1>
 
                 {/* Steps */}
-                <div className="flex items-center gap-2 mb-8">
+                <div className="flex items-center gap-1 sm:gap-2 mb-8 flex-wrap">
                     {['Shipping', 'Review', 'Payment'].map((s, i) => (
                         <div key={i} className="flex items-center gap-2">
                             <motion.div
@@ -252,8 +252,8 @@ const CheckoutPage = () => {
                             >
                                 {step > i + 1 ? '✓' : i + 1}
                             </motion.div>
-                            <span className={`text-sm font-semibold ${step >= i + 1 ? 'text-dark-900' : 'text-dark-300'}`}>{s}</span>
-                            {i < 2 && <div className={`w-12 h-0.5 rounded-full transition-all duration-500 ${step > i + 1 ? 'bg-green-500' : 'bg-dark-100'}`} />}
+                            <span className={`text-xs sm:text-sm font-semibold ${step >= i + 1 ? 'text-dark-900' : 'text-dark-300'}`}>{s}</span>
+                            {i < 2 && <div className={`w-6 sm:w-12 h-0.5 rounded-full transition-all duration-500 ${step > i + 1 ? 'bg-green-500' : 'bg-dark-100'}`} />}
                         </div>
                     ))}
                 </div>
@@ -266,13 +266,13 @@ const CheckoutPage = () => {
                                 <motion.div key="step1" variants={stepVariants} initial="hidden" animate="visible" exit="exit" className="bg-white rounded-2xl p-6 shadow-sm border border-dark-100/10">
                                     <h2 className="text-lg font-bold text-dark-900 mb-5">Shipping Address</h2>
                                     <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Full Name *</label><input value={address.fullName} onChange={e => setAddress({ ...address, fullName: e.target.value })} className="form-input-premium" /></div>
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Phone *</label><input value={address.phone} onChange={e => setAddress({ ...address, phone: e.target.value })} className="form-input-premium" placeholder="10-digit number" /></div>
                                         </div>
                                         <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Address Line 1 *</label><input value={address.line1} onChange={e => setAddress({ ...address, line1: e.target.value })} className="form-input-premium" placeholder="House/Flat, Building, Street" /></div>
                                         <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Address Line 2</label><input value={address.line2} onChange={e => setAddress({ ...address, line2: e.target.value })} className="form-input-premium" placeholder="Area, Colony (Optional)" /></div>
-                                        <div className="grid grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">City *</label><input value={address.city} onChange={e => setAddress({ ...address, city: e.target.value })} className="form-input-premium" /></div>
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">State *</label><input value={address.state} onChange={e => setAddress({ ...address, state: e.target.value })} className="form-input-premium" /></div>
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Pincode *</label><input value={address.pincode} onChange={e => setAddress({ ...address, pincode: e.target.value })} className="form-input-premium" placeholder="6-digit" /></div>
@@ -326,7 +326,7 @@ const CheckoutPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-3">
+                                    <div className="flex flex-col-reverse sm:flex-row gap-3">
                                         <button onClick={() => setStep(1)} className="btn-secondary flex-1">← Edit Address</button>
                                         <button onClick={() => { setStep(3); handlePayment(); }} disabled={processing} className="btn-primary flex-1">
                                             {paymentMethod === 'cod' ? `Place Order ₹${total.toLocaleString()}` : `Pay ₹${total.toLocaleString()} →`}

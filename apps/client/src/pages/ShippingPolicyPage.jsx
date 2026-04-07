@@ -11,7 +11,7 @@ const ShippingPolicyPage = () => (
         />
         <section className="section-wrapper">
             <ScrollReveal className="max-w-3xl mx-auto">
-                <div className="glass-morph p-8 md:p-12">
+                <div className="glass-morph p-5 sm:p-8 md:p-12">
                     <div className="prose prose-lg prose-gray max-w-none prose-headings:font-display prose-headings:font-bold prose-headings:text-dark-900 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-3 prose-p:text-dark-500 prose-p:leading-relaxed">
                         <section><h2>Delivery Areas</h2><p>We deliver across India through our trusted logistics partners. Delivery is available to all major cities and most pin codes across the country.</p></section>
                         <section><h2>Shipping Charges</h2><p>FREE shipping on orders above ₹999. For orders below ₹999, a flat shipping fee of ₹99 applies. Heavy/bulky items may attract additional handling charges.</p></section>

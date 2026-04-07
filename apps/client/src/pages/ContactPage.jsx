@@ -47,7 +47,7 @@ const ContactPage = () => {
             />
 
             <section className="section-wrapper">
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 max-w-6xl mx-auto">
                     {/* Contact Info Column */}
                     <div className="lg:col-span-2">
                         <ScrollReveal stagger staggerDelay={0.1} className="space-y-5">
@@ -106,7 +106,7 @@ const ContactPage = () => {
 
                     {/* Form Column */}
                     <ScrollReveal direction="right" className="lg:col-span-3">
-                        <div className="glass-morph p-8 md:p-10">
+                        <div className="glass-morph p-5 sm:p-8 md:p-10">
                             <h2 className="text-2xl font-display font-bold text-dark-900 mb-2">Send Us a Message</h2>
                             <p className="text-dark-400 text-sm mb-8">Fill out the form below and our team will get back to you within 24 hours.</p>
 
