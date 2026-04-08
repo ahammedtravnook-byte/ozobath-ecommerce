@@ -11,7 +11,7 @@ const TermsPage = () => (
         />
         <section className="section-wrapper">
             <ScrollReveal className="max-w-3xl mx-auto">
-                <div className="glass-morph p-8 md:p-12">
+                <div className="glass-morph p-5 sm:p-8 md:p-12">
                     <div className="prose prose-lg prose-gray max-w-none prose-headings:font-display prose-headings:font-bold prose-headings:text-dark-900 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-3 prose-p:text-dark-500 prose-p:leading-relaxed">
                         <section><h2>1. General</h2><p>By accessing and using the OZOBATH website, you agree to be bound by these Terms and Conditions. OZOBATH reserves the right to modify these terms at any time without prior notice.</p></section>
                         <section><h2>2. Products & Pricing</h2><p>All products listed on our website are subject to availability. Prices are inclusive of GST unless stated otherwise. OZOBATH reserves the right to modify prices without prior notice.</p></section>

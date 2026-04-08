@@ -5,7 +5,6 @@
       <div class="flex gap-2">
         <button @click="activeTab = 'slots'" :class="activeTab === 'slots' ? 'admin-btn-primary' : 'px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200'">Manage Slots</button>
         <button @click="activeTab = 'video'" :class="activeTab === 'video' ? 'admin-btn-primary' : 'px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200'">Video Bookings</button>
-        <button @click="activeTab = 'site'" :class="activeTab === 'site' ? 'admin-btn-primary' : 'px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200'">Site Visits</button>
       </div>
     </div>
 
@@ -166,47 +165,6 @@
       </div>
     </div>
 
-    <!-- ══════ TAB: SITE VISITS ══════ -->
-    <div v-if="activeTab === 'site'">
-      <div class="admin-card overflow-hidden">
-        <div v-if="loadingSite" class="p-8 text-center"><div class="animate-spin w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full mx-auto"></div></div>
-        <div v-else-if="siteVisits.length === 0" class="p-12 text-center text-gray-400">No site visit bookings yet.</div>
-        <table v-else class="w-full text-sm">
-          <thead class="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th class="text-left text-xs font-semibold text-gray-400 uppercase px-4 py-3">Customer</th>
-              <th class="text-left text-xs font-semibold text-gray-400 uppercase px-4 py-3">Preferred Date</th>
-              <th class="text-left text-xs font-semibold text-gray-400 uppercase px-4 py-3">City</th>
-              <th class="text-left text-xs font-semibold text-gray-400 uppercase px-4 py-3">Message</th>
-              <th class="text-left text-xs font-semibold text-gray-400 uppercase px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-50">
-            <tr v-for="sv in siteVisits" :key="sv._id" class="hover:bg-gray-50">
-              <td class="px-4 py-3">
-                <p class="font-semibold text-gray-900">{{ sv.customerName }}</p>
-                <p class="text-xs text-gray-400">{{ sv.email }}</p>
-                <p class="text-xs text-gray-400">{{ sv.phone }}</p>
-              </td>
-              <td class="px-4 py-3 text-gray-600">
-                {{ sv.preferredDate?.slice(0, 10) }}
-                <span v-if="sv.preferredTime" class="text-xs text-gray-400 ml-1">{{ sv.preferredTime }}</span>
-              </td>
-              <td class="px-4 py-3 text-gray-600">{{ sv.city || '—' }}</td>
-              <td class="px-4 py-3 text-xs text-gray-500 max-w-xs truncate">{{ sv.message || '—' }}</td>
-              <td class="px-4 py-3">
-                <select :value="sv.status" @change="updateSiteVisitStatus(sv._id, $event.target.value)" class="admin-input text-xs py-1">
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -338,32 +296,6 @@ const updateSlotStatus = async (id, status) => {
   }
 };
 
-// ── Site visits ───────────────────────────────────
-const loadingSite = ref(false);
-const siteVisits = ref([]);
-
-const fetchSiteVisits = async () => {
-  try {
-    loadingSite.value = true;
-    const res = await bookingAPI.getSiteVisits();
-    siteVisits.value = res.data || [];
-  } catch {
-    toast.error('Failed to load site visits');
-  } finally {
-    loadingSite.value = false;
-  }
-};
-
-const updateSiteVisitStatus = async (id, status) => {
-  try {
-    await bookingAPI.updateSiteVisit(id, { status });
-    toast.success('Updated');
-    fetchSiteVisits();
-  } catch {
-    toast.error('Failed');
-  }
-};
-
 // ── Helpers ───────────────────────────────────────
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -373,11 +305,9 @@ const formatDate = (dateStr) => {
 watch(activeTab, (tab) => {
   if (tab === 'slots') fetchAllSlots();
   else if (tab === 'video') fetchVideoBookings();
-  else if (tab === 'site') fetchSiteVisits();
 });
 
 onMounted(() => {
   fetchAllSlots();
-  fetchSiteVisits();
 });
 </script>

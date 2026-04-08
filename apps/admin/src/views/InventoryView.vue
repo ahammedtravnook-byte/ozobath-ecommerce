@@ -1,143 +1,199 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8 animate-fade-in-up">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Inventory</h1>
-        <p class="text-sm text-gray-500 mt-0.5">Manage product stock levels</p>
+        <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Inventory</h1>
+        <p class="text-xs sm:text-sm text-gray-400 mt-1 font-medium italic italic">Fine-tune your stock levels and monitor product availability</p>
       </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="admin-card p-4 text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l-2xl"></div>
-        <p class="text-2xl font-bold text-gray-900 pl-2">{{ products.length }}</p>
-        <p class="text-xs text-gray-500 font-semibold mt-1 pl-2">Total Products</p>
+    <!-- Enhanced Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+      <div class="admin-card p-6 text-center relative overflow-hidden group hover:scale-[1.02] transition-all">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500/80 rounded-l-2xl"></div>
+        <p class="text-3xl font-black text-gray-900">{{ products.length }}</p>
+        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">Total Catalog</p>
       </div>
-      <div class="admin-card p-4 text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-1 h-full bg-green-500 rounded-l-2xl"></div>
-        <p class="text-2xl font-bold text-green-600 pl-2">{{ healthyStock }}</p>
-        <p class="text-xs text-gray-500 font-semibold mt-1 pl-2">In Stock</p>
+      <div class="admin-card p-6 text-center relative overflow-hidden group hover:scale-[1.02] transition-all">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500/80 rounded-l-2xl"></div>
+        <p class="text-3xl font-black text-emerald-600">{{ healthyStock }}</p>
+        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 line-clamp-1">In Stock</p>
       </div>
-      <div class="admin-card p-4 text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-1 h-full bg-amber-400 rounded-l-2xl"></div>
-        <p class="text-2xl font-bold text-amber-600 pl-2">{{ lowStock }}</p>
-        <p class="text-xs text-gray-500 font-semibold mt-1 pl-2">Low Stock</p>
+      <div class="admin-card p-6 text-center relative overflow-hidden group hover:scale-[1.02] transition-all">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-amber-400/80 rounded-l-2xl"></div>
+        <p class="text-3xl font-black text-amber-500">{{ lowStock }}</p>
+        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 line-clamp-1">Low Warning</p>
       </div>
-      <div class="admin-card p-4 text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-1 h-full bg-red-500 rounded-l-2xl"></div>
-        <p class="text-2xl font-bold text-red-600 pl-2">{{ outOfStock }}</p>
-        <p class="text-xs text-gray-500 font-semibold mt-1 pl-2">Out of Stock</p>
+      <div class="admin-card p-6 text-center relative overflow-hidden group hover:scale-[1.02] transition-all">
+        <div class="absolute top-0 left-0 w-1.5 h-full bg-red-500/80 rounded-l-2xl"></div>
+        <p class="text-3xl font-black text-red-500">{{ outOfStock }}</p>
+        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 line-clamp-1">Sold Out</p>
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="admin-card p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-      <div class="relative flex-1 max-w-sm">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+    <!-- Controls & Filters -->
+    <div class="admin-card p-6 flex flex-col lg:flex-row gap-6 items-stretch lg:items-center">
+      <div class="relative flex-1">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🔍</span>
         <input
           v-model="searchQuery"
-          class="admin-input pl-9"
+          class="admin-input pl-12 h-14"
           placeholder="Search product or SKU..."
         />
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
         <button
           v-for="f in stockFilters"
           :key="f.value"
           @click="stockFilter = f.value"
           :class="[
-            'px-3 py-2 text-xs font-semibold rounded-xl border-2 transition-all',
-            stockFilter === f.value ? f.activeClass : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'
+            'px-5 py-3 text-[11px] font-black uppercase tracking-widest rounded-2xl border-2 transition-all shrink-0 whitespace-nowrap shadow-sm',
+            stockFilter === f.value ? f.activeClass : 'border-gray-100 text-gray-400 hover:border-gray-200 bg-white'
           ]"
         >{{ f.label }}</button>
       </div>
     </div>
 
-    <!-- Table -->
-    <div class="admin-card p-0 overflow-hidden">
-      <div v-if="loading" class="p-10 flex items-center justify-center gap-3">
-        <div class="w-8 h-8 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
-        <span class="text-sm text-gray-400">Loading inventory...</span>
+    <!-- Content Container -->
+    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[400px]">
+      <div v-if="loading" class="flex-1 flex items-center justify-center py-24">
+        <div class="flex flex-col items-center gap-6">
+          <div class="animate-spin w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full"></div>
+          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory Syncing...</p>
+        </div>
       </div>
-      <div v-else-if="filtered.length === 0" class="flex flex-col items-center justify-center py-16">
-        <span class="text-5xl mb-3">📦</span>
-        <p class="text-gray-400 text-sm">No products match your filters</p>
+
+      <div v-else-if="filtered.length === 0" class="flex-1 flex flex-col items-center justify-center py-24 text-center px-6">
+        <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-5xl mb-8 shadow-inner">📦</div>
+        <h4 class="text-base font-black text-gray-900 uppercase tracking-widest">No Matches Found</h4>
+        <p class="text-sm text-gray-400 mt-2 max-w-xs font-medium italic">Adjust your search or status filters to locate specific items.</p>
       </div>
-      <div v-else class="overflow-x-auto">
-        <table class="w-full admin-table">
-          <thead>
-            <tr>
-              <th class="w-12">#</th>
-              <th>Product</th>
-              <th>SKU</th>
-              <th>Current Stock</th>
-              <th>Status</th>
-              <th>Update Stock</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(p, i) in filtered" :key="p._id">
-              <td class="text-gray-400 font-medium">{{ i + 1 }}</td>
-              <td>
-                <div class="flex items-center gap-3">
-                  <img
-                    :src="p.images?.[0]?.url || '/placeholder.jpg'"
-                    class="w-11 h-11 rounded-xl object-cover bg-gray-100 border border-gray-100 shrink-0"
-                  />
-                  <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-900 truncate max-w-[200px]">{{ p.name }}</p>
-                    <p class="text-xs text-gray-400">₹{{ p.price?.toLocaleString('en-IN') }}</p>
+
+      <div v-else class="flex-1 flex flex-col">
+        <!-- Desktop Table View -->
+        <div class="hidden lg:block overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
+            <thead>
+              <tr class="bg-gray-50/50">
+                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16 text-center">#</th>
+                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Information</th>
+                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory Status</th>
+                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Global Status</th>
+                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Update Stock</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              <tr v-for="(p, i) in filtered" :key="p._id" class="hover:bg-blue-50/10 transition-colors group">
+                <td class="px-8 py-5 text-center text-xs font-black text-gray-300">{{ i + 1 }}</td>
+                <td class="px-8 py-5">
+                  <div class="flex items-center gap-5">
+                    <img
+                      :src="p.images?.[0]?.url || '/placeholder.jpg'"
+                      class="w-14 h-14 rounded-2xl object-cover bg-gray-50 border border-gray-100 shrink-0 group-hover:scale-110 transition-transform"
+                    />
+                    <div class="min-w-0">
+                      <p class="text-sm font-black text-gray-900 truncate max-w-[280px] group-hover:text-blue-600 transition-colors">{{ p.name }}</p>
+                      <code class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1 block">SKU: {{ p.sku || 'N/A' }}</code>
+                    </div>
                   </div>
-                </div>
-              </td>
-              <td>
-                <code class="text-xs bg-gray-100 px-2 py-1 rounded-lg font-mono text-gray-600">{{ p.sku || '—' }}</code>
-              </td>
-              <td>
-                <div class="flex flex-col gap-1">
+                </td>
+                <td class="px-8 py-5">
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-baseline justify-between">
+                      <span :class="['text-sm font-black tracking-tight', p.stock === 0 ? 'text-red-600' : p.stock < 10 ? 'text-amber-600' : 'text-emerald-600']">
+                        {{ p.stock }} <span class="text-[10px] uppercase opacity-70">Units</span>
+                      </span>
+                    </div>
+                    <div class="w-32 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                      <div
+                        :class="['h-full rounded-full transition-all duration-700', p.stock === 0 ? 'bg-red-500' : p.stock < 10 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500']"
+                        :style="{ width: Math.min(p.stock / 100 * 100, 100) + '%' }"
+                      ></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-8 py-5">
                   <span :class="[
-                    'text-sm font-bold',
-                    p.stock === 0 ? 'text-red-600' : p.stock < 10 ? 'text-amber-600' : 'text-green-600'
-                  ]">{{ p.stock }} units</span>
-                  <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      :class="['h-full rounded-full transition-all', p.stock === 0 ? 'bg-red-400' : p.stock < 10 ? 'bg-amber-400' : 'bg-green-400']"
-                      :style="{ width: Math.min(p.stock / 100 * 100, 100) + '%' }"
-                    ></div>
+                    'inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm',
+                    p.stock === 0 ? 'bg-red-50 text-red-700 border-red-100' : p.stock < 10 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                  ]">
+                    {{ p.stock === 0 ? '⛔ Out of stock' : p.stock < 10 ? '⚠️ Low stock' : '✅ In stock' }}
+                  </span>
+                </td>
+                <td class="px-8 py-5 text-right">
+                  <div class="flex items-center justify-end gap-3">
+                    <input
+                      :value="p.newStock ?? p.stock"
+                      @input="p.newStock = parseInt($event.target.value)"
+                      type="number"
+                      min="0"
+                      class="admin-input w-24 text-sm font-black py-2.5 text-center border-gray-100"
+                    />
+                    <button
+                      @click="updateStock(p)"
+                      :disabled="p.updating"
+                      class="h-11 px-6 bg-gray-900 hover:bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-gray-900/10 disabled:opacity-50 active:scale-95 flex items-center justify-center min-w-[80px]"
+                    >
+                      <span v-if="!p.updating">Update</span>
+                      <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    </button>
                   </div>
-                </div>
-              </td>
-              <td>
-                <span :class="[
-                  'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold',
-                  p.stock === 0 ? 'bg-red-100 text-red-700' : p.stock < 10 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
-                ]">
-                  {{ p.stock === 0 ? '⛔ Out of stock' : p.stock < 10 ? '⚠️ Low stock' : '✅ In stock' }}
-                </span>
-              </td>
-              <td>
-                <div class="flex items-center gap-2">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Grid View -->
+        <div class="lg:hidden p-4 space-y-4 bg-gray-50/30 overflow-y-auto max-h-[70vh] custom-scrollbar">
+          <div v-for="p in filtered" :key="p._id" class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-5 flex flex-col gap-5 animate-fade-in-up">
+            <!-- Product Identity -->
+            <div class="flex items-center gap-4">
+              <img :src="p.images?.[0]?.url || '/placeholder.jpg'" class="w-16 h-16 rounded-[1.25rem] object-cover bg-gray-100 border border-gray-50" />
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-black text-gray-900 line-clamp-2 leading-tight uppercase tracking-tight">{{ p.name }}</h4>
+                <code class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1 block">SKU: {{ p.sku || 'N/A' }}</code>
+              </div>
+            </div>
+
+            <!-- Health Indicator -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+               <div class="flex flex-col gap-1.5">
+                  <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Inventory Status</p>
+                  <p :class="['text-sm font-black uppercase tracking-tight', p.stock === 0 ? 'text-red-600' : p.stock < 10 ? 'text-amber-600' : 'text-emerald-600']">
+                    {{ p.stock === 0 ? 'Sold Out' : p.stock < 10 ? 'Running Low' : 'Adequate' }}
+                  </p>
+               </div>
+               <div class="text-right">
+                  <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Stock Level</p>
+                  <p class="text-lg font-black text-gray-900">{{ p.stock }} <span class="text-[10px] text-gray-400">UNITs</span></p>
+               </div>
+            </div>
+
+            <!-- Mobile Stock Updater -->
+            <div class="flex items-center gap-3">
+               <div class="flex-1 flex items-center bg-gray-50 rounded-2xl border border-gray-100 px-4 h-14">
+                  <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-3">New Qty</p>
                   <input
                     :value="p.newStock ?? p.stock"
                     @input="p.newStock = parseInt($event.target.value)"
                     type="number"
                     min="0"
-                    class="admin-input w-20 text-sm py-2 text-center"
+                    class="bg-transparent font-black text-gray-900 border-none focus:ring-0 w-full text-right"
                   />
-                  <button
-                    @click="updateStock(p)"
-                    :disabled="p.updating"
-                    class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 active:scale-95"
-                  >
-                    {{ p.updating ? '...' : 'Save' }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+               </div>
+               <button 
+                 @click="updateStock(p)"
+                 :disabled="p.updating"
+                 class="h-14 px-8 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center shadow-lg shadow-gray-900/10 active:scale-95 transition-transform"
+               >
+                 <span v-if="!p.updating">Update</span>
+                 <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+               </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

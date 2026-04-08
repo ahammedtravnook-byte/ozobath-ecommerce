@@ -509,6 +509,14 @@ const bookVideoCall = asyncHandler(async (req, res) => {
   slot.booking = { customerName, customerEmail, customerPhone, message, productsInterested };
   await slot.save();
 
+  createAdminNotification(
+    'new_booking',
+    '📹 New Video Call Booked',
+    `${customerName} booked a video call for ${new Date(slot.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} at ${slot.startTime}`,
+    '/bookings',
+    { slotId: slot._id, customerName, customerEmail }
+  );
+
   sendResponse(res, 200, slot, 'Video call booked successfully');
 });
 
@@ -597,7 +605,26 @@ const deleteVideoCallSlot = asyncHandler(async (req, res) => {
 
 // ─── SITE VISIT ──────────────────────────────────
 const bookSiteVisit = asyncHandler(async (req, res) => {
-  const booking = await SiteVisitBooking.create(req.body);
+  const {
+    customerName, email, phone, preferredDate, preferredTime,
+    address, city, state, pincode, message, numberOfBathrooms,
+    productId, productName, productImage,
+  } = req.body;
+
+  const booking = await SiteVisitBooking.create({
+    customerName, email, phone, preferredDate, preferredTime,
+    address, city, state, pincode, message, numberOfBathrooms,
+    productId, productName, productImage,
+  });
+
+  createAdminNotification(
+    'new_site_visit',
+    '🏠 New Site Visit Booked',
+    `${booking.customerName} requested a site visit${booking.preferredDate ? ` on ${new Date(booking.preferredDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : ''}${booking.preferredTime ? ` at ${booking.preferredTime}` : ''}${booking.city ? ` — ${booking.city}` : ''}`,
+    '/site-visits',
+    { bookingId: booking._id, customerName: booking.customerName, city: booking.city }
+  );
+
   sendResponse(res, 201, booking, 'Site visit booked');
 });
 

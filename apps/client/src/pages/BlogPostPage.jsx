@@ -69,7 +69,7 @@ const BlogPostPage = () => {
     if (loading) {
         return (
             <div className="bg-[#ffffff]">
-                <div className="pt-32 pb-20 bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800">
+                <div className="pt-24 sm:pt-32 pb-12 sm:pb-20 bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800">
                     <div className="max-w-3xl mx-auto px-4">
                         <div className="skeleton-shimmer h-4 w-32 rounded-full mb-4" />
                         <div className="skeleton-shimmer h-10 w-full rounded-2xl mb-3" />
@@ -112,7 +112,7 @@ const BlogPostPage = () => {
             />
 
             {/* Hero */}
-            <section className="relative pt-32 pb-16 overflow-hidden">
+            <section className="relative pt-24 sm:pt-32 pb-10 sm:pb-16 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800" />
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <motion.div
@@ -186,20 +186,20 @@ const BlogPostPage = () => {
             </section>
 
             {/* Content */}
-            <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+            <article className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
                 {/* Featured Image */}
                 {post.featuredImage?.url && (
                     <ScrollReveal className="mb-10">
                         <img
                             src={post.featuredImage.url}
                             alt={post.title}
-                            className="w-full rounded-3xl shadow-xl shadow-dark-900/10 -mt-20 relative z-20"
+                            className="w-full rounded-2xl sm:rounded-3xl shadow-xl shadow-dark-900/10 -mt-8 sm:-mt-20 relative z-20"
                         />
                     </ScrollReveal>
                 )}
 
                 {/* Share Bar */}
-                <ScrollReveal className="flex items-center gap-3 mb-10 pb-8 border-b border-dark-100">
+                <ScrollReveal className="flex items-center flex-wrap gap-2 sm:gap-3 mb-8 sm:mb-10 pb-6 sm:pb-8 border-b border-dark-100">
                     <span className="text-xs font-bold text-dark-400 uppercase tracking-widest">Share</span>
                     <button
                         onClick={handleCopyLink}

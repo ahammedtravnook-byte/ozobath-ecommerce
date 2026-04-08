@@ -72,7 +72,7 @@ const AboutPage = () => {
 
             {/* ── Mission + Stats ─────────────────────── */}
             <section className="section-wrapper">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center mb-12 md:mb-20">
                     <ScrollReveal direction="left">
                         <span className="text-accent-500 font-bold uppercase tracking-[0.2em] text-xs mb-4 block">Our Story</span>
                         <h2 className="text-3xl md:text-4xl font-display font-bold text-dark-900 mb-6">
@@ -116,10 +116,10 @@ const AboutPage = () => {
             </section>
 
             {/* ── Timeline ────────────────────────────── */}
-            <section className="py-20 relative overflow-hidden">
+            <section className="py-12 md:py-20 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent-50/30 to-transparent" />
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    <ScrollReveal className="text-center mb-16">
+                    <ScrollReveal className="text-center mb-10 md:mb-16">
                         <span className="text-accent-500 font-bold uppercase tracking-[0.2em] text-xs mb-3 block">Our Journey</span>
                         <h2 className="text-3xl md:text-4xl font-display font-bold text-dark-900">The OZOBATH Story</h2>
                     </ScrollReveal>
@@ -130,7 +130,7 @@ const AboutPage = () => {
 
                         {timeline.map((item, i) => (
                             <ScrollReveal key={i} direction={i % 2 === 0 ? 'left' : 'right'} delay={i * 0.1}>
-                                <div className={`flex items-center gap-8 mb-12 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+                                <div className={`flex items-start gap-4 md:gap-8 mb-8 md:mb-12 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
                                     <div className={`flex-1 ${i % 2 === 0 ? 'md:text-right' : 'md:text-left'}`}>
                                         <span className="text-accent-500 font-display font-extrabold text-2xl">{item.year}</span>
                                         <h3 className="text-lg font-display font-bold text-dark-900 mt-1 mb-2">{item.title}</h3>
@@ -149,7 +149,7 @@ const AboutPage = () => {
 
             {/* ── Values ──────────────────────────────── */}
             <section className="section-wrapper">
-                <ScrollReveal className="text-center mb-14">
+                <ScrollReveal className="text-center mb-8 md:mb-14">
                     <span className="text-accent-500 font-bold uppercase tracking-[0.2em] text-xs mb-3 block">Why Choose Us</span>
                     <h2 className="text-3xl md:text-4xl font-display font-bold text-dark-900 mb-4">Why OZOBATH?</h2>
                     <p className="text-dark-400 max-w-2xl mx-auto">Six pillars that define our commitment to delivering the finest bathroom experience.</p>
@@ -158,7 +158,7 @@ const AboutPage = () => {
                 <ScrollReveal stagger staggerDelay={0.08} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {values.map((value, i) => (
                         <ScrollRevealItem key={i}>
-                            <div className="glass-morph p-8 text-center group cursor-default h-full">
+                            <div className="glass-morph p-5 sm:p-8 text-center group cursor-default h-full">
                                 <div className={`w-14 h-14 rounded-2xl bg-${value.color}-50 flex items-center justify-center mx-auto mb-5 group-hover:bg-${value.color}-500 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-${value.color}-500/20 group-hover:scale-110`}>
                                     <value.icon className={`w-6 h-6 text-${value.color}-500 group-hover:text-white transition-colors duration-300`} />
                                 </div>
@@ -171,17 +171,17 @@ const AboutPage = () => {
             </section>
 
             {/* ── CTA Section ─────────────────────────── */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 sm:pb-20">
                 <ScrollReveal>
-                    <div className="relative bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 rounded-[2.5rem] p-12 md:p-20 text-center overflow-hidden">
+                    <div className="relative bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-12 md:p-20 text-center overflow-hidden">
                         <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl" />
                         <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl" />
 
                         <div className="relative z-10">
-                            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-4">
+                            <h2 className="text-2xl sm:text-3xl md:text-5xl font-display font-bold text-white mb-4">
                                 Ready to Transform Your <span className="text-accent-400">Bathroom</span>?
                             </h2>
-                            <p className="text-white/60 max-w-md mx-auto mb-10 text-base">
+                            <p className="text-white/60 max-w-md mx-auto mb-8 text-sm sm:text-base">
                                 Explore our premium collection and find the perfect shower enclosure for your space.
                             </p>
                             <div className="flex flex-wrap gap-4 justify-center">

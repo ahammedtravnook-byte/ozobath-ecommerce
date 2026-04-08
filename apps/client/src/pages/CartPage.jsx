@@ -66,7 +66,7 @@ const CartPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-dark-50/30 pt-28 pb-20">
+        <div className="min-h-screen bg-dark-50/30 pt-20 sm:pt-28 pb-16 sm:pb-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -101,7 +101,7 @@ const CartPage = () => {
                                 </div>
                                 <span className={`text-xs font-bold uppercase tracking-wider hidden sm:block ${s.active ? 'text-dark-900' : 'text-dark-300'}`}>{s.label}</span>
                             </div>
-                            {i < 2 && <div className={`w-10 md:w-20 h-0.5 rounded-full ${i === 0 ? 'bg-dark-200' : 'bg-dark-100'}`} />}
+                            {i < 2 && <div className={`w-6 sm:w-10 md:w-20 h-0.5 rounded-full ${i === 0 ? 'bg-dark-200' : 'bg-dark-100'}`} />}
                         </div>
                     ))}
                 </motion.div>

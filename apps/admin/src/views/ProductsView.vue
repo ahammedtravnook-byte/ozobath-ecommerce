@@ -88,66 +88,141 @@
     </div>
 
     <!-- Products Table -->
-    <div class="admin-card overflow-hidden">
-      <div v-if="loading" class="p-8 text-center">
-        <div class="animate-spin w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full mx-auto"></div>
+    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+      <div v-if="loading" class="flex-1 flex items-center justify-center py-20">
+        <div class="flex flex-col items-center gap-4">
+          <div class="animate-spin w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full"></div>
+          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Loading Catalog...</p>
+        </div>
       </div>
 
-      <div v-else-if="products.length === 0" class="p-12 text-center">
-        <p class="text-gray-400 text-lg">No products found</p>
+      <div v-else-if="products.length === 0" class="flex-1 flex flex-col items-center justify-center py-20 text-center px-6">
+        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">📦</div>
+        <h4 class="text-base font-black text-gray-900">No Products Found</h4>
+        <p class="text-sm text-gray-400 mt-2 max-w-xs font-medium">Try adjusting your filters or search terms to find what you're looking for.</p>
       </div>
 
-      <table v-else class="w-full">
-        <thead class="bg-gray-50 border-b border-gray-100">
-          <tr>
-            <th class="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">Product</th>
-            <th class="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">Price</th>
-            <th class="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">Stock</th>
-            <th class="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">Sales</th>
-            <th class="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">Status</th>
-            <th class="text-right text-xs font-medium text-gray-500 uppercase px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-50">
-          <tr v-for="product in products" :key="product._id" class="hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <img :src="product.images?.[0]?.url || '/placeholder.jpg'" class="w-10 h-10 rounded-lg object-cover bg-gray-100" />
-                <div>
-                  <p class="text-sm font-medium text-gray-900 truncate max-w-[200px]">{{ product.name }}</p>
-                  <p class="text-xs text-gray-400">{{ product.sku || 'No SKU' }}</p>
+      <div v-else class="flex-1 flex flex-col overflow-hidden">
+        <!-- Desktop Table View -->
+        <div class="hidden lg:block flex-1 overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
+            <thead>
+              <tr class="bg-gray-50/50">
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Details</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Pricing</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sales</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              <tr v-for="product in products" :key="product._id" class="hover:bg-blue-50/10 transition-colors group">
+                <td class="px-8 py-4">
+                  <div class="flex items-center gap-4">
+                    <div class="relative shrink-0">
+                      <img :src="product.images?.[0]?.url || '/placeholder.jpg'" class="w-12 h-12 rounded-2xl object-cover bg-gray-50 border border-gray-100 group-hover:scale-105 transition-transform" />
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-black text-gray-900 truncate max-w-[240px] group-hover:text-blue-600 transition-colors">{{ product.name }}</p>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">SKU: {{ product.sku || 'N/A' }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-8 py-4">
+                  <p class="text-sm font-black text-gray-900 tracking-tight">₹{{ product.price?.toLocaleString('en-IN') }}</p>
+                  <p v-if="(product.compareAtPrice || product.mrp) > product.price" class="text-[10px] text-gray-400 line-through font-bold opacity-60">
+                    ₹{{ (product.compareAtPrice || product.mrp)?.toLocaleString('en-IN') }}
+                  </p>
+                </td>
+                <td class="px-8 py-4">
+                  <div class="flex items-center gap-2">
+                    <div :class="['w-2 h-2 rounded-full', product.stock < 10 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500']"></div>
+                    <span :class="['text-sm font-black', product.stock < 10 ? 'text-red-600' : 'text-gray-700']">{{ product.stock }}</span>
+                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-1">Units</span>
+                  </div>
+                </td>
+                <td class="px-8 py-4">
+                  <p class="text-sm font-black text-gray-900 tracking-tight">{{ product.salesCount || 0 }}</p>
+                  <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">Total Sold</p>
+                </td>
+                <td class="px-8 py-4">
+                  <span :class="product.isActive ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'" class="text-[10px] px-3 py-1 rounded-lg font-black uppercase tracking-widest border shadow-sm">
+                    {{ product.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="px-8 py-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button @click="$router.push(`/products/${product._id}/edit`)" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                      <span class="text-xl">✏️</span>
+                    </button>
+                    <button @click="deleteProduct(product._id)" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                      <span class="text-xl">🗑️</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card Grid View -->
+        <div class="lg:hidden flex-1 p-4 sm:p-6 space-y-4 overflow-y-auto max-h-[80vh] custom-scrollbar bg-gray-50/30">
+          <div v-for="product in products" :key="product._id" class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in-up">
+            <!-- Header -->
+            <div class="p-4 flex gap-4 border-b border-gray-50 bg-gray-50/20">
+              <img :src="product.images?.[0]?.url || '/placeholder.jpg'" class="w-16 h-16 rounded-2xl object-cover bg-white border border-gray-100" />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2">
+                  <h4 class="text-sm font-black text-gray-900 leading-tight">{{ product.name }}</h4>
+                  <span :class="product.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'" class="text-[8px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-current opacity-70">
+                    {{ product.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">SKU: {{ product.sku || 'N/A' }}</p>
+              </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-3 divide-x divide-gray-50 border-b border-gray-50">
+              <div class="p-4 text-center">
+                <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Price</p>
+                <p class="text-sm font-black text-gray-900 tracking-tight">₹{{ product.price?.toLocaleString('en-IN') }}</p>
+              </div>
+              <div class="p-4 text-center">
+                <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Stock</p>
+                <div class="flex items-center justify-center gap-1">
+                  <div :class="['w-1.5 h-1.5 rounded-full', product.stock < 10 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500']"></div>
+                  <p :class="['text-sm font-black', product.stock < 10 ? 'text-red-600' : 'text-gray-900']">{{ product.stock }}</p>
                 </div>
               </div>
-            </td>
-            <td class="px-4 py-3">
-              <p class="text-sm font-semibold text-gray-900">₹{{ product.price?.toLocaleString('en-IN') }}</p>
-              <p v-if="(product.compareAtPrice || product.mrp) > product.price" class="text-xs text-gray-400 line-through">
-                ₹{{ (product.compareAtPrice || product.mrp)?.toLocaleString('en-IN') }}
-              </p>
-            </td>
-            <td class="px-4 py-3">
-              <span :class="product.stock < 10 ? 'text-red-600 font-semibold' : 'text-gray-700'" class="text-sm">{{ product.stock }}</span>
-            </td>
-            <td class="px-4 py-3 text-sm text-gray-600">{{ product.salesCount || 0 }}</td>
-            <td class="px-4 py-3">
-              <span :class="product.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" class="text-xs px-2 py-0.5 rounded-full font-medium">
-                {{ product.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-right">
-              <button @click="$router.push(`/products/${product._id}/edit`)" class="text-xs text-blue-600 hover:text-blue-800 mr-3">Edit</button>
-              <button @click="deleteProduct(product._id)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              <div class="p-4 text-center">
+                <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Sales</p>
+                <p class="text-sm font-black text-gray-900">{{ product.salesCount || 0 }}</p>
+              </div>
+            </div>
 
-      <!-- Pagination -->
-      <div v-if="pagination.pages > 1" class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-        <p class="text-xs text-gray-500">Showing {{ products.length }} of {{ pagination.total }}</p>
-        <div class="flex gap-1">
+            <!-- Actions -->
+            <div class="p-3 bg-gray-50/50 flex items-center justify-between gap-3">
+               <button @click="$router.push(`/products/${product._id}/edit`)" class="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border border-gray-100 text-blue-600 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-blue-50 transition-colors">
+                 <span>✏️</span> Edit Product
+               </button>
+               <button @click="deleteProduct(product._id)" class="w-11 h-11 flex items-center justify-center bg-white border border-gray-100 text-red-500 rounded-2xl shadow-sm hover:bg-red-50 transition-colors">
+                 <span>🗑️</span>
+               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Pagination -->
+      <div v-if="pagination.pages > 1" class="flex flex-col sm:flex-row items-center justify-between gap-4 px-8 py-6 border-t border-gray-50 bg-gray-50/20">
+        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          Displaying <span class="text-gray-900">{{ products.length }}</span> of <span class="text-gray-900">{{ pagination.total }}</span> units
+        </p>
+        <div class="flex items-center gap-1.5">
           <button v-for="p in pagination.pages" :key="p" @click="page = p; fetchProducts()"
-            :class="['px-3 py-1 rounded text-xs', page === p ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
+            :class="['w-10 h-10 rounded-2xl text-xs font-black transition-all shadow-sm', page === p ? 'bg-gray-900 text-white shadow-gray-900/10' : 'bg-white border border-gray-100 text-gray-600 hover:bg-gray-50']">
             {{ p }}
           </button>
         </div>

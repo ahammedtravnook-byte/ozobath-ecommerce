@@ -36,10 +36,10 @@ const B2BEnquiryPage = () => {
 
             <section className="section-wrapper">
                 {/* Benefits */}
-                <ScrollReveal stagger staggerDelay={0.1} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+                <ScrollReveal stagger staggerDelay={0.1} className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-10 md:mb-16">
                     {benefits.map((b, i) => (
                         <ScrollRevealItem key={i}>
-                            <motion.div className="glass-morph p-6 text-center group cursor-default" whileHover={{ y: -4 }}>
+                            <motion.div className="glass-morph p-4 sm:p-6 text-center group cursor-default" whileHover={{ y: -4 }}>
                                 <div className={`w-12 h-12 rounded-2xl bg-${b.color}-50 flex items-center justify-center mx-auto mb-3 group-hover:bg-${b.color}-500 transition-all duration-300`}>
                                     <b.icon className={`w-5 h-5 text-${b.color}-500 group-hover:text-white transition-colors duration-300`} />
                                 </div>
@@ -52,7 +52,7 @@ const B2BEnquiryPage = () => {
 
                 {/* Form */}
                 <ScrollReveal className="max-w-2xl mx-auto">
-                    <div className="glass-morph p-8 md:p-10">
+                    <div className="glass-morph p-5 sm:p-8 md:p-10">
                         <h2 className="text-2xl font-display font-bold text-dark-900 mb-2">Submit Your Enquiry</h2>
                         <p className="text-dark-400 text-sm mb-8">Fill out the form below and our B2B team will get back to you within 24 hours.</p>
 

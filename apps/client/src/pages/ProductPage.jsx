@@ -189,6 +189,15 @@ const ProductPage = () => {
     };
 
     const handleBuyNow = () => {
+        if (!product) return;
+        const isShowerEnclosure = product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower');
+        if (isShowerEnclosure) {
+            const img = encodeURIComponent(product.images?.[0]?.url || '');
+            const name = encodeURIComponent(product.name || '');
+            navigate(`/book-site-visit?productId=${product._id}&productName=${name}&productImage=${img}`);
+            return;
+        }
+
         handleAddToCart();
         if (isAuthenticated) navigate('/checkout');
         else navigate('/login?redirect=/checkout');
@@ -270,7 +279,7 @@ const ProductPage = () => {
         <div className="min-h-screen bg-white">
             {/* ── Breadcrumb ───────────────────────────── */}
             <div className="bg-dark-50/50 border-b border-dark-100/30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 pt-28">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 pt-2 sm:pt-8">
                     <nav className="flex items-center gap-1.5 text-xs text-dark-400 font-medium flex-wrap">
                         <Link to="/" className="hover:text-accent-500 transition-colors">Home</Link>
                         <FiChevronRight className="w-3 h-3 shrink-0 text-dark-300" />
@@ -457,7 +466,7 @@ const ProductPage = () => {
 
                                 {/* Main lightbox image */}
                                 <motion.div
-                                    className="max-w-3xl max-h-[80vh] w-full mx-16 flex items-center justify-center"
+                                    className="max-w-3xl max-h-[80vh] w-full mx-4 sm:mx-16 flex items-center justify-center"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <AnimatePresence mode="wait">
@@ -611,6 +620,13 @@ const ProductPage = () => {
                                         Notify Me
                                     </button>
                                 </div>
+                            ) : (product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower')) ? (
+                                <button
+                                    onClick={handleBuyNow}
+                                    className="w-full bg-accent-500 hover:bg-accent-400 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all duration-300 shadow-md shadow-accent-500/20 hover:shadow-accent-500/40"
+                                >
+                                    Book Site Visit
+                                </button>
                             ) : (
                                 <div className="flex gap-3">
                                     <button
@@ -682,7 +698,7 @@ const ProductPage = () => {
                     transition={{ duration: 0.5 }}
                 >
                     {/* Tab nav */}
-                    <div className="flex gap-1 bg-dark-50 rounded-2xl p-1.5 w-fit mb-7 border border-dark-100/40">
+                    <div className="flex gap-1 bg-dark-50 rounded-2xl p-1.5 w-full overflow-x-auto no-scrollbar mb-7 border border-dark-100/40">
                         {[
                             { key: 'description', label: 'Description' },
                             { key: 'specs', label: 'Specifications' },
@@ -691,7 +707,7 @@ const ProductPage = () => {
                             <button
                                 key={key}
                                 onClick={() => setActiveTab(key)}
-                                className={`py-2.5 px-5 text-sm font-bold transition-all duration-300 rounded-xl whitespace-nowrap
+                                className={`py-2.5 px-3 sm:px-5 text-sm font-bold transition-all duration-300 rounded-xl whitespace-nowrap flex-1
                                     ${activeTab === key ? 'bg-white text-dark-900 shadow-md' : 'text-dark-400 hover:text-dark-700'}`}
                             >
                                 {label}
@@ -934,48 +950,57 @@ const ProductPage = () => {
             </div>
 
             {/* ── Mobile Sticky CTA Bar ─────────────────── */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-dark-100/60 px-4 py-3 shadow-2xl shadow-dark-900/20">
-                <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                        <p className="text-[11px] text-dark-400 font-medium leading-none mb-0.5 truncate">{product.name}</p>
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg font-extrabold text-dark-900">₹{product.price?.toLocaleString('en-IN')}</span>
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-dark-100/60 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-2xl shadow-dark-900/20">
+                <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0 pr-1">
+                        <p className="text-[10px] text-dark-400 font-medium leading-none mb-0.5 truncate">{product.name}</p>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-base font-extrabold text-dark-900">₹{product.price?.toLocaleString('en-IN')}</span>
                             {origPrice > product.price && (
-                                <span className="text-xs text-dark-300 line-through">₹{origPrice.toLocaleString('en-IN')}</span>
+                                <span className="text-[10px] text-dark-300 line-through">₹{origPrice.toLocaleString('en-IN')}</span>
                             )}
                         </div>
                     </div>
-                    <button
-                        onClick={() => inWishlist ? removeFromWishlist(product._id) : addToWishlist(product._id)}
-                        className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center border-2 transition-all
-                            ${inWishlist ? 'border-red-400 bg-red-50 text-red-500' : 'border-dark-100 text-dark-400 hover:border-red-300 hover:text-red-500'}`}
-                    >
-                        <FiHeart className={`w-4.5 h-4.5 ${inWishlist ? 'fill-current' : ''}`} />
-                    </button>
-                    {product.stock === 0 ? (
-                        <button disabled className="shrink-0 px-5 h-11 bg-dark-100 text-dark-400 rounded-2xl font-bold text-xs uppercase tracking-widest cursor-not-allowed">
-                            Out of Stock
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={() => inWishlist ? removeFromWishlist(product._id) : addToWishlist(product._id)}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all
+                                ${inWishlist ? 'border-red-400 bg-red-50 text-red-500' : 'border-dark-100 text-dark-400 hover:border-red-300 hover:text-red-500'}`}
+                        >
+                            <FiHeart className={`w-4 h-4 ${inWishlist ? 'fill-current' : ''}`} />
                         </button>
-                    ) : (
-                        <>
-                            <button
-                                onClick={handleAddToCart}
-                                className="shrink-0 px-4 h-11 bg-dark-900 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95"
-                            >
-                                <FiShoppingCart className="w-4 h-4" /> Cart
+                        {product.stock === 0 ? (
+                            <button disabled className="px-5 h-10 bg-dark-100 text-dark-400 rounded-xl font-bold text-[10px] uppercase tracking-widest cursor-not-allowed">
+                                OUT OF STOCK
                             </button>
+                        ) : (product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower')) ? (
                             <button
                                 onClick={handleBuyNow}
-                                className="shrink-0 px-5 h-11 bg-accent-500 text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-accent-500/30"
+                                className="px-6 h-10 bg-accent-500 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-accent-500/20"
                             >
-                                Buy Now
+                                BOOK VISIT
                             </button>
-                        </>
-                    )}
+                        ) : (
+                            <>
+                                <button
+                                    onClick={handleAddToCart}
+                                    className="px-3 h-10 bg-dark-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95"
+                                >
+                                    <FiShoppingCart className="w-3.5 h-3.5" /> CART
+                                </button>
+                                <button
+                                    onClick={handleBuyNow}
+                                    className="px-4 h-10 bg-accent-500 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-accent-500/20"
+                                >
+                                    BUY NOW
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
             {/* Spacer for mobile sticky bar */}
-            <div className="lg:hidden h-[72px]" />
+            <div className="lg:hidden h-[80px]" />
         </div>
     );
 };

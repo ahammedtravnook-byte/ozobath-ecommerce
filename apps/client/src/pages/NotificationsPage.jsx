@@ -124,7 +124,7 @@ const NotifCard = ({ notif, onRead, onDelete, index }) => {
             {/* Delete */}
             <button
                 onClick={e => { e.stopPropagation(); onDelete(notif._id); }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1.5 rounded-lg hover:bg-red-50 text-dark-300 hover:text-red-500 shrink-0 mt-0.5"
+                className="opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1.5 rounded-lg hover:bg-red-50 text-dark-300 hover:text-red-500 shrink-0 mt-0.5"
             >
                 <FiTrash2 className="w-3.5 h-3.5" />
             </button>

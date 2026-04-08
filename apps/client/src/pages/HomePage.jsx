@@ -3,7 +3,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { FiArrowRight, FiPlay, FiShoppingCart, FiStar, FiArrowUpRight, FiCheckCircle, FiTruck, FiShield, FiAward, FiChevronDown, FiHeart } from 'react-icons/fi';
 import { productAPI, categoryAPI, bannerAPI } from '@api/services';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import { useWishlist } from '@context/WishlistContext';
@@ -76,7 +76,7 @@ const FAQAccordionSection = () => {
     return (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             <motion.div
-                className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16"
+                className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-16"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
@@ -176,6 +176,7 @@ const staggerFast = {
 const HomePage = () => {
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const heroRef = useRef(null);
 
@@ -252,6 +253,17 @@ const HomePage = () => {
         fetchHomeData();
     }, []);
 
+    const isShowerEnclosure = (product) =>
+        product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower');
+
+    const handleBookVisit = (e, product) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const img = encodeURIComponent(product.images?.[0]?.url || '');
+        const name = encodeURIComponent(product.name || '');
+        navigate(`/book-site-visit?productId=${product._id}&productName=${name}&productImage=${img}`);
+    };
+
     const handleAddToCart = (product) => {
         if (!isAuthenticated) {
             const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
@@ -303,7 +315,7 @@ const HomePage = () => {
                                 <span className="text-xs font-semibold uppercase tracking-widest text-white/90">Premium Collection</span>
                             </motion.div>
 
-                            <motion.h1 variants={fadeInUp} className="text-[2.6rem] sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.1] mb-5 tracking-tight">
+                            <motion.h1 variants={fadeInUp} className="text-[1.9rem] sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.1] mb-5 tracking-tight">
                                 Make Your{' '}
                                 <span className="relative inline-block">
                                     <span className="text-accent-400">Bathroom</span>
@@ -350,7 +362,7 @@ const HomePage = () => {
                             </motion.div>
 
                             {/* Trust Stat */}
-                            <motion.div variants={fadeInUp} className="mt-12 flex items-center gap-3">
+                            <motion.div variants={fadeInUp} className="mt-6 md:mt-12 flex items-center gap-3">
                                 <div className="flex -space-x-2">
                                     {[1, 2, 3, 4].map(i => (
                                         <div key={i} className={`w-8 h-8 rounded-full border-2 border-white/50 bg-accent-${i * 100 + 200} flex items-center justify-center text-[10px] font-bold text-white`}>
@@ -479,16 +491,16 @@ const HomePage = () => {
                         </motion.div>
                     ) : (
                         /* ── Hardcoded Promo 1 ── */
-                        <motion.div variants={fadeInLeft} className="glass-morph-premium p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer">
-                            <div className="w-1/2 relative z-10">
+                        <motion.div variants={fadeInLeft} className="glass-morph-premium p-6 sm:p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer">
+                            <div className="w-full sm:w-1/2 relative z-10">
                                 <span className="text-accent-500 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Featured Collection</span>
                                 <h3 className="text-3xl lg:text-4xl font-display font-bold text-dark-900 mb-3 leading-tight">Shower Enclosures</h3>
-                                <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-[200px]">Premium frameless glass for modern bathrooms.</p>
+                                <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-full sm:max-w-[200px]">Premium frameless glass for modern bathrooms.</p>
                                 <Link to="/shop" className="inline-flex items-center gap-2 bg-dark-900 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider group-hover:bg-accent-500 transition-all duration-300 shadow-lg">
                                     SHOP NOW <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
                                 </Link>
                             </div>
-                            <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-6">
+                            <div className="hidden sm:flex absolute right-0 bottom-0 w-1/2 h-full items-center justify-center p-6">
                                 <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700">
                                     <img src="/images/promo_shower_enclosure.png" alt="Shower Enclosure" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-gradient-to-tr from-accent-500/10 to-transparent" />
@@ -513,16 +525,16 @@ const HomePage = () => {
                         </motion.div>
                     ) : (
                         /* ── Hardcoded Promo 2 ── */
-                        <motion.div variants={fadeInRight} className="glass-morph-premium p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer">
-                            <div className="w-1/2 relative z-10">
+                        <motion.div variants={fadeInRight} className="glass-morph-premium p-6 sm:p-8 lg:p-10 flex items-center overflow-hidden group min-h-[320px] cursor-pointer">
+                            <div className="w-full sm:w-1/2 relative z-10">
                                 <span className="text-primary-600 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Popular Choice</span>
                                 <h3 className="text-3xl lg:text-4xl font-display font-bold text-dark-900 mb-3 leading-tight">Bathroom Fittings</h3>
-                                <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-[200px]">Precision engineered hardware & accessories.</p>
+                                <p className="text-dark-500 text-sm mb-8 leading-relaxed max-w-full sm:max-w-[200px]">Precision engineered hardware & accessories.</p>
                                 <Link to="/shop" className="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider hover:bg-dark-900 transition-all duration-300 shadow-lg">
                                     SHOP NOW <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
                                 </Link>
                             </div>
-                            <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center p-6">
+                            <div className="hidden sm:flex absolute right-0 bottom-0 w-1/2 h-full items-center justify-center p-6">
                                 <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700 [animation-delay:1s]">
                                     <img src="/images/promo_sliding_door.png" alt="Bathroom Fittings" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/10 to-transparent" />
@@ -598,12 +610,21 @@ const HomePage = () => {
                                             <span className="font-black text-dark-900 text-base">₹{item.price?.toLocaleString() || '0'}</span>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
-                                        className="mt-3 w-full bg-dark-900 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
-                                    >
-                                        <FiShoppingCart className="w-3.5 h-3.5" /> Add to Cart
-                                    </button>
+                                    {isShowerEnclosure(item) ? (
+                                        <button
+                                            onClick={(e) => handleBookVisit(e, item)}
+                                            className="mt-3 w-full bg-accent-500 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
+                                        >
+                                            Book Visit
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                                            className="mt-3 w-full bg-dark-900 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
+                                        >
+                                            <FiShoppingCart className="w-3.5 h-3.5" /> Add to Cart
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -638,14 +659,23 @@ const HomePage = () => {
                                         />
                                     </div>
 
-                                    {/* Quick Add Button — Enhanced */}
+                                    {/* Quick Add / Book Visit Button — Enhanced */}
                                     <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-20">
-                                        <button
-                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(item); }}
-                                            className="w-full bg-dark-900/90 backdrop-blur-md hover:bg-accent-500 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
-                                        >
-                                            <FiShoppingCart className="w-4 h-4" /> Add to cart
-                                        </button>
+                                        {isShowerEnclosure(item) ? (
+                                            <button
+                                                onClick={(e) => handleBookVisit(e, item)}
+                                                className="w-full bg-accent-500 hover:bg-accent-600 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
+                                            >
+                                                Book Site Visit
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(item); }}
+                                                className="w-full bg-dark-900/90 backdrop-blur-md hover:bg-accent-500 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
+                                            >
+                                                <FiShoppingCart className="w-4 h-4" /> Add to cart
+                                            </button>
+                                        )}
                                     </div>
 
                                     {/* Discount badge — Premium Style */}
@@ -739,7 +769,7 @@ const HomePage = () => {
                                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 via-dark-900/20 to-transparent" />
-                            <div className="absolute bottom-10 left-10 right-10 z-10">
+                            <div className="absolute bottom-6 left-6 right-6 sm:bottom-10 sm:left-10 sm:right-10 z-10">
                                 <span className="bg-accent-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 inline-block">Featured</span>
                                 <h3 className="text-white font-display font-extrabold text-3xl leading-tight mb-2">Luxury Bath <br /> Essentials</h3>
                                 <p className="text-white/70 text-sm font-medium">Elevate your sanctuary with <br /> our bespoke collections.</p>
@@ -824,7 +854,7 @@ const HomePage = () => {
                 <div className="absolute right-[15%] bottom-28 w-4 h-4 rounded-full border-2 border-accent-400/50" />
                 <div className="absolute left-[10%] top-32 w-6 h-6 rounded-full bg-accent-100" />
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse lg:flex-row items-center gap-16 relative z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse lg:flex-row items-center gap-8 lg:gap-16 relative z-10">
                     <motion.div
                         className="lg:w-2/5 text-center lg:text-left"
                         initial="hidden"
@@ -1007,7 +1037,7 @@ const HomePage = () => {
             ═══════════════════════════════════════════ */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                 <motion.div
-                    className="relative bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 rounded-[2.5rem] p-12 md:p-20 text-center overflow-hidden"
+                    className="relative bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 rounded-[2.5rem] p-6 sm:p-10 md:p-16 lg:p-20 text-center overflow-hidden"
                     initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}

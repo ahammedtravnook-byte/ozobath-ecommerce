@@ -44,7 +44,7 @@ const ShopLivePage = () => {
 
             <section className="section-wrapper">
                 {/* Perks */}
-                <ScrollReveal stagger staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-14">
+                <ScrollReveal stagger staggerDelay={0.1} className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-8 sm:mb-14">
                     {perks.map((p, i) => (
                         <ScrollRevealItem key={i}>
                             <motion.div className="glass-morph p-6 text-center group cursor-default" whileHover={{ y: -4 }}>
@@ -60,7 +60,7 @@ const ShopLivePage = () => {
 
                 {/* Booking Card */}
                 <ScrollReveal className="max-w-2xl mx-auto">
-                    <div className="glass-morph p-8 md:p-10">
+                    <div className="glass-morph p-5 sm:p-8 md:p-10">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 rounded-xl bg-accent-50 flex items-center justify-center"><FiCalendar className="w-5 h-5 text-accent-500" /></div>
                             <div>
@@ -77,13 +77,13 @@ const ShopLivePage = () => {
                                 onChange={e => setSelectedDate(e.target.value)}
                                 type="date"
                                 min={new Date().toISOString().slice(0, 10)}
-                                className={inputClass + ' max-w-xs'}
+                                className={inputClass + ' w-full sm:max-w-xs'}
                             />
                         </div>
 
                         {/* Time Slots */}
                         {loading ? (
-                            <div className="grid grid-cols-3 gap-2 mb-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
                                 {[...Array(6)].map((_, i) => <div key={i} className="skeleton-shimmer h-12 rounded-xl" />)}
                             </div>
                         ) : slots.length === 0 ? (

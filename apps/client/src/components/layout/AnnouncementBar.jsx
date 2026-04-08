@@ -28,7 +28,7 @@ const AnnouncementBar = () => {
                 <div className="overflow-hidden relative">
                     <div className="marquee-track">
                         {[...announcements, ...announcements].map((text, i) => (
-                            <span key={i} className="inline-flex items-center whitespace-nowrap px-8 text-[13px] tracking-wider font-medium">
+                            <span key={i} className="inline-flex items-center whitespace-nowrap px-6 sm:px-8 text-[11px] sm:text-[13px] tracking-wider font-medium">
                                 {text}
                                 <span className="mx-6 text-accent-400/60">✦</span>
                             </span>
@@ -38,7 +38,7 @@ const AnnouncementBar = () => {
 
                 <button
                     onClick={() => setIsVisible(false)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/10 rounded-full transition-all duration-300 hover:scale-110"
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-white/10 rounded-full transition-all duration-300 hover:scale-110"
                     aria-label="Close announcement"
                 >
                     <FiX className="w-3.5 h-3.5" />

@@ -156,7 +156,7 @@ const ChatBot = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed bottom-[100px] right-6 z-[90]"
+                        className="fixed bottom-[152px] lg:bottom-[100px] right-4 lg:right-6 z-[90]"
                     >
                         <Link
                             to="/shop-live"
@@ -191,7 +191,7 @@ const ChatBot = () => {
 
             {/* ─── Floating Chat Button ──────────── */}
             <motion.button
-                className="fixed bottom-6 right-6 z-[100] w-14 h-14 bg-gradient-to-br from-primary-700 to-accent-500 text-white rounded-2xl shadow-xl shadow-primary-800/30 flex items-center justify-center hover:scale-110 transition-transform duration-300"
+                className="fixed bottom-[84px] lg:bottom-6 right-4 lg:right-6 z-[100] w-14 h-14 bg-gradient-to-br from-primary-700 to-accent-500 text-white rounded-2xl shadow-xl shadow-primary-800/30 flex items-center justify-center hover:scale-110 transition-transform duration-300"
                 onClick={() => { setIsOpen(!isOpen); setHasInteracted(true); }}
                 whileTap={{ scale: 0.9 }}
                 aria-label="Chat with us"
@@ -216,7 +216,7 @@ const ChatBot = () => {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        className="fixed bottom-24 right-4 sm:right-6 z-[99] w-[calc(100vw-2rem)] sm:w-[400px] h-[520px] flex flex-col rounded-3xl overflow-hidden shadow-2xl shadow-dark-900/30 border border-white/10"
+                        className="fixed bottom-[148px] lg:bottom-24 right-4 lg:right-6 z-[99] w-[calc(100vw-2.5rem)] lg:w-[400px] h-[calc(100dvh-220px)] max-h-[500px] lg:h-[520px] flex flex-col rounded-3xl overflow-hidden shadow-2xl shadow-dark-900/30 border-2 border-white/40"
                         initial={{ opacity: 0, y: 30, scale: 0.92 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 30, scale: 0.92 }}
@@ -227,8 +227,8 @@ const ChatBot = () => {
                             {/* Glassmorphism overlay */}
                             <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-sm" />
                             <div className="relative flex items-center gap-3">
-                                <div className="w-12 h-10 rounded-xl bg-white/10 flex items-center justify-center p-1.5 ring-1 ring-white/20">
-                                    <img src="/images/logo-transparent.png" alt="OzoBath" className="w-full h-full object-contain drop-shadow-md" />
+                                <div className="w-12 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 ring-2 ring-white/30 shadow-sm overflow-hidden">
+                                    <img src="/images/logo.png" alt="OzoBath" className="w-full h-full object-contain" />
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="text-white font-display font-bold text-sm tracking-wide">OZO Assistant</h3>
@@ -262,8 +262,8 @@ const ChatBot = () => {
                                         {/* Avatar for bot messages */}
                                         {msg.type === 'bot' && (
                                             <div className="flex items-center gap-2 mb-1.5">
-                                                <div className="w-6 h-5 rounded-lg bg-white/10 flex items-center justify-center ring-1 ring-dark-200/30 overflow-hidden">
-                                                    <img src="/images/logo-transparent.png" alt="OZO" className="w-full h-full object-contain mix-blend-multiply opacity-80" />
+                                                <div className="w-7 h-6 rounded-lg bg-white flex items-center justify-center ring-1 ring-dark-200/30 overflow-hidden shadow-sm">
+                                                    <img src="/images/logo.png" alt="OZO" className="w-3/4 h-3/4 object-contain" />
                                                 </div>
                                                 <span className="text-[10px] text-dark-300 font-semibold">OZO Assistant</span>
                                             </div>
@@ -352,7 +352,7 @@ const ChatBot = () => {
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     placeholder="Ask about products, shipping, returns..."
-                                    className="flex-1 bg-transparent text-[13px] text-dark-900 placeholder:text-dark-300 focus:outline-none py-2.5"
+                                    className="flex-1 bg-transparent text-[13px] text-dark-900 placeholder:text-dark-300 focus:outline-none focus:ring-0 border-none appearance-none py-2.5"
                                     disabled={isTyping}
                                 />
                                 <button

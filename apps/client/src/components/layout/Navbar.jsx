@@ -24,6 +24,7 @@ const clearRecentSearches = () => localStorage.removeItem(RECENT_SEARCHES_KEY);
 const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Products', path: '/shop' },
+    { label: 'Shower Enclosure', path: '/shop/shower-enclosures' },
     { label: 'Experience', path: '/experience-centre' },
     { label: 'B2B', path: '/b2b-enquiry' },
     { label: 'Contact', path: '/contact' },
@@ -145,7 +146,7 @@ const SearchOverlay = ({ onClose }) => {
                             onChange={(e) => handleSearch(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter' && query.trim().length >= 2) handleViewAll(); }}
                             placeholder="Search products, categories..."
-                            className="flex-1 py-4 px-3 text-base text-dark-900 placeholder:text-dark-300 bg-transparent focus:outline-none"
+                            className="flex-1 py-4 px-3 text-base text-dark-900 placeholder:text-dark-300 bg-transparent focus:outline-none focus:ring-0 border-none appearance-none"
                         />
                         <div className="flex items-center gap-1 pr-2">
                             {query && (
@@ -426,7 +427,7 @@ const NotificationBell = () => {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        className="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-2xl shadow-2xl border border-dark-100/30 overflow-hidden z-50"
+                        className="absolute right-0 top-full mt-2 w-[340px] max-w-[calc(100vw-1rem)] bg-white rounded-2xl shadow-2xl border border-dark-100/30 overflow-hidden z-50"
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -555,8 +556,8 @@ const Navbar = () => {
                     <div
                         className={`flex items-center justify-between transition-all duration-300 ease-out
                             ${isScrolled
-                                ? 'bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] px-6 py-2 border border-white/50 rounded-full'
-                                : 'py-4 bg-transparent rounded-none'
+                                ? 'bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] px-3 sm:px-6 py-2 border border-white/50 rounded-full'
+                                : 'py-3 sm:py-4 bg-transparent rounded-none'
                             }`}
                     >
                         {/* Logo */}

@@ -60,7 +60,7 @@ const OrderTrackingPage = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#F5F9FF] to-white">
-            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
                 <motion.div
                     className="text-center mb-10"
                     initial={{ opacity: 0, y: -15 }}
@@ -88,7 +88,7 @@ const OrderTrackingPage = () => {
                     <button
                         onClick={trackOrder}
                         disabled={loading}
-                        className="btn-primary px-6 rounded-xl"
+                        className="btn-primary px-4 sm:px-6 rounded-xl shrink-0"
                     >
                         {loading ? (
                             <span className="flex items-center gap-2">
@@ -111,8 +111,8 @@ const OrderTrackingPage = () => {
                             className="space-y-6"
                         >
                             {/* Order Header */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-dark-100/10">
-                                <div className="flex items-center justify-between mb-6">
+                            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-dark-100/10">
+                                <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
                                     <div>
                                         <p className="text-xs text-dark-300 font-semibold uppercase tracking-wider">Order</p>
                                         <p className="text-lg font-display font-bold text-dark-900">#{order.orderNumber || order._id?.slice(-8)}</p>
@@ -147,10 +147,10 @@ const OrderTrackingPage = () => {
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 transition={{ delay: i * 0.1, duration: 0.3 }}
                                             >
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${isActive ? 'bg-gradient-to-br from-accent-500 to-primary-600 text-white shadow-md shadow-accent-500/20' : 'bg-dark-50 text-dark-300'}`}>
-                                                    <Icon className="w-4 h-4" />
+                                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${isActive ? 'bg-gradient-to-br from-accent-500 to-primary-600 text-white shadow-md shadow-accent-500/20' : 'bg-dark-50 text-dark-300'}`}>
+                                                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                                 </div>
-                                                <span className={`text-[10px] mt-2 font-bold text-center uppercase tracking-wider ${isActive ? 'text-dark-900' : 'text-dark-300'}`}>{s.label}</span>
+                                                <span className={`text-[9px] sm:text-[10px] mt-1 sm:mt-2 font-bold text-center uppercase tracking-wider ${isActive ? 'text-dark-900' : 'text-dark-300'}`}>{s.label}</span>
                                             </motion.div>
                                         );
                                     })}
