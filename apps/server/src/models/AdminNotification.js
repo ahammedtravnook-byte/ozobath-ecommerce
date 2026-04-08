@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 const adminNotificationSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['new_order', 'new_review', 'low_stock', 'new_enquiry', 'new_service_request', 'new_booking', 'payment_failed'],
+    enum: ['new_order', 'new_review', 'low_stock', 'new_enquiry', 'new_service_request', 'new_booking', 'new_site_visit', 'payment_failed'],
     required: true,
   },
   title: { type: String, required: true },

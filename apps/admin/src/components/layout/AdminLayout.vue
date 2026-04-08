@@ -262,7 +262,7 @@ let notifPollInterval = null;
 const NOTIF_ICONS = {
   new_order: '🛒', new_review: '⭐', low_stock: '📉',
   new_enquiry: '🏢', new_service_request: '🔧', new_booking: '📹',
-  payment_failed: '⚠️',
+  new_site_visit: '🏠', payment_failed: '⚠️',
 };
 const getNotifIcon = (type) => NOTIF_ICONS[type] || '🔔';
 
@@ -374,7 +374,7 @@ const menuGroups = computed(() => {
         { label: 'Video Call Slots', path: '/bookings', icon: '📹' },
         { label: 'B2B Enquiries', path: '/enquiries', icon: '🏢' },
         { label: 'Service Requests', path: '/service-requests', icon: '🔧' },
-        { label: 'Experience Centres', path: '/experience-centres', icon: '📍' },
+        { label: 'Site Visits', path: '/site-visits', icon: '🏠' },
       ],
     },
     {

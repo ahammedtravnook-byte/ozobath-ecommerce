@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiFilter, FiGrid, FiList, FiShoppingCart, FiStar, FiChevronLeft, FiChevronRight, FiX, FiSliders, FiHeart, FiChevronDown } from 'react-icons/fi';
 import { productAPI, categoryAPI } from '@api/services';
@@ -31,6 +31,7 @@ const fallbackProducts = [
 const ShopPage = () => {
     const { category: categorySlug } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -91,6 +92,16 @@ const ShopPage = () => {
         } else {
             addToCart(product._id, 1);
         }
+    };
+
+    const isShowerEnclosure = (product) =>
+        product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower');
+
+    const handleBookVisit = (e, product) => {
+        e.preventDefault();
+        const img = encodeURIComponent(product.images?.[0]?.url || '');
+        const name = encodeURIComponent(product.name || '');
+        navigate(`/book-site-visit?productId=${product._id}&productName=${name}&productImage=${img}`);
     };
 
     const discount = (product) => product.mrp > product.price ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0;
@@ -364,19 +375,30 @@ const ShopPage = () => {
                                                     <span className="text-sm sm:text-base font-extrabold text-dark-900">₹{product.price?.toLocaleString()}</span>
                                                     {product.mrp > product.price && <span className="text-[10px] text-dark-300 line-through ml-1.5">₹{product.mrp?.toLocaleString()}</span>}
                                                 </div>
+                                                {!isShowerEnclosure(product) && (
+                                                    <button
+                                                        onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
+                                                        className="w-9 h-9 bg-dark-900 hover:bg-accent-500 text-white rounded-xl sm:flex hidden items-center justify-center transition-all duration-300 active:scale-95 shadow-md shrink-0"
+                                                    >
+                                                        <FiShoppingCart className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {isShowerEnclosure(product) ? (
+                                                <button
+                                                    onClick={(e) => handleBookVisit(e, product)}
+                                                    className="w-full py-2.5 bg-accent-500 hover:bg-accent-600 text-white rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-[0.97] shadow-sm"
+                                                >
+                                                    Book Visit
+                                                </button>
+                                            ) : (
                                                 <button
                                                     onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
-                                                    className="w-9 h-9 bg-dark-900 hover:bg-accent-500 text-white rounded-xl sm:flex hidden items-center justify-center transition-all duration-300 active:scale-95 shadow-md shrink-0"
+                                                    className="w-full py-2.5 bg-dark-900 hover:bg-accent-500 text-white rounded-xl sm:hidden flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-[0.97] shadow-sm"
                                                 >
-                                                    <FiShoppingCart className="w-4 h-4" />
+                                                    <FiShoppingCart className="w-3.5 h-3.5" /> ADD TO CART
                                                 </button>
-                                            </div>
-                                            <button
-                                                onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
-                                                className="w-full py-2.5 bg-dark-900 hover:bg-accent-500 text-white rounded-xl sm:hidden flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-[0.97] shadow-sm"
-                                            >
-                                                <FiShoppingCart className="w-3.5 h-3.5" /> ADD TO CART
-                                            </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -429,13 +451,22 @@ const ShopPage = () => {
                                             {discount(product) > 0 && <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 sm:bg-emerald-50 sm:px-2 sm:py-0.5 rounded-lg">{discount(product)}% OFF</span>}
                                         </div>
 
-                                        <button
-                                            onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
-                                            className="bg-dark-900 hover:bg-accent-500 text-white h-10 sm:h-12 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-dark-900/10 hover:shadow-accent-500/20 active:scale-95 group/btn"
-                                        >
-                                            <FiShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:-translate-y-0.5 transition-transform" />
-                                            <span>ADD TO CART</span>
-                                        </button>
+                                        {isShowerEnclosure(product) ? (
+                                            <button
+                                                onClick={(e) => handleBookVisit(e, product)}
+                                                className="bg-accent-500 hover:bg-accent-600 text-white h-10 sm:h-12 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-accent-500/20 active:scale-95"
+                                            >
+                                                Book Visit
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
+                                                className="bg-dark-900 hover:bg-accent-500 text-white h-10 sm:h-12 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-dark-900/10 hover:shadow-accent-500/20 active:scale-95 group/btn"
+                                            >
+                                                <FiShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:-translate-y-0.5 transition-transform" />
+                                                <span>ADD TO CART</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>

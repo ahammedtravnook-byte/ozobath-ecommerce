@@ -3,7 +3,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { FiArrowRight, FiPlay, FiShoppingCart, FiStar, FiArrowUpRight, FiCheckCircle, FiTruck, FiShield, FiAward, FiChevronDown, FiHeart } from 'react-icons/fi';
 import { productAPI, categoryAPI, bannerAPI } from '@api/services';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import { useWishlist } from '@context/WishlistContext';
@@ -176,6 +176,7 @@ const staggerFast = {
 const HomePage = () => {
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const heroRef = useRef(null);
 
@@ -251,6 +252,17 @@ const HomePage = () => {
         };
         fetchHomeData();
     }, []);
+
+    const isShowerEnclosure = (product) =>
+        product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower');
+
+    const handleBookVisit = (e, product) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const img = encodeURIComponent(product.images?.[0]?.url || '');
+        const name = encodeURIComponent(product.name || '');
+        navigate(`/book-site-visit?productId=${product._id}&productName=${name}&productImage=${img}`);
+    };
 
     const handleAddToCart = (product) => {
         if (!isAuthenticated) {
@@ -598,12 +610,21 @@ const HomePage = () => {
                                             <span className="font-black text-dark-900 text-base">₹{item.price?.toLocaleString() || '0'}</span>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
-                                        className="mt-3 w-full bg-dark-900 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
-                                    >
-                                        <FiShoppingCart className="w-3.5 h-3.5" /> Add to Cart
-                                    </button>
+                                    {isShowerEnclosure(item) ? (
+                                        <button
+                                            onClick={(e) => handleBookVisit(e, item)}
+                                            className="mt-3 w-full bg-accent-500 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
+                                        >
+                                            Book Visit
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                                            className="mt-3 w-full bg-dark-900 text-white py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
+                                        >
+                                            <FiShoppingCart className="w-3.5 h-3.5" /> Add to Cart
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -638,14 +659,23 @@ const HomePage = () => {
                                         />
                                     </div>
 
-                                    {/* Quick Add Button — Enhanced */}
+                                    {/* Quick Add / Book Visit Button — Enhanced */}
                                     <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-20">
-                                        <button
-                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(item); }}
-                                            className="w-full bg-dark-900/90 backdrop-blur-md hover:bg-accent-500 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
-                                        >
-                                            <FiShoppingCart className="w-4 h-4" /> Add to cart
-                                        </button>
+                                        {isShowerEnclosure(item) ? (
+                                            <button
+                                                onClick={(e) => handleBookVisit(e, item)}
+                                                className="w-full bg-accent-500 hover:bg-accent-600 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
+                                            >
+                                                Book Site Visit
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(item); }}
+                                                className="w-full bg-dark-900/90 backdrop-blur-md hover:bg-accent-500 text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase shadow-xl transition-all duration-300"
+                                            >
+                                                <FiShoppingCart className="w-4 h-4" /> Add to cart
+                                            </button>
+                                        )}
                                     </div>
 
                                     {/* Discount badge — Premium Style */}

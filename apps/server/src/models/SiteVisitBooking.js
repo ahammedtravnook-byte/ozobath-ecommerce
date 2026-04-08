@@ -7,7 +7,7 @@ const siteVisitBookingSchema = new mongoose.Schema({
   customerName: { type: String, required: true },
   email: { type: String, required: true },
   phone: { type: String, required: true },
-  preferredDate: { type: Date, required: true },
+  preferredDate: { type: Date },
   preferredTime: String,
   address: String,
   city: String,
@@ -15,6 +15,9 @@ const siteVisitBookingSchema = new mongoose.Schema({
   pincode: String,
   message: String,
   numberOfBathrooms: Number,
+  productId: { type: String },
+  productName: String,
+  productImage: String,
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'completed', 'cancelled'],

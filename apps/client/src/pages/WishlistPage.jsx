@@ -57,6 +57,15 @@ const WishlistPage = () => {
         }
     };
 
+    const isShowerEnclosure = (product) =>
+        product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower');
+
+    const handleBookVisit = (product) => {
+        const img = encodeURIComponent(product.images?.[0]?.url || '');
+        const name = encodeURIComponent(product.name || '');
+        navigate(`/book-site-visit?productId=${product._id}&productName=${name}&productImage=${img}`);
+    };
+
     const moveToCart = async (product) => {
         if (isAuthenticated) {
             await addToCart(product._id, 1);
@@ -146,12 +155,21 @@ const WishlistPage = () => {
                                             <h3 className="text-sm font-bold text-dark-900 line-clamp-1 mb-1 group-hover:text-accent-500 transition-colors uppercase tracking-tight">{product.name}</h3>
                                         </Link>
                                         <p className="text-lg font-extrabold text-dark-900 mb-3">₹{product.price?.toLocaleString()}</p>
-                                        <button
-                                            onClick={() => moveToCart(product)}
-                                            className="w-full py-3 bg-dark-900 hover:bg-accent-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
-                                        >
-                                            <FiShoppingCart className="w-3.5 h-3.5" /> MOVE TO CART
-                                        </button>
+                                        {isShowerEnclosure(product) ? (
+                                            <button
+                                                onClick={() => handleBookVisit(product)}
+                                                className="w-full py-3 bg-accent-500 hover:bg-accent-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+                                            >
+                                                BOOK SITE VISIT
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => moveToCart(product)}
+                                                className="w-full py-3 bg-dark-900 hover:bg-accent-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+                                            >
+                                                <FiShoppingCart className="w-3.5 h-3.5" /> MOVE TO CART
+                                            </button>
+                                        )}
                                     </div>
                                 </motion.div>
                             ))}

@@ -61,6 +61,7 @@ const routes = [
       { path: 'faqs', name: 'FAQs', component: FAQsView },
       { path: 'testimonials', name: 'Testimonials', component: TestimonialsView },
       { path: 'experience-centres', name: 'ExperienceCentres', component: ExperienceCentresView },
+      { path: 'site-visits', name: 'SiteVisits', component: ExperienceCentresView },
       { path: 'bookings', name: 'Bookings', component: BookingsView },
       { path: 'enquiries', name: 'Enquiries', component: EnquiriesView },
       { path: 'service-requests', name: 'ServiceRequests', component: ServiceRequestsView },

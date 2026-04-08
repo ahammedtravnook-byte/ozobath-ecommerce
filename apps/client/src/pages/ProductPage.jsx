@@ -192,7 +192,9 @@ const ProductPage = () => {
         if (!product) return;
         const isShowerEnclosure = product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower');
         if (isShowerEnclosure) {
-            navigate('/book-site-visit?reason=shower-enclosure');
+            const img = encodeURIComponent(product.images?.[0]?.url || '');
+            const name = encodeURIComponent(product.name || '');
+            navigate(`/book-site-visit?productId=${product._id}&productName=${name}&productImage=${img}`);
             return;
         }
 
@@ -618,6 +620,13 @@ const ProductPage = () => {
                                         Notify Me
                                     </button>
                                 </div>
+                            ) : (product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower')) ? (
+                                <button
+                                    onClick={handleBuyNow}
+                                    className="w-full bg-accent-500 hover:bg-accent-400 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all duration-300 shadow-md shadow-accent-500/20 hover:shadow-accent-500/40"
+                                >
+                                    Book Site Visit
+                                </button>
                             ) : (
                                 <div className="flex gap-3">
                                     <button
@@ -631,7 +640,7 @@ const ProductPage = () => {
                                         onClick={handleBuyNow}
                                         className="flex-1 bg-accent-500 hover:bg-accent-400 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all duration-300 shadow-md shadow-accent-500/20 hover:shadow-accent-500/40"
                                     >
-                                        {(product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower')) ? 'Book Site Visit' : 'Buy Now'}
+                                        Buy Now
                                     </button>
                                 </div>
                             )}
@@ -964,6 +973,13 @@ const ProductPage = () => {
                             <button disabled className="px-5 h-10 bg-dark-100 text-dark-400 rounded-xl font-bold text-[10px] uppercase tracking-widest cursor-not-allowed">
                                 OUT OF STOCK
                             </button>
+                        ) : (product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower')) ? (
+                            <button
+                                onClick={handleBuyNow}
+                                className="px-6 h-10 bg-accent-500 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-accent-500/20"
+                            >
+                                BOOK VISIT
+                            </button>
                         ) : (
                             <>
                                 <button
@@ -976,7 +992,7 @@ const ProductPage = () => {
                                     onClick={handleBuyNow}
                                     className="px-4 h-10 bg-accent-500 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-accent-500/20"
                                 >
-                                    {(product?.category?.slug === 'shower-enclosures' || product?.category?.name?.toLowerCase().includes('shower')) ? 'BOOK VISIT' : 'BUY NOW'}
+                                    BUY NOW
                                 </button>
                             </>
                         )}
