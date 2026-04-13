@@ -23,7 +23,8 @@
       "Bash(xargs basename:*)",
       "Bash(wc -l /c/Users/Tariq/OneDrive/Desktop/Ahammed/ozobath-ecommerce/apps/client/src/pages/*.jsx)",
       "Bash(xargs wc:*)",
-      "Bash(grep -E \"\\\\.vue$\")"
+      "Bash(grep -E \"\\\\.vue$\")",
+      "Bash(xargs grep:*)"
     ]
   }
 }

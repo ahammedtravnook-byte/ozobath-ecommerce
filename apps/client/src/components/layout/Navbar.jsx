@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiSearch, FiHeart, FiShoppingBag, FiMenu, FiX, FiUser, FiArrowRight, FiBell, FiClock, FiTag, FiPackage } from 'react-icons/fi';
+import { FiSearch, FiHeart, FiShoppingBag, FiMenu, FiX, FiUser, FiArrowRight, FiBell, FiClock, FiTag, FiPackage, FiChevronDown } from 'react-icons/fi';
 import { useAuth } from '@context/AuthContext';
 import { useCart } from '@context/CartContext';
 import { useWishlist } from '@context/WishlistContext';
@@ -524,10 +524,23 @@ const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [navCategories, setNavCategories] = useState([]);
+    const [productsDropdownOpen, setProductsDropdownOpen] = useState(false);
+    const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
     const location = useLocation();
     const { user, isAuthenticated, logout } = useAuth();
     const { itemCount } = useCart();
     const { count: wishlistCount } = useWishlist();
+
+    // Fetch categories for Products dropdown (exclude shower-enclosures — it has its own nav item)
+    useEffect(() => {
+        categoryAPI.getAll()
+            .then(res => {
+                const cats = res.data?.categories || [];
+                setNavCategories(cats.filter(c => c.slug !== 'shower-enclosures'));
+            })
+            .catch(() => {});
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 30);
@@ -572,6 +585,63 @@ const Navbar = () => {
                         {/* Desktop Navigation — optimized (no layoutId) */}
                         <nav className="hidden lg:flex items-center gap-0.5 relative">
                             {navLinks.map((link) => {
+                                if (link.label === 'Products') {
+                                    const isActive = location.pathname === '/shop';
+                                    return (
+                                        <div
+                                            key="products-dropdown"
+                                            className="relative"
+                                            onMouseEnter={() => setProductsDropdownOpen(true)}
+                                            onMouseLeave={() => setProductsDropdownOpen(false)}
+                                        >
+                                            <Link
+                                                to="/shop"
+                                                className={`relative px-5 py-2.5 text-[13px] font-semibold transition-colors duration-200 rounded-full flex items-center gap-1
+                                                    ${isActive
+                                                        ? 'text-accent-500'
+                                                        : 'text-dark-600 hover:text-dark-900 hover:bg-dark-50/60'
+                                                    }`}
+                                            >
+                                                Products
+                                                {navCategories.length > 0 && (
+                                                    <FiChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${productsDropdownOpen ? 'rotate-180' : ''}`} />
+                                                )}
+                                                {isActive && <WaveIndicator />}
+                                            </Link>
+                                            <AnimatePresence>
+                                                {productsDropdownOpen && navCategories.length > 0 && (
+                                                    <motion.div
+                                                        className="absolute top-full left-0 pt-2 z-50"
+                                                        initial={{ opacity: 0, y: -8 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -8 }}
+                                                        transition={{ duration: 0.15 }}
+                                                    >
+                                                        <div className="bg-white rounded-2xl shadow-xl border border-dark-100/30 overflow-hidden min-w-[200px] py-1">
+                                                            <Link
+                                                                to="/shop"
+                                                                className="flex items-center px-4 py-2.5 text-[11px] font-bold text-dark-400 uppercase tracking-widest border-b border-dark-50 hover:bg-dark-50 transition-colors"
+                                                                onClick={() => setProductsDropdownOpen(false)}
+                                                            >
+                                                                All Products
+                                                            </Link>
+                                                            {navCategories.map(cat => (
+                                                                <Link
+                                                                    key={cat._id}
+                                                                    to={`/shop?category=${cat._id}`}
+                                                                    className="flex items-center px-4 py-2.5 text-sm text-dark-700 hover:bg-accent-50 hover:text-accent-600 transition-colors"
+                                                                    onClick={() => setProductsDropdownOpen(false)}
+                                                                >
+                                                                    {cat.name}
+                                                                </Link>
+                                                            ))}
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    );
+                                }
                                 const isActive = location.pathname === link.path;
                                 return (
                                     <Link
@@ -728,23 +798,71 @@ const Navbar = () => {
 
                             {/* Navigation Links — CSS-only transitions (no per-item motion) */}
                             <div className="flex flex-col gap-1 flex-1 px-4 pt-4">
-                                {navLinks.map((link) => (
-                                    <Link
-                                        key={link.path}
-                                        to={link.path}
-                                        className={`flex items-center text-base font-display font-semibold py-3.5 px-4 rounded-2xl transition-colors duration-200
-                                            ${location.pathname === link.path
-                                                ? 'text-accent-500 bg-accent-50'
-                                                : 'text-dark-900 hover:bg-dark-50 hover:text-accent-500'
-                                            }`}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        {link.label}
-                                        {location.pathname === link.path && (
-                                            <span className="ml-auto w-1.5 h-1.5 bg-accent-500 rounded-full" />
-                                        )}
-                                    </Link>
-                                ))}
+                                {navLinks.map((link) => {
+                                    if (link.label === 'Products') {
+                                        const isActive = location.pathname === '/shop' || location.pathname.startsWith('/shop/');
+                                        return (
+                                            <div key="mobile-products">
+                                                <button
+                                                    className={`w-full flex items-center justify-between text-base font-display font-semibold py-3.5 px-4 rounded-2xl transition-colors duration-200
+                                                        ${isActive ? 'text-accent-500 bg-accent-50' : 'text-dark-900 hover:bg-dark-50 hover:text-accent-500'}`}
+                                                    onClick={() => setMobileProductsOpen(prev => !prev)}
+                                                >
+                                                    <span>Products</span>
+                                                    <FiChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileProductsOpen ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                <AnimatePresence>
+                                                    {mobileProductsOpen && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            className="overflow-hidden"
+                                                        >
+                                                            <div className="pl-4 pb-1 space-y-0.5">
+                                                                <Link
+                                                                    to="/shop"
+                                                                    className="flex items-center py-2.5 px-4 text-sm font-bold text-dark-400 uppercase tracking-widest hover:text-accent-500 hover:bg-accent-50 rounded-xl transition-colors"
+                                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                                >
+                                                                    All Products
+                                                                </Link>
+                                                                {navCategories.map(cat => (
+                                                                    <Link
+                                                                        key={cat._id}
+                                                                        to={`/shop?category=${cat._id}`}
+                                                                        className="flex items-center py-2.5 px-4 text-sm text-dark-700 hover:text-accent-500 hover:bg-accent-50 rounded-xl transition-colors"
+                                                                        onClick={() => setIsMobileMenuOpen(false)}
+                                                                    >
+                                                                        {cat.name}
+                                                                    </Link>
+                                                                ))}
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <Link
+                                            key={link.path}
+                                            to={link.path}
+                                            className={`flex items-center text-base font-display font-semibold py-3.5 px-4 rounded-2xl transition-colors duration-200
+                                                ${location.pathname === link.path
+                                                    ? 'text-accent-500 bg-accent-50'
+                                                    : 'text-dark-900 hover:bg-dark-50 hover:text-accent-500'
+                                                }`}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                        >
+                                            {link.label}
+                                            {location.pathname === link.path && (
+                                                <span className="ml-auto w-1.5 h-1.5 bg-accent-500 rounded-full" />
+                                            )}
+                                        </Link>
+                                    );
+                                })}
 
                                 <hr className="border-dark-100 my-3" />
 
