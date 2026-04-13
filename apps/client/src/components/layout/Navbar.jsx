@@ -53,7 +53,15 @@ const SearchOverlay = ({ onClose }) => {
 
     // Load categories once for chip display + matching
     useEffect(() => {
-        categoryAPI.getAll().then(res => setAllCategories(res.data?.categories || [])).catch(() => {});
+        categoryAPI.getAll().then(res => {
+            let cats = [];
+            if (Array.isArray(res)) cats = res;
+            else if (Array.isArray(res?.data)) cats = res.data;
+            else if (Array.isArray(res?.data?.data)) cats = res.data.data;
+            else if (Array.isArray(res?.categories)) cats = res.categories;
+            else if (Array.isArray(res?.data?.categories)) cats = res.data.categories;
+            setAllCategories(cats);
+        }).catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -536,7 +544,13 @@ const Navbar = () => {
     useEffect(() => {
         categoryAPI.getAll()
             .then(res => {
-                const cats = res.data?.categories || [];
+                let cats = [];
+                if (Array.isArray(res)) cats = res;
+                else if (Array.isArray(res?.data)) cats = res.data;
+                else if (Array.isArray(res?.data?.data)) cats = res.data.data;
+                else if (Array.isArray(res?.categories)) cats = res.categories;
+                else if (Array.isArray(res?.data?.categories)) cats = res.data.categories;
+                
                 setNavCategories(cats.filter(c => c.slug !== 'shower-enclosures'));
             })
             .catch(() => {});
