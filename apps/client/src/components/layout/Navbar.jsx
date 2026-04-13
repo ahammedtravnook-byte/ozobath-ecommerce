@@ -617,24 +617,39 @@ const Navbar = () => {
                                                         exit={{ opacity: 0, y: -8 }}
                                                         transition={{ duration: 0.15 }}
                                                     >
-                                                        <div className="bg-white rounded-2xl shadow-xl border border-dark-100/30 overflow-hidden min-w-[200px] py-1">
-                                                            <Link
-                                                                to="/shop"
-                                                                className="flex items-center px-4 py-2.5 text-[11px] font-bold text-dark-400 uppercase tracking-widest border-b border-dark-50 hover:bg-dark-50 transition-colors"
-                                                                onClick={() => setProductsDropdownOpen(false)}
-                                                            >
-                                                                All Products
-                                                            </Link>
-                                                            {navCategories.map(cat => (
+                                                        <div className="bg-white rounded-2xl shadow-2xl border border-dark-100/30 overflow-hidden w-[420px] p-4">
+                                                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-dark-50">
+                                                                <div>
+                                                                    <h3 className="text-sm font-bold text-dark-900 tracking-wide">Our Collections</h3>
+                                                                    <p className="text-[11px] text-dark-400 mt-0.5">Explore our premium offerings</p>
+                                                                </div>
                                                                 <Link
-                                                                    key={cat._id}
-                                                                    to={`/shop?category=${cat._id}`}
-                                                                    className="flex items-center px-4 py-2.5 text-sm text-dark-700 hover:bg-accent-50 hover:text-accent-600 transition-colors"
+                                                                    to="/shop"
+                                                                    className="text-xs font-bold text-accent-500 hover:text-accent-600 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
                                                                     onClick={() => setProductsDropdownOpen(false)}
                                                                 >
-                                                                    {cat.name}
+                                                                    View All <FiArrowRight className="w-3 h-3" />
                                                                 </Link>
-                                                            ))}
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                {navCategories.map((cat, index) => (
+                                                                    <Link
+                                                                        key={cat._id}
+                                                                        to={`/shop?category=${cat._id}`}
+                                                                        className="group relative flex flex-col justify-center p-3 rounded-xl border border-transparent hover:border-accent-100 hover:bg-accent-50/50 transition-all duration-300 overflow-hidden"
+                                                                        onClick={() => setProductsDropdownOpen(false)}
+                                                                    >
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-6 h-6 rounded-md bg-dark-50 text-dark-400 group-hover:bg-accent-100 group-hover:text-accent-500 flex items-center justify-center transition-colors shrink-0">
+                                                                                <FiTag className="w-3 h-3" />
+                                                                            </div>
+                                                                            <span className="text-[13px] font-semibold text-dark-700 group-hover:text-accent-600 transition-colors truncate">
+                                                                                {cat.name}
+                                                                            </span>
+                                                                        </div>
+                                                                    </Link>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     </motion.div>
                                                 )}
