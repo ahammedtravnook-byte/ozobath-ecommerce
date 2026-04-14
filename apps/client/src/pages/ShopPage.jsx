@@ -79,7 +79,29 @@ const ShopPage = () => {
     useEffect(() => {
         categoryAPI.getAll().then(res => setCategories(res.data || [])).catch(() => { });
     }, []);
-    useEffect(() => { if (categorySlug) setSelectedCategory(categorySlug); }, [categorySlug]);
+
+    // Sync state with URL params (Params and SearchParams)
+    useEffect(() => {
+        const queryCategory = searchParams.get('category');
+        const querySearch = searchParams.get('search');
+        const querySort = searchParams.get('sort');
+        const queryPage = searchParams.get('page');
+
+        if (categorySlug) {
+            setSelectedCategory(categorySlug);
+        } else if (queryCategory) {
+            setSelectedCategory(queryCategory);
+        } else if (!queryCategory && !categorySlug) {
+            setSelectedCategory('');
+        }
+
+        if (querySearch !== null) setSearch(querySearch);
+        if (querySort) setSortBy(querySort);
+        if (queryPage) setPage(Number(queryPage));
+
+        // Smooth scroll to top when category changes
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [categorySlug, searchParams]);
 
     const handleAddToCart = (product) => {
         if (!isAuthenticated) {
@@ -116,7 +138,7 @@ const ShopPage = () => {
                     <div className="absolute bottom-0 left-20 w-56 h-56 bg-primary-500 rounded-full blur-3xl" />
                 </div>
                 <motion.div
-                    className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
+                    className="max-width-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
@@ -137,86 +159,111 @@ const ShopPage = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
                 {/* ── Desktop Toolbar ─────────────────────── */}
                 <motion.div
-                    className="hidden md:block bg-white rounded-2xl p-4 shadow-soft mb-8 border border-dark-100/30"
+                    className="hidden md:block bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-10 border border-dark-100/30"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                 >
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 flex-wrap flex-1">
+                    <div className="flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-4 flex-wrap flex-1">
                             <div className="relative flex-1 min-w-[200px] max-w-sm">
                                 <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-300" />
                                 <input
                                     value={search}
                                     onChange={e => { setSearch(e.target.value); setPage(1); }}
                                     placeholder="Search products..."
-                                    className="w-full pl-11 pr-4 py-3 bg-dark-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all"
+                                    className="w-full pl-11 pr-4 py-3 bg-dark-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all font-medium"
                                 />
                             </div>
-                            <select value={selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setPage(1); }} className="py-3 px-4 bg-dark-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 font-medium text-dark-700">
-                                <option value="">All Categories</option>
-                                {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                            </select>
-                            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="py-3 px-4 bg-dark-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 font-medium text-dark-700">
-                                <option value="newest">Newest First</option>
-                                <option value="price_asc">Price: Low → High</option>
-                                <option value="price_desc">Price: High → Low</option>
-                                <option value="popular">Most Popular</option>
-                                <option value="rating">Highest Rated</option>
-                            </select>
+                            <div className="h-8 w-px bg-dark-100 hidden lg:block mx-1" />
+
+                            <div className="flex items-center gap-3">
+                                <span className="text-[10px] font-black text-dark-400 uppercase tracking-widest hidden lg:block mr-1">Category</span>
+                                <div className="relative">
+                                    <select 
+                                        value={selectedCategory} 
+                                        onChange={e => { setSelectedCategory(e.target.value); setPage(1); }} 
+                                        className="py-3 px-5 pr-10 bg-dark-50 border border-transparent rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500 font-bold text-dark-700 cursor-pointer hover:bg-dark-100 transition-all appearance-none"
+                                    >
+                                        <option value="">All Categories</option>
+                                        {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                                    </select>
+                                    <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <span className="text-[10px] font-black text-dark-400 uppercase tracking-widest hidden lg:block mr-1">Sort By</span>
+                                <div className="relative">
+                                    <select 
+                                        value={sortBy} 
+                                        onChange={e => setSortBy(e.target.value)} 
+                                        className="py-3 px-5 pr-10 bg-dark-50 border border-transparent rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500 font-bold text-dark-700 cursor-pointer hover:bg-dark-100 transition-all appearance-none"
+                                    >
+                                        <option value="newest">Newest First</option>
+                                        <option value="price_asc">Price: Low → High</option>
+                                        <option value="price_desc">Price: High → Low</option>
+                                        <option value="popular">Most Popular</option>
+                                        <option value="rating">Highest Rated</option>
+                                    </select>
+                                    <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 pointer-events-none" />
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4 shrink-0">
-                            <p className="text-sm text-dark-400 font-medium">{pagination.total} products</p>
-                            <div className="flex bg-dark-50 rounded-xl overflow-hidden">
-                                <button onClick={() => setViewMode('grid')} className={`p-2.5 transition-colors ${viewMode === 'grid' ? 'bg-dark-900 text-white' : 'text-dark-400 hover:text-dark-700'}`}><FiGrid className="w-4 h-4" /></button>
-                                <button onClick={() => setViewMode('list')} className={`p-2.5 transition-colors ${viewMode === 'list' ? 'bg-dark-900 text-white' : 'text-dark-400 hover:text-dark-700'}`}><FiList className="w-4 h-4" /></button>
+                        <div className="flex items-center gap-6 shrink-0">
+                            <p className="text-xs font-bold text-dark-400 uppercase tracking-widest">{pagination.total} products</p>
+                            <div className="flex bg-dark-50 p-1 rounded-2xl border border-dark-100/50">
+                                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-xl transition-all duration-300 ${viewMode === 'grid' ? 'bg-dark-900 text-white shadow-lg shadow-dark-900/20' : 'text-dark-400 hover:text-dark-700 hover:bg-dark-100'}`}><FiGrid className="w-4 h-4" /></button>
+                                <button onClick={() => setViewMode('list')} className={`p-2 rounded-xl transition-all duration-300 ${viewMode === 'list' ? 'bg-dark-900 text-white shadow-lg shadow-dark-900/20' : 'text-dark-400 hover:text-dark-700 hover:bg-dark-100'}`}><FiList className="w-4 h-4" /></button>
                             </div>
                         </div>
                     </div>
                 </motion.div>
 
-                {/* ── Mobile Toolbar ───────────────────────── */}
-                <div className="md:hidden mb-5">
+                <div className="md:hidden mb-8">
                     {/* Search bar */}
-                    <div className="relative mb-3">
-                        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-300" />
+                    <div className="relative mb-4 group">
+                        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 group-focus-within:text-accent-500 transition-colors" />
                         <input
                             value={search}
                             onChange={e => { setSearch(e.target.value); setPage(1); }}
                             placeholder="Search products..."
-                            className="w-full pl-11 pr-4 py-3.5 bg-white border border-dark-100/60 rounded-2xl text-sm focus:outline-none focus:border-accent-500 transition-all shadow-sm"
+                            className="w-full pl-11 pr-4 py-4 bg-white border border-dark-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500 transition-all shadow-sm font-medium"
                         />
                     </div>
 
                     {/* Filter + Sort row */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                         <button
                             onClick={() => setShowFilters(true)}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-dark-100/60 rounded-2xl text-sm font-semibold text-dark-700 shadow-sm active:scale-95 transition-all"
+                            className="flex-1 flex items-center justify-center gap-2 py-4 bg-white border border-dark-100 rounded-2xl text-sm font-bold text-dark-900 shadow-sm active:scale-95 transition-all"
                         >
-                            <FiSliders className="w-4 h-4" />
+                            <FiSliders className="w-4 h-4 text-accent-500" />
                             Filters
-                            {(selectedCategory || search) && <span className="w-2 h-2 bg-accent-500 rounded-full" />}
+                            {(selectedCategory || search) && <span className="w-1.5 h-1.5 bg-accent-500 rounded-full" />}
                         </button>
-                        <select
-                            value={sortBy}
-                            onChange={e => setSortBy(e.target.value)}
-                            className="flex-1 py-3 px-3 bg-white border border-dark-100/60 rounded-2xl text-sm font-semibold text-dark-700 shadow-sm focus:outline-none focus:border-accent-500 appearance-none text-center"
-                        >
-                            <option value="newest">Newest</option>
-                            <option value="price_asc">Price ↑</option>
-                            <option value="price_desc">Price ↓</option>
-                            <option value="popular">Popular</option>
-                            <option value="rating">Top Rated</option>
-                        </select>
-                        <div className="flex bg-white border border-dark-100/60 rounded-2xl overflow-hidden shadow-sm">
-                            <button onClick={() => setViewMode('grid')} className={`px-3 transition-colors ${viewMode === 'grid' ? 'bg-dark-900 text-white' : 'text-dark-400'}`}><FiGrid className="w-4 h-4" /></button>
-                            <button onClick={() => setViewMode('list')} className={`px-3 transition-colors ${viewMode === 'list' ? 'bg-dark-900 text-white' : 'text-dark-400'}`}><FiList className="w-4 h-4" /></button>
+                        <div className="flex-1 relative">
+                            <select
+                                value={sortBy}
+                                onChange={e => setSortBy(e.target.value)}
+                                className="w-full py-4 pl-4 pr-10 bg-white border border-dark-100 rounded-2xl text-sm font-bold text-dark-900 shadow-sm focus:outline-none focus:border-accent-500 appearance-none"
+                            >
+                                <option value="newest">Sort: New</option>
+                                <option value="price_asc">Price ↑</option>
+                                <option value="price_desc">Price ↓</option>
+                                <option value="popular">Popular</option>
+                                <option value="rating">Rated</option>
+                            </select>
+                            <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 pointer-events-none" />
+                        </div>
+                        <div className="flex bg-white border border-dark-100 rounded-2xl overflow-hidden shadow-sm">
+                            <button onClick={() => setViewMode('grid')} className={`px-3.5 transition-all duration-300 ${viewMode === 'grid' ? 'bg-dark-900 text-white' : 'text-dark-400'}`}><FiGrid className="w-4 h-4" /></button>
+                            <button onClick={() => setViewMode('list')} className={`px-3.5 transition-all duration-300 ${viewMode === 'list' ? 'bg-dark-900 text-white' : 'text-dark-400'}`}><FiList className="w-4 h-4" /></button>
                         </div>
                     </div>
 
                     {/* Results count */}
-                    <p className="text-xs text-dark-400 font-medium mt-3 px-1">{pagination.total} products found</p>
+                    <p className="text-[10px] text-dark-400 font-black uppercase tracking-widest mt-4 px-2">{pagination.total} products found</p>
                 </div>
 
                 {/* ── Mobile Filter Bottom Drawer ───────────── */}
@@ -394,7 +441,7 @@ const ShopPage = () => {
                                             ) : (
                                                 <button
                                                     onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}
-                                                    className="w-full py-2.5 bg-dark-900 hover:bg-accent-500 text-white rounded-xl sm:hidden flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-[0.97] shadow-sm"
+                                                    className="w-full py-3.5 bg-dark-900 hover:bg-accent-500 text-white rounded-xl sm:hidden flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-[0.97] shadow-sm"
                                                 >
                                                     <FiShoppingCart className="w-3.5 h-3.5" /> ADD TO CART
                                                 </button>
