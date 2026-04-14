@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { FiSearch, FiHeart, FiShoppingBag, FiMenu, FiX, FiUser, FiArrowRight, FiBell, FiClock, FiTag, FiPackage, FiChevronDown } from 'react-icons/fi';
 import { useAuth } from '@context/AuthContext';
 import { useCart } from '@context/CartContext';
@@ -535,10 +535,12 @@ const Navbar = () => {
     const [navCategories, setNavCategories] = useState([]);
     const [productsDropdownOpen, setProductsDropdownOpen] = useState(false);
     const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
+    const [searchParams] = useSearchParams();
     const location = useLocation();
     const { user, isAuthenticated, logout } = useAuth();
     const { itemCount } = useCart();
     const { count: wishlistCount } = useWishlist();
+    const activeCategoryId = searchParams.get('category');
 
     // Fetch categories for Products dropdown (exclude shower-enclosures — it has its own nav item)
     useEffect(() => {
@@ -646,23 +648,34 @@ const Navbar = () => {
                                                                 </Link>
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-2">
-                                                                {navCategories.map((cat, index) => (
-                                                                    <Link
-                                                                        key={cat._id}
-                                                                        to={`/shop?category=${cat._id}`}
-                                                                        className="group relative flex flex-col justify-center p-3 rounded-xl border border-transparent hover:border-accent-100 hover:bg-accent-50/50 transition-all duration-300 overflow-hidden"
-                                                                        onClick={() => setProductsDropdownOpen(false)}
-                                                                    >
-                                                                        <div className="flex items-center gap-2">
-                                                                            <div className="w-6 h-6 rounded-md bg-dark-50 text-dark-400 group-hover:bg-accent-100 group-hover:text-accent-500 flex items-center justify-center transition-colors shrink-0">
-                                                                                <FiTag className="w-3 h-3" />
+                                                                {navCategories.map((cat, index) => {
+                                                                    const isActive = location.pathname === '/shop' && activeCategoryId === cat._id;
+                                                                    return (
+                                                                        <Link
+                                                                            key={cat._id}
+                                                                            to={`/shop?category=${cat._id}`}
+                                                                            className={`group relative flex flex-col justify-center p-3 rounded-xl border transition-all duration-300 overflow-hidden
+                                                                                ${isActive 
+                                                                                    ? 'border-accent-200 bg-accent-50/50 ring-1 ring-accent-100 shadow-[0_2px_10px_rgba(6,182,212,0.05)]' 
+                                                                                    : 'border-transparent hover:border-accent-100 hover:bg-accent-50/50'}`}
+                                                                            onClick={() => setProductsDropdownOpen(false)}
+                                                                        >
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors shrink-0
+                                                                                    ${isActive ? 'bg-accent-100 text-accent-500' : 'bg-dark-50 text-dark-400 group-hover:bg-accent-100 group-hover:text-accent-500'}`}>
+                                                                                    <FiTag className="w-3 h-3" />
+                                                                                </div>
+                                                                                <span className={`text-[13px] font-semibold transition-colors truncate
+                                                                                    ${isActive ? 'text-accent-600' : 'text-dark-700 group-hover:text-accent-600'}`}>
+                                                                                    {cat.name}
+                                                                                </span>
+                                                                                {isActive && (
+                                                                                    <div className="ml-auto w-1 h-1 bg-accent-500 rounded-full animate-pulse" />
+                                                                                )}
                                                                             </div>
-                                                                            <span className="text-[13px] font-semibold text-dark-700 group-hover:text-accent-600 transition-colors truncate">
-                                                                                {cat.name}
-                                                                            </span>
-                                                                        </div>
-                                                                    </Link>
-                                                                ))}
+                                                                        </Link>
+                                                                    );
+                                                                })}
                                                             </div>
                                                         </div>
                                                     </motion.div>
@@ -852,21 +865,31 @@ const Navbar = () => {
                                                             <div className="pl-4 pb-1 space-y-0.5">
                                                                 <Link
                                                                     to="/shop"
-                                                                    className="flex items-center py-2.5 px-4 text-sm font-bold text-dark-400 uppercase tracking-widest hover:text-accent-500 hover:bg-accent-50 rounded-xl transition-colors"
+                                                                    className={`flex items-center py-2.5 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-colors
+                                                                        ${location.pathname === '/shop' && !activeCategoryId 
+                                                                            ? 'text-accent-600 bg-accent-50/80' 
+                                                                            : 'text-dark-400 hover:text-accent-500 hover:bg-accent-50'}`}
                                                                     onClick={() => setIsMobileMenuOpen(false)}
                                                                 >
                                                                     All Products
                                                                 </Link>
-                                                                {navCategories.map(cat => (
-                                                                    <Link
-                                                                        key={cat._id}
-                                                                        to={`/shop?category=${cat._id}`}
-                                                                        className="flex items-center py-2.5 px-4 text-sm text-dark-700 hover:text-accent-500 hover:bg-accent-50 rounded-xl transition-colors"
-                                                                        onClick={() => setIsMobileMenuOpen(false)}
-                                                                    >
-                                                                        {cat.name}
-                                                                    </Link>
-                                                                ))}
+                                                                {navCategories.map(cat => {
+                                                                    const isActive = location.pathname === '/shop' && activeCategoryId === cat._id;
+                                                                    return (
+                                                                        <Link
+                                                                            key={cat._id}
+                                                                            to={`/shop?category=${cat._id}`}
+                                                                            className={`flex items-center py-2.5 px-4 text-sm rounded-xl transition-colors
+                                                                                ${isActive 
+                                                                                    ? 'text-accent-600 font-bold bg-accent-50' 
+                                                                                    : 'text-dark-700 font-medium hover:text-accent-500 hover:bg-accent-50'}`}
+                                                                            onClick={() => setIsMobileMenuOpen(false)}
+                                                                        >
+                                                                            <span className="flex-1">{cat.name}</span>
+                                                                            {isActive && <div className="w-1.5 h-1.5 bg-accent-500 rounded-full" />}
+                                                                        </Link>
+                                                                    );
+                                                                })}
                                                             </div>
                                                         </motion.div>
                                                     )}
