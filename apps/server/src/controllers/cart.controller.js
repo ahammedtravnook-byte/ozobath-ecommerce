@@ -90,7 +90,11 @@ const mergeGuestCart = asyncHandler(async (req, res) => {
   let cart = await Cart.findOne({ user: req.user._id });
   if (!cart) cart = new Cart({ user: req.user._id, items: [] });
 
+  const { isValidObjectId } = require('mongoose');
+
   for (const guestItem of items) {
+    // Skip items with invalid MongoDB ObjectIds (e.g. guest demo items)
+    if (!isValidObjectId(guestItem.productId)) continue;
     const product = await Product.findById(guestItem.productId);
     if (!product || !product.isActive) continue;
 

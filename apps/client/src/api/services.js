@@ -13,6 +13,13 @@ export const authAPI = {
   updateProfile: (data) => api.put('/auth/me', data),
 };
 
+// ─── Address API ──────────────────────────────────
+export const addressAPI = {
+  add: (data) => api.post('/auth/addresses', data),
+  update: (id, data) => api.put(`/auth/addresses/${id}`, data),
+  remove: (id) => api.delete(`/auth/addresses/${id}`),
+};
+
 // ─── Product API ─────────────────────────────────
 export const productAPI = {
   getAll: (params) => api.get('/products', { params }),
@@ -112,8 +119,8 @@ export const bookingAPI = {
 
 // ─── Payment API ─────────────────────────────────
 export const paymentAPI = {
-  createOrder: (data) => api.post('/payment/create-order', data),
-  verify: (data) => api.post('/payment/verify', data),
+  createOrder: (data) => api.post('/payment/create-order', data),  // init Razorpay (no DB order)
+  confirm: (data) => api.post('/payment/confirm', data),           // verify + create order
   cod: (data) => api.post('/payment/cod', data),
 };
 
