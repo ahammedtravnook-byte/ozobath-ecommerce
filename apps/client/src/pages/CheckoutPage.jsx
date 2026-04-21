@@ -120,103 +120,110 @@ const CheckoutPage = () => {
     const handlePayment = async () => {
         if (!validateAddress()) return;
 
-        try {
-            setProcessing(true);
+        setProcessing(true);
 
-            // Create order — pass couponCode so server applies & records usage
-            const orderRes = await orderAPI.create({
-                shippingAddress: address,
-                items: items.map(i => ({ product: i.product._id, quantity: i.quantity, variant: i.variant, price: i.product.price })),
-                totalAmount: total, subtotal, shippingCharges: shipping,
-                paymentMethod,
-                couponCode: appliedCoupon?.code || undefined,
-            });
-            const order = orderRes.data;
-
-            // ── COD Fallback Path ────────────────
-            if (paymentMethod === 'cod') {
-                try {
-                    await paymentAPI.cod({ orderId: order._id });
-                    clearCart();
-                    toast.success('Order placed successfully!');
-                    navigate(`/order-confirmation/${order._id}`);
-                } catch (e) {
-                    toast.error('Failed to place COD order');
-                    setProcessing(false);
-                }
-                return;
+        // ── COD: create order immediately ────────────
+        if (paymentMethod === 'cod') {
+            try {
+                const orderRes = await orderAPI.create({
+                    shippingAddress: address,
+                    paymentMethod: 'cod',
+                    couponCode: appliedCoupon?.code || undefined,
+                });
+                const order = orderRes.data;
+                await paymentAPI.cod({ orderId: order._id });
+                clearCart();
+                toast.success('Order placed successfully!');
+                navigate(`/order-confirmation/${order._id}`);
+            } catch (e) {
+                toast.error(e?.message || 'Failed to place order. Please try again.');
+                setStep(2);
+                setProcessing(false);
             }
+            return;
+        }
 
-            // ── Razorpay Path — use discounted total ─
+        // ── Razorpay: no DB order until payment succeeds ──
+        try {
+            // Step 1: Create Razorpay payment order (server computes amount from cart)
             let payRes;
             try {
-                payRes = await paymentAPI.createOrder({ amount: total, orderId: order._id });
+                payRes = await paymentAPI.createOrder({ couponCode: appliedCoupon?.code || undefined });
             } catch (e) {
-                toast.error('Online payment is not available right now. Switching to Cash on Delivery.');
-                try {
-                    await paymentAPI.cod({ orderId: order._id });
-                    clearCart();
-                    toast.success('Order placed with COD!');
-                    navigate(`/order-confirmation/${order._id}`);
-                } catch (codErr) {
-                    toast.error('Order creation failed. Please try again.');
-                    setProcessing(false);
-                }
+                toast.error(e?.message || 'Payment gateway error. Please try again or use COD.', { duration: 5000 });
+                setStep(2);
+                setProcessing(false);
                 return;
             }
 
             const razorpayOrder = payRes.data;
 
-            const script = document.createElement('script');
-            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-            script.onerror = () => {
-                toast.error('Failed to load payment gateway. Please try again.');
+            // Step 2: Load Razorpay SDK
+            await new Promise((resolve, reject) => {
+                if (window.Razorpay) { resolve(); return; }
+                const script = document.createElement('script');
+                script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Failed to load payment SDK'));
+                document.body.appendChild(script);
+            }).catch(() => {
+                throw new Error('Failed to load payment gateway. Check your internet connection.');
+            });
+
+            // Step 3: Open Razorpay modal
+            const options = {
+                key: razorpayOrder.keyId,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                name: 'OZOBATH',
+                description: 'Premium Bath Solutions',
+                image: '/images/logo.png',
+                order_id: razorpayOrder.orderId,
+                handler: async (response) => {
+                    // Step 4: Payment succeeded — now create order in DB
+                    try {
+                        const confirmRes = await paymentAPI.confirm({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            shippingAddress: address,
+                            couponCode: appliedCoupon?.code || undefined,
+                        });
+                        const confirmedOrder = confirmRes.data;
+                        clearCart();
+                        toast.success('Payment successful! Order confirmed.');
+                        navigate(`/order-confirmation/${confirmedOrder.orderId}`);
+                    } catch (e) {
+                        toast.error('Payment received but order creation failed. Please contact support with your payment ID: ' + response.razorpay_payment_id, { duration: 8000 });
+                        setStep(2);
+                        setProcessing(false);
+                    }
+                },
+                prefill: { name: address.fullName, email: user?.email, contact: address.phone },
+                theme: { color: '#0A3D6B' },
+                modal: {
+                    ondismiss: () => {
+                        // Cart is untouched — no DB order was created
+                        setStep(2);
+                        setProcessing(false);
+                        toast('Payment cancelled. Your cart is intact.', { icon: 'ℹ️', duration: 3000 });
+                    },
+                    confirm_close: true,
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', (response) => {
+                // Cart is untouched — no DB order was created
+                toast.error(`Payment failed: ${response.error.description}`);
+                setStep(2);
                 setProcessing(false);
-            };
-            script.onload = () => {
-                const options = {
-                    key: razorpayOrder.keyId,
-                    amount: razorpayOrder.amount,
-                    currency: razorpayOrder.currency,
-                    name: 'OZOBATH',
-                    description: 'Premium Bath Solutions',
-                    image: '/images/logo.png',
-                    order_id: razorpayOrder.orderId,
-                    handler: async (response) => {
-                        try {
-                            await paymentAPI.verify({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                                orderId: order._id,
-                            });
-                            clearCart();
-                            toast.success('Payment successful!');
-                            navigate(`/order-confirmation/${order._id}`);
-                        } catch (e) {
-                            toast.error('Payment verification failed. Contact support.');
-                        }
-                    },
-                    prefill: { name: address.fullName, email: user?.email, contact: address.phone },
-                    theme: { color: '#0A3D6B' },
-                    modal: {
-                        ondismiss: () => {
-                            setProcessing(false);
-                            toast.error('Payment cancelled');
-                        },
-                        confirm_close: true,
-                    },
-                };
-                const rzp = new window.Razorpay(options);
-                rzp.on('payment.failed', (response) => {
-                    toast.error(`Payment failed: ${response.error.description}`);
-                    setProcessing(false);
-                });
-                rzp.open();
-            };
-            document.body.appendChild(script);
+            });
+            rzp.open();
+
         } catch (e) {
-            toast.error(e.response?.data?.message || e.message || 'Checkout failed. Please try again.');
+            toast.error(e?.message || 'Checkout failed. Please try again.');
+            setStep(2);
             setProcessing(false);
         }
     };
@@ -265,6 +272,47 @@ const CheckoutPage = () => {
                             {step === 1 && (
                                 <motion.div key="step1" variants={stepVariants} initial="hidden" animate="visible" exit="exit" className="bg-white rounded-2xl p-6 shadow-sm border border-dark-100/10">
                                     <h2 className="text-lg font-bold text-dark-900 mb-5">Shipping Address</h2>
+
+                                    {/* Saved addresses */}
+                                    {user?.addresses?.length > 0 && (
+                                        <div className="mb-5">
+                                            <p className="text-xs font-bold text-dark-500 uppercase tracking-wider mb-2">Saved Addresses</p>
+                                            <div className="space-y-2">
+                                                {user.addresses.map((addr) => (
+                                                    <button
+                                                        key={addr._id}
+                                                        type="button"
+                                                        onClick={() => setAddress({
+                                                            fullName: addr.fullName || user.name,
+                                                            phone: addr.phone || user.phone || '',
+                                                            line1: addr.line1,
+                                                            line2: addr.line2 || '',
+                                                            city: addr.city,
+                                                            state: addr.state,
+                                                            pincode: addr.pincode,
+                                                            country: 'India',
+                                                        })}
+                                                        className="w-full text-left p-3 rounded-xl border border-dark-100/40 hover:border-accent-400 hover:bg-accent-50/30 transition-all duration-200"
+                                                    >
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div>
+                                                                <span className="text-xs font-bold text-accent-600 bg-accent-50 px-2 py-0.5 rounded-md">{addr.label || 'Home'}</span>
+                                                                <p className="text-sm font-semibold text-dark-900 mt-1">{addr.fullName || user.name}</p>
+                                                                <p className="text-xs text-dark-500 mt-0.5">{addr.line1}{addr.line2 ? ', ' + addr.line2 : ''}, {addr.city}, {addr.state} — {addr.pincode}</p>
+                                                            </div>
+                                                            <span className="text-xs text-accent-500 font-semibold shrink-0 mt-1">Use →</span>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="flex items-center gap-3 my-4">
+                                                <div className="flex-1 h-px bg-dark-100/40" />
+                                                <span className="text-xs text-dark-400 font-medium">or enter a new address</span>
+                                                <div className="flex-1 h-px bg-dark-100/40" />
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Full Name *</label><input value={address.fullName} onChange={e => setAddress({ ...address, fullName: e.target.value })} className="form-input-premium" /></div>

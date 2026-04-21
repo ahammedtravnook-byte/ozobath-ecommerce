@@ -81,7 +81,7 @@ const createOrder = asyncHandler(async (req, res) => {
     });
   }
 
-  // Clear cart
+  // Clear cart (COD path — Razorpay path clears cart in payment.controller.js)
   await Cart.findOneAndUpdate({ user: req.user._id }, { items: [], totalAmount: 0 });
 
   // Notify customer
