@@ -164,6 +164,53 @@
         <p class="text-xs text-gray-500 mt-1">Select products that will appear as "You May Also Like" on this product's page.</p>
       </div>
 
+      <!-- Delivery Settings -->
+      <div class="admin-card p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-1">🚚 Delivery Settings</h2>
+        <p class="text-xs text-gray-400 mb-4">Override global shipping rules for this specific product.</p>
+        <div class="space-y-4">
+          <!-- Free Delivery Toggle -->
+          <label class="flex items-center gap-3 cursor-pointer group">
+            <div
+              @click="form.freeDelivery = !form.freeDelivery"
+              :class="form.freeDelivery ? 'bg-green-500' : 'bg-gray-200'"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none"
+            >
+              <span
+                :class="form.freeDelivery ? 'translate-x-6' : 'translate-x-1'"
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out"
+              />
+            </div>
+            <div>
+              <span class="text-sm font-semibold text-gray-900">Free Delivery</span>
+              <p class="text-xs text-gray-400">This product will ship for free regardless of order total</p>
+            </div>
+          </label>
+
+          <!-- Delivery Charge Input (only when not free) -->
+          <div v-if="!form.freeDelivery" class="max-w-xs">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Custom Delivery Charge (₹)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">₹</span>
+              <input
+                v-model.number="form.deliveryCharge"
+                type="number"
+                min="0"
+                class="admin-input w-full pl-7"
+                placeholder="0"
+              />
+            </div>
+            <p class="text-xs text-gray-400 mt-1">
+              <span v-if="form.deliveryCharge > 0">Customers will pay ₹{{ form.deliveryCharge }} delivery for this product.</span>
+              <span v-else>Leave at 0 to use global rules (Free above ₹999, else ₹99).</span>
+            </p>
+          </div>
+          <div v-else class="flex items-center gap-2 text-sm text-green-600 font-medium">
+            <span>✅</span> <span>This product ships for free — no delivery charges applied</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Status -->
       <div class="admin-card p-6 flex items-center gap-6">
         <label class="flex items-center gap-2 text-sm"><input v-model="form.isActive" type="checkbox" class="w-4 h-4 rounded" /><span>Active</span></label>
@@ -203,6 +250,7 @@ const form = ref({
   price: 0, compareAtPrice: 0, costPrice: 0, stock: 0, category: '', tagsStr: '',
   images: [], variants: [], specifications: [], relatedProducts: [], badges: [],
   metaTitle: '', metaDescription: '', isActive: true, isFeatured: false, isNewArrival: false,
+  freeDelivery: false, deliveryCharge: 0,
 });
 
 const discountPct = computed(() => {
@@ -284,6 +332,8 @@ onMounted(async () => {
         relatedProducts: (p.relatedProducts || []).map(rp => rp._id || rp),
         badges: p.badges || [],
         compareAtPrice: p.compareAtPrice || p.mrp || 0,
+        freeDelivery: p.freeDelivery || false,
+        deliveryCharge: p.deliveryCharge || 0,
       };
     } catch (e) { toast.error('Failed to load product'); }
   }

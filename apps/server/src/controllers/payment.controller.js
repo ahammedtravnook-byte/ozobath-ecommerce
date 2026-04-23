@@ -23,6 +23,10 @@ const getRazorpay = () => {
             env.RAZORPAY_KEY_ID === 'rzp_test_placeholder') {
             throw new ApiError(503, 'Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.');
         }
+        // Warn if test keys are used in production
+        if (env.NODE_ENV === 'production' && env.RAZORPAY_KEY_ID.startsWith('rzp_test_')) {
+            console.warn('⚠️  WARNING: Razorpay is using TEST keys in PRODUCTION mode. Switch to live keys (rzp_live_xxx) for real payments.');
+        }
         razorpayInstance = new Razorpay({
             key_id: env.RAZORPAY_KEY_ID,
             key_secret: env.RAZORPAY_KEY_SECRET,

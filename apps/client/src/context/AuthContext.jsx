@@ -60,10 +60,22 @@ export const AuthProvider = ({ children }) => {
         return res.data;
     }, []);
 
+    // Re-fetch full user profile from server (includes addresses, avatar, etc.)
+    const refreshProfile = useCallback(async () => {
+        try {
+            const res = await authAPI.getProfile();
+            setUser(res.data);
+            return res.data;
+        } catch (e) {
+            return null;
+        }
+    }, []);
+
     const value = {
         user, loading, isAuthenticated: !!user,
-        login, register, logout, updateProfile,
+        login, register, logout, updateProfile, refreshProfile, setUser,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+

@@ -50,6 +50,10 @@ const productSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   isFeatured: { type: Boolean, default: false },
 
+  // Delivery settings (per-product override)
+  freeDelivery: { type: Boolean, default: false },
+  deliveryCharge: { type: Number, default: 0, min: 0 },
+
   weight: Number,
   dimensions: {
     length: Number,

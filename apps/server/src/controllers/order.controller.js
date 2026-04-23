@@ -63,7 +63,26 @@ const createOrder = asyncHandler(async (req, res) => {
     couponId = coupon._id;
   }
 
-  const shippingCost = subtotal >= 999 ? 0 : 99;
+  // Per-product delivery logic:
+  // - If ALL items have freeDelivery, shipping = 0
+  // - If any item has a custom deliveryCharge > 0, use the highest one
+  // - Otherwise fall back to global rule (free above ₹999, else ₹99)
+  const productDeliveryData = cart.items.map(i => ({
+    freeDelivery: i.product.freeDelivery || false,
+    deliveryCharge: i.product.deliveryCharge || 0,
+  }));
+  const allFreeDelivery = productDeliveryData.every(p => p.freeDelivery);
+  const maxCustomCharge = Math.max(...productDeliveryData.map(p => p.deliveryCharge));
+
+  let shippingCost;
+  if (allFreeDelivery) {
+    shippingCost = 0;
+  } else if (maxCustomCharge > 0) {
+    shippingCost = maxCustomCharge;
+  } else {
+    shippingCost = subtotal >= 999 ? 0 : 99;
+  }
+
   const tax = Math.round(subtotal * 0.18);
   const total = subtotal + shippingCost + tax - discount;
 
@@ -221,7 +240,13 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   order.status = status;
   if (trackingNumber) order.trackingNumber = trackingNumber;
   if (trackingUrl) order.trackingUrl = trackingUrl;
-  if (status === 'delivered') order.deliveredAt = new Date();
+  if (status === 'delivered') {
+    order.deliveredAt = new Date();
+    // Auto-mark COD as paid when delivered (cash collected on delivery)
+    if (order.paymentMethod === 'cod' && order.paymentStatus !== 'paid') {
+      order.paymentStatus = 'paid';
+    }
+  }
   if (status === 'confirmed') order.paymentStatus = 'paid';
 
   order.statusHistory.push({

@@ -7,6 +7,7 @@ import api from './axiosInstance';
 export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   getProfile: () => api.get('/auth/me'),
+  updateProfile: (data) => api.put('/auth/me', data),
 };
 
 // ─── Dashboard & Analytics ──────────────────────
