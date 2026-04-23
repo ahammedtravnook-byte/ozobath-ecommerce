@@ -89,10 +89,61 @@
 
     <!-- Products Table -->
     <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
-      <div v-if="loading" class="flex-1 flex items-center justify-center py-20">
-        <div class="flex flex-col items-center gap-4">
-          <div class="animate-spin w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full"></div>
-          <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Loading Catalog...</p>
+      <div v-if="loading" class="flex-1 flex flex-col overflow-hidden">
+        <!-- Desktop Skeleton -->
+        <div class="hidden lg:block">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
+            <thead>
+              <tr class="bg-gray-50/50">
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Details</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Pricing</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sales</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              <tr v-for="n in 6" :key="n" class="animate-pulse">
+                <td class="px-8 py-4">
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gray-100 shrink-0"></div>
+                    <div class="space-y-2 flex-1">
+                      <div class="h-4 w-40 bg-gray-100 rounded-lg"></div>
+                      <div class="h-2.5 w-24 bg-gray-50 rounded"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-8 py-4"><div class="h-4 w-20 bg-gray-100 rounded-lg"></div></td>
+                <td class="px-8 py-4"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-200"></div><div class="h-4 w-10 bg-gray-100 rounded-lg"></div></div></td>
+                <td class="px-8 py-4"><div class="h-4 w-10 bg-gray-100 rounded-lg"></div></td>
+                <td class="px-8 py-4"><div class="h-6 w-16 bg-gray-100 rounded-lg"></div></td>
+                <td class="px-8 py-4 text-right"><div class="flex items-center justify-end gap-2"><div class="w-10 h-10 bg-gray-100 rounded-2xl"></div><div class="w-10 h-10 bg-gray-100 rounded-2xl"></div></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Mobile Skeleton -->
+        <div class="lg:hidden p-4 sm:p-6 space-y-4">
+          <div v-for="n in 4" :key="n" class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
+            <div class="p-4 flex gap-4 border-b border-gray-50">
+              <div class="w-16 h-16 rounded-2xl bg-gray-100"></div>
+              <div class="flex-1 space-y-2">
+                <div class="h-4 w-3/4 bg-gray-100 rounded-lg"></div>
+                <div class="h-2.5 w-1/3 bg-gray-50 rounded"></div>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 divide-x divide-gray-50 border-b border-gray-50">
+              <div v-for="m in 3" :key="m" class="p-4 flex flex-col items-center gap-2">
+                <div class="h-2 w-10 bg-gray-50 rounded"></div>
+                <div class="h-4 w-12 bg-gray-100 rounded-lg"></div>
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50/50 flex gap-3">
+              <div class="flex-1 h-10 bg-gray-100 rounded-2xl"></div>
+              <div class="w-11 h-10 bg-gray-100 rounded-2xl"></div>
+            </div>
+          </div>
         </div>
       </div>
 

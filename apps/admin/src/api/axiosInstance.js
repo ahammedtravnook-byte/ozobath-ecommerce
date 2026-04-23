@@ -9,6 +9,15 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// ─── Auth Expiry Event ───────────────────────────
+// Dispatches a custom event so main.js can clear Pinia state + redirect via router
+// This avoids circular imports between axios ↔ store ↔ router
+const triggerAuthExpiry = () => {
+  localStorage.removeItem('adminAccessToken');
+  localStorage.removeItem('adminUser');
+  window.dispatchEvent(new CustomEvent('admin:auth:expired'));
+};
+
 // Request interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('adminAccessToken');
@@ -30,10 +39,9 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Account deactivated or forbidden
     if (error.response?.status === 403) {
-      localStorage.removeItem('adminAccessToken');
-      localStorage.removeItem('adminUser');
-      window.location.href = '/login';
+      triggerAuthExpiry();
       return Promise.reject(error.response?.data || error);
     }
 
@@ -62,9 +70,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('adminAccessToken');
-        localStorage.removeItem('adminUser');
-        window.location.href = '/login';
+        triggerAuthExpiry();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
-import { orderAPI, paymentAPI, couponAPI, couponAutoAPI } from '@api/services';
+import { orderAPI, paymentAPI, couponAPI, couponAutoAPI, addressAPI } from '@api/services';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CheckoutPage = () => {
     const { cart, clearCart } = useCart();
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, refreshProfile } = useAuth();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [processing, setProcessing] = useState(false);
@@ -25,6 +25,31 @@ const CheckoutPage = () => {
         fullName: user?.name || '', phone: user?.phone || '',
         line1: '', line2: '', city: '', state: '', pincode: '', country: 'India',
     });
+    const [saveAddress, setSaveAddress] = useState(true); // Auto-save address checkbox
+
+    // Helper: save address to user's address book (non-blocking)
+    const trySaveAddress = async (addr) => {
+        try {
+            // Check if this address already exists (same line1 + pincode)
+            const existing = user?.addresses?.find(a => a.line1 === addr.line1 && a.pincode === addr.pincode);
+            if (!existing) {
+                await addressAPI.add({
+                    label: 'Home',
+                    fullName: addr.fullName,
+                    phone: addr.phone,
+                    line1: addr.line1,
+                    line2: addr.line2,
+                    city: addr.city,
+                    state: addr.state,
+                    pincode: addr.pincode,
+                    isDefault: !user?.addresses?.length, // default if first address
+                });
+                refreshProfile(); // update context so profile page sees it
+            }
+        } catch (e) {
+            // Non-blocking — don't break checkout flow
+        }
+    };
 
     const items = cart?.items || [];
     const subtotal = items.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0);
@@ -133,6 +158,7 @@ const CheckoutPage = () => {
                 const order = orderRes.data;
                 await paymentAPI.cod({ orderId: order._id });
                 clearCart();
+                if (saveAddress) trySaveAddress(address);
                 toast.success('Order placed successfully!');
                 navigate(`/order-confirmation/${order._id}`);
             } catch (e) {
@@ -191,6 +217,7 @@ const CheckoutPage = () => {
                         });
                         const confirmedOrder = confirmRes.data;
                         clearCart();
+                        if (saveAddress) trySaveAddress(address);
                         toast.success('Payment successful! Order confirmed.');
                         navigate(`/order-confirmation/${confirmedOrder.orderId}`);
                     } catch (e) {
@@ -325,6 +352,14 @@ const CheckoutPage = () => {
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">State *</label><input value={address.state} onChange={e => setAddress({ ...address, state: e.target.value })} className="form-input-premium" /></div>
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Pincode *</label><input value={address.pincode} onChange={e => setAddress({ ...address, pincode: e.target.value })} className="form-input-premium" placeholder="6-digit" /></div>
                                         </div>
+                                        {/* Save address checkbox */}
+                                        <label className="flex items-center gap-2.5 cursor-pointer group mt-2">
+                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${saveAddress ? 'bg-accent-500 border-accent-500' : 'border-dark-200 group-hover:border-dark-300'}`}>
+                                                {saveAddress && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                            </div>
+                                            <input type="checkbox" checked={saveAddress} onChange={e => setSaveAddress(e.target.checked)} className="hidden" />
+                                            <span className="text-sm text-dark-600 font-medium">Save this address for future orders</span>
+                                        </label>
                                         <button onClick={() => { if (validateAddress()) setStep(2); }} className="btn-primary w-full mt-2">Continue to Review →</button>
                                     </div>
                                 </motion.div>

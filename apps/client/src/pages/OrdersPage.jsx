@@ -43,6 +43,15 @@ const OrdersPage = () => {
   const [showCancelModal, setShowCancelModal] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const filteredOrders = orders.filter(o => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'active') return ['pending', 'confirmed', 'processing', 'shipped'].includes(o.status);
+    if (activeFilter === 'delivered') return o.status === 'delivered';
+    if (activeFilter === 'cancelled') return o.status === 'cancelled';
+    return true;
+  });
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return; }
@@ -78,9 +87,36 @@ const OrdersPage = () => {
   };
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center py-32 gap-4">
-      <div className="w-12 h-12 border-4 border-accent-200 border-t-accent-500 rounded-full animate-spin" />
-      <p className="text-dark-400 text-sm font-medium animate-pulse">Loading your orders...</p>
+    <div className="min-h-screen bg-dark-50/40">
+      <div className="bg-white border-b border-dark-100/40">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-20 sm:pt-6">
+          <div className="h-7 w-36 bg-dark-100 rounded-xl animate-pulse mb-1" />
+          <div className="h-3 w-20 bg-dark-50 rounded animate-pulse" />
+        </div>
+      </div>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-white rounded-3xl border border-dark-100/40 shadow-sm overflow-hidden animate-pulse">
+            <div className="h-1.5 bg-dark-100 w-full" />
+            <div className="p-5">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-dark-100" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-28 bg-dark-100 rounded-lg" />
+                    <div className="h-3 w-20 bg-dark-50 rounded" />
+                  </div>
+                </div>
+                <div className="h-7 w-20 bg-dark-100 rounded-xl" />
+              </div>
+              <div className="flex gap-2 mb-4">
+                {[1, 2, 3].map(j => <div key={j} className="w-14 h-14 rounded-2xl bg-dark-50" />)}
+              </div>
+              <div className="h-1.5 w-full bg-dark-50 rounded-full" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
@@ -88,19 +124,37 @@ const OrdersPage = () => {
     <div className="min-h-screen bg-dark-50/40">
       {/* Page Header */}
       <div className="bg-white border-b border-dark-100/40 sticky top-0 z-30">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-20 sm:pt-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-display font-bold text-dark-900">My Orders</h1>
-            <p className="text-dark-400 text-xs sm:text-sm mt-0.5">{orders.length} order{orders.length !== 1 ? 's' : ''} total</p>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-20 sm:pt-6">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-display font-bold text-dark-900">My Orders</h1>
+              <p className="text-dark-400 text-xs sm:text-sm mt-0.5">{filteredOrders.length} of {orders.length} order{orders.length !== 1 ? 's' : ''}</p>
+            </div>
+            <Link to="/shop" className="hidden sm:flex items-center gap-2 text-sm font-semibold text-accent-500 hover:text-accent-600 transition-colors">
+              <FiShoppingBag className="w-4 h-4" /> Continue Shopping
+            </Link>
           </div>
-          <Link to="/shop" className="hidden sm:flex items-center gap-2 text-sm font-semibold text-accent-500 hover:text-accent-600 transition-colors">
-            <FiShoppingBag className="w-4 h-4" /> Continue Shopping
-          </Link>
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {[{key:'all',label:'All'},{key:'active',label:'Active'},{key:'delivered',label:'Delivered'},{key:'cancelled',label:'Cancelled'}].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveFilter(tab.key)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                  activeFilter === tab.key
+                    ? 'bg-dark-900 text-white shadow-sm'
+                    : 'bg-dark-50 text-dark-500 hover:bg-dark-100'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-10">
-        {orders.length === 0 ? (
+        {filteredOrders.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -109,8 +163,10 @@ const OrdersPage = () => {
             <div className="w-20 h-20 bg-dark-50 rounded-3xl flex items-center justify-center mx-auto mb-5">
               <FiPackage className="w-9 h-9 text-dark-300" />
             </div>
-            <h2 className="text-xl font-bold text-dark-800 mb-2">No orders yet</h2>
-            <p className="text-dark-400 text-sm mb-7 max-w-xs mx-auto">Your orders will appear here once you place one. Start exploring our premium collection.</p>
+            <h2 className="text-xl font-bold text-dark-800 mb-2">{activeFilter === 'all' ? 'No orders yet' : `No ${activeFilter} orders`}</h2>
+            <p className="text-dark-400 text-sm mb-7 max-w-xs mx-auto">
+              {activeFilter === 'all' ? 'Your orders will appear here once you place one.' : `You don't have any ${activeFilter} orders.`}
+            </p>
             <Link
               to="/shop"
               className="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-400 text-white px-8 py-3.5 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all shadow-lg shadow-accent-500/20"
@@ -125,7 +181,7 @@ const OrdersPage = () => {
             animate="visible"
             variants={stagger}
           >
-            {orders.map(order => {
+            {filteredOrders.map(order => {
               const status = order.status || order.orderStatus || 'pending';
               const cfg = statusConfig[status] || statusConfig.pending;
               const StatusIcon = cfg.icon;

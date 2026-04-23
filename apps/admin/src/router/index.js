@@ -31,6 +31,7 @@ const AdminUsersView = () => import('@/views/AdminUsersView.vue');
 const SettingsView = () => import('@/views/SettingsView.vue');
 const ReelsView = () => import('@/views/ReelsView.vue');
 const ActivityLogsView = () => import('@/views/ActivityLogsView.vue');
+const ProfileView = () => import('@/views/ProfileView.vue');
 
 const routes = [
   {
@@ -72,6 +73,7 @@ const routes = [
       { path: 'activity-logs', name: 'ActivityLogs', component: ActivityLogsView },
       { path: 'settings', name: 'Settings', component: SettingsView },
       { path: 'reels', name: 'Reels', component: ReelsView },
+      { path: 'profile', name: 'Profile', component: ProfileView },
     ],
   },
 ];

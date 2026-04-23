@@ -254,9 +254,67 @@ const ProductPage = () => {
     };
 
     if (loading) return (
-        <div className="flex flex-col items-center justify-center py-40 gap-4">
-            <div className="w-12 h-12 border-4 border-accent-200 border-t-accent-500 rounded-full animate-spin" />
-            <p className="text-dark-400 text-sm font-medium animate-pulse">Loading product...</p>
+        <div className="min-h-screen bg-white">
+            {/* Breadcrumb skeleton */}
+            <div className="bg-dark-50/50 border-b border-dark-100/30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 pt-2 sm:pt-8">
+                    <div className="flex items-center gap-2">
+                        {[1, 2, 3].map(i => <div key={i} className="h-3 w-12 bg-dark-100 rounded animate-pulse" />)}
+                    </div>
+                </div>
+            </div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+                    {/* Gallery skeleton */}
+                    <div className="space-y-4">
+                        <div className="aspect-square bg-dark-50 rounded-3xl animate-pulse border border-dark-100/40" />
+                        <div className="flex gap-2.5">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="w-[72px] h-[72px] bg-dark-50 rounded-2xl animate-pulse border border-dark-100/40" />
+                            ))}
+                        </div>
+                    </div>
+                    {/* Details skeleton */}
+                    <div className="space-y-5">
+                        <div className="h-3 w-28 bg-dark-100 rounded-full animate-pulse" />
+                        <div className="space-y-2">
+                            <div className="h-9 w-4/5 bg-dark-100 rounded-xl animate-pulse" />
+                            <div className="h-9 w-3/5 bg-dark-50 rounded-xl animate-pulse" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1">{[1, 2, 3, 4, 5].map(i => <div key={i} className="w-4 h-4 bg-dark-100 rounded animate-pulse" />)}</div>
+                            <div className="h-3 w-20 bg-dark-50 rounded animate-pulse" />
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="h-11 w-36 bg-dark-100 rounded-xl animate-pulse" />
+                            <div className="h-7 w-24 bg-dark-50 rounded-lg animate-pulse" />
+                            <div className="h-6 w-20 bg-green-50 rounded-lg animate-pulse" />
+                        </div>
+                        <div className="space-y-2">
+                            <div className="h-4 w-full bg-dark-50 rounded animate-pulse" />
+                            <div className="h-4 w-5/6 bg-dark-50 rounded animate-pulse" />
+                            <div className="h-4 w-2/3 bg-dark-50 rounded animate-pulse" />
+                        </div>
+                        <div className="flex items-center gap-3 pt-2">
+                            <div className="h-12 w-32 bg-dark-50 rounded-xl animate-pulse border border-dark-100" />
+                            <div className="h-4 w-20 bg-dark-50 rounded animate-pulse" />
+                        </div>
+                        <div className="flex gap-3 pt-1">
+                            <div className="flex-1 h-14 bg-dark-100 rounded-2xl animate-pulse" />
+                            <div className="flex-1 h-14 bg-dark-100 rounded-2xl animate-pulse" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-dark-100/50">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="flex flex-col items-center gap-2 p-4 bg-dark-50/70 rounded-2xl">
+                                    <div className="w-5 h-5 bg-dark-100 rounded animate-pulse" />
+                                    <div className="h-2.5 w-16 bg-dark-100 rounded animate-pulse" />
+                                    <div className="h-2 w-12 bg-dark-50 rounded animate-pulse" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 
