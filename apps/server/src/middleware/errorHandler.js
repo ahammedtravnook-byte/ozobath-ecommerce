@@ -35,9 +35,17 @@ const errorHandler = (err, req, res, next) => {
 
   const statusCode = error.statusCode || 500;
 
-  // Log for dev: Only log 500+ errors to reduce console noise for 4xx (Not Found, Unauthorized, etc.)
-  if (process.env.NODE_ENV === 'development' && statusCode >= 500) {
-    console.error('❌ Server Error:', err);
+  // Always log 500+ errors, in every environment — these are real server faults
+  // and silently swallowing them in production leaves you debugging blind.
+  // 4xx stays unlogged to avoid noise from Not Found / Unauthorized.
+  if (statusCode >= 500) {
+    console.error('❌ Server Error:', {
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+      message: err.message,
+      stack: err.stack,
+    });
   }
 
   res.status(statusCode).json({

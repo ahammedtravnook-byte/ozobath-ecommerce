@@ -15,6 +15,18 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
+// ─── Proxy Trust ─────────────────────────────────────
+// Behind Nginx every request originates from 127.0.0.1, so without this the
+// rate limiter treats all traffic as a single client (one attacker locks out
+// every customer) and req.ip is useless for logging.
+//
+// The value MUST stay `1` (exactly one proxy hop). Using `true` would trust a
+// client-supplied X-Forwarded-For chain, letting anyone spoof their IP and
+// bypass the login rate limiter entirely.
+if (env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // ─── Security ────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
@@ -40,7 +52,11 @@ app.use(cookieParser());
 app.use(compression());
 
 // ─── Logging ─────────────────────────────────────────
-if (env.NODE_ENV === 'development') {
+// 'combined' (Apache format) in production so PM2/Nginx logs correlate and
+// client IPs are recorded; concise 'dev' output locally.
+if (env.NODE_ENV === 'production') {
+  app.use(morgan('combined'));
+} else {
   app.use(morgan('dev'));
 }
 
