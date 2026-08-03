@@ -49,6 +49,20 @@ const pendingCheckoutSchema = new mongoose.Schema({
     // at confirm time so an abandoned checkout never consumes a coupon.
     couponCode: String,
 
+    // Shipping address captured at quote time, when the client supplies it.
+    // The browser sends the authoritative address to /confirm; this copy
+    // exists so an order created by the webhook (browser never returned) is
+    // still shippable rather than having a blank address.
+    shippingAddress: {
+        fullName: String,
+        phone: String,
+        line1: String,
+        line2: String,
+        city: String,
+        state: String,
+        pincode: String,
+    },
+
     // Set once the snapshot has produced an order, so a replay is visible
     // even if the Order row were later removed.
     consumedAt: Date,

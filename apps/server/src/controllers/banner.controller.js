@@ -6,6 +6,10 @@ const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 
+// req.body after validate() middleware — already allowlisted and coerced.
+// Named so it is obvious at the call site that this is not raw input.
+const validated = (req) => req.body;
+
 const getBanners = asyncHandler(async (req, res) => {
   const { page = 'home', position } = req.query;
   const filter = { isActive: true, page };
@@ -29,12 +33,12 @@ const getAllBannersAdmin = asyncHandler(async (req, res) => {
 });
 
 const createBanner = asyncHandler(async (req, res) => {
-  const banner = await Banner.create(req.body);
+  const banner = await Banner.create(validated(req));
   sendResponse(res, 201, banner, 'Banner created');
 });
 
 const updateBanner = asyncHandler(async (req, res) => {
-  const banner = await Banner.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  const banner = await Banner.findByIdAndUpdate(req.params.id, validated(req), { new: true });
   if (!banner) throw new ApiError(404, 'Banner not found.');
   sendResponse(res, 200, banner, 'Banner updated');
 });

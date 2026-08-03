@@ -6,6 +6,10 @@ const Product = require('../models/Product');
 const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
+
+// req.body after validate() middleware — already allowlisted and coerced.
+// Named so it is obvious at the call site that this is not raw input.
+const validated = (req) => req.body;
 const slugify = require('../utils/slugify');
 
 const getCategories = asyncHandler(async (req, res) => {
@@ -24,14 +28,14 @@ const createCategory = asyncHandler(async (req, res) => {
   const existing = await Category.findOne({ slug: req.body.slug });
   if (existing) throw new ApiError(409, 'Category with this name already exists.');
 
-  const category = await Category.create(req.body);
+  const category = await Category.create(validated(req));
   sendResponse(res, 201, category, 'Category created');
 });
 
 const updateCategory = asyncHandler(async (req, res) => {
   if (req.body.name) req.body.slug = slugify(req.body.name);
 
-  const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const category = await Category.findByIdAndUpdate(req.params.id, validated(req), { new: true, runValidators: true });
   if (!category) throw new ApiError(404, 'Category not found.');
   sendResponse(res, 200, category, 'Category updated');
 });

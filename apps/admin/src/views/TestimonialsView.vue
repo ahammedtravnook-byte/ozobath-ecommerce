@@ -12,12 +12,12 @@
           <div class="flex items-start gap-3 mb-3">
             <img :src="t.avatar?.url || '/placeholder.jpg'" class="w-10 h-10 rounded-full object-cover bg-gray-100" />
             <div class="flex-1">
-              <p class="text-sm font-semibold text-gray-900">{{ t.customerName }}</p>
+              <p class="text-sm font-semibold text-gray-900">{{ t.name }}</p>
               <p class="text-xs text-gray-400">{{ t.designation || t.location }}</p>
             </div>
             <span class="text-yellow-500 text-sm">{{ '★'.repeat(t.rating || 5) }}</span>
           </div>
-          <p class="text-sm text-gray-600 line-clamp-3">{{ t.content }}</p>
+          <p class="text-sm text-gray-600 line-clamp-3">{{ t.comment }}</p>
           <div class="mt-3 flex items-center justify-between">
             <span :class="t.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'" class="text-xs px-2 py-0.5 rounded-full font-medium">{{ t.isActive ? 'Active' : 'Inactive' }}</span>
             <div class="flex gap-2">
@@ -35,9 +35,9 @@
           <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
         </div>
         <div class="p-6 space-y-4">
-          <div><label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label><input v-model="form.customerName" class="admin-input w-full" /></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label><input v-model="form.name" class="admin-input w-full" /></div>
           <div><label class="block text-sm font-medium text-gray-700 mb-1">Designation / Location</label><input v-model="form.designation" class="admin-input w-full" /></div>
-          <div><label class="block text-sm font-medium text-gray-700 mb-1">Content</label><textarea v-model="form.content" rows="4" class="admin-input w-full"></textarea></div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Content</label><textarea v-model="form.comment" rows="4" class="admin-input w-full"></textarea></div>
           <div class="grid grid-cols-2 gap-4">
             <div><label class="block text-sm font-medium text-gray-700 mb-1">Rating (1-5)</label><input v-model.number="form.rating" type="number" min="1" max="5" class="admin-input w-full" /></div>
             <div><label class="block text-sm font-medium text-gray-700 mb-1">Order</label><input v-model.number="form.order" type="number" class="admin-input w-full" /></div>
@@ -66,7 +66,7 @@ import { testimonialAPI, uploadAPI } from '@/api/services';
 import { useToast } from 'vue-toastification';
 const toast = useToast();
 const loading = ref(true); const saving = ref(false); const showModal = ref(false); const items = ref([]); const editingId = ref(null);
-const form = ref({ customerName: '', designation: '', content: '', rating: 5, order: 0, avatarUrl: '', isActive: true });
+const form = ref({ name: '', designation: '', company: '', comment: '', rating: 5, order: 0, avatarUrl: '', isActive: true });
 const uploadingImage = ref(false);
 
 const handleFileUpload = async (event) => {

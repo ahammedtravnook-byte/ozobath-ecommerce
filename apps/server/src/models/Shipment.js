@@ -48,7 +48,8 @@ const shipmentSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-shipmentSchema.index({ order: 1 });
+// NOTE: the unique:true on the field above already creates this index;
+// declaring it again produced a duplicate-index warning at boot.
 shipmentSchema.index({ awbCode: 1 });
 shipmentSchema.index({ status: 1 });
 

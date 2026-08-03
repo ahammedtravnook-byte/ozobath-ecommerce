@@ -33,9 +33,15 @@ const userSchema = new mongoose.Schema({
   addresses: [addressSchema],
   isActive: { type: Boolean, default: true },
   emailVerified: { type: Boolean, default: false },
+  // sha256 of the current refresh token — never the token itself.
   refreshToken: { type: String, select: false },
   passwordResetToken: String,
   passwordResetExpires: Date,
+
+  // Per-account brute-force throttle. IP rate limiting alone does not stop a
+  // distributed attempt against one account.
+  failedLoginAttempts: { type: Number, default: 0, select: false },
+  lockedUntil: { type: Date, select: false },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, {
   timestamps: true,

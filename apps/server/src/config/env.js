@@ -56,6 +56,25 @@ if (NODE_ENV === 'production') {
     fatal.push('CLIENT_URL and ADMIN_URL must be set in production (CORS depends on them).');
   }
 
+  // A localhost origin in production means the .env was never updated from
+  // the development template — CORS would reject the real storefront.
+  ['CLIENT_URL', 'ADMIN_URL'].forEach((key) => {
+    if (/localhost|127\.0\.0\.1/.test(process.env[key] || '')) {
+      fatal.push(`${key} still points at localhost. Set it to the real public origin.`);
+    }
+  });
+
+  // sameSite:'none' cookies are rejected by browsers unless also `secure`,
+  // which requires the SPA to reach the API over HTTPS.
+  if (process.env.COOKIE_CROSS_SITE === 'true') {
+    ['CLIENT_URL', 'ADMIN_URL'].forEach((key) => {
+      const url = process.env[key] || '';
+      if (url && !url.startsWith('https://')) {
+        fatal.push(`COOKIE_CROSS_SITE=true requires HTTPS, but ${key} is "${url}".`);
+      }
+    });
+  }
+
   if (fatal.length) {
     console.error('');
     console.error('💀 FATAL: Insecure production configuration:');
@@ -100,22 +119,58 @@ if (!Number.isFinite(TAX_RATE) || TAX_RATE < 0 || TAX_RATE >= 1) {
   process.exit(1);
 }
 
+// ─── Order Limits ────────────────────────────────────
+// Upper bound on the quantity of a single line item. `product.stock` remains
+// the real binding constraint; this is a sanity ceiling that stops a client
+// from submitting a quantity large enough to distort the order arithmetic.
+const MAX_ORDER_QUANTITY =
+  process.env.MAX_ORDER_QUANTITY !== undefined
+    ? Number(process.env.MAX_ORDER_QUANTITY)
+    : 50;
+
+if (!Number.isInteger(MAX_ORDER_QUANTITY) || MAX_ORDER_QUANTITY < 1) {
+  console.error('');
+  console.error(`💀 FATAL: MAX_ORDER_QUANTITY must be a positive integer (got "${process.env.MAX_ORDER_QUANTITY}").`);
+  console.error('');
+  process.exit(1);
+}
+
 module.exports = {
   NODE_ENV,
   PORT: parseInt(process.env.PORT, 10) || 5000,
 
   TAX_MODE,
   TAX_RATE,
+  MAX_ORDER_QUANTITY,
   TAX_ON_SHIPPING: process.env.TAX_ON_SHIPPING === 'true',
   TAX_AFTER_DISCOUNT: process.env.TAX_AFTER_DISCOUNT === 'true',
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
   ADMIN_URL: process.env.ADMIN_URL || 'http://localhost:5174',
+  // Comma-separated additional CORS origins (exact match). Use for a staging
+  // domain or a second storefront — never a bare wildcard suffix.
+  EXTRA_CORS_ORIGINS: (process.env.EXTRA_CORS_ORIGINS || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean),
+
+  // Set true when the API and the SPAs are on different hostnames — including
+  // different subdomains of one domain (api.ozobath.com vs admin.ozobath.com),
+  // which browsers treat as cross-site. Makes the refresh cookie
+  // sameSite:'none'; secure, which REQUIRES HTTPS on both ends.
+  COOKIE_CROSS_SITE: process.env.COOKIE_CROSS_SITE === 'true',
+
+  // Optional. Setting `.ozobath.com` shares the refresh cookie across all
+  // subdomains. Leave unset to scope it to the API host only (tighter).
+  COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || undefined,
 
   MONGODB_URI: process.env.MONGODB_URI,
 
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
-  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '1d',
+  // Short-lived by default. This was '1d', 96× longer than .env.example
+  // documented — and with no token revocation, a stolen access token was
+  // usable for a full day.
+  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
 
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
@@ -134,6 +189,13 @@ module.exports = {
 
   SHIPROCKET_EMAIL: process.env.SHIPROCKET_EMAIL,
   SHIPROCKET_PASSWORD: process.env.SHIPROCKET_PASSWORD,
+  // Shared secret for the Shiprocket status webhook. Configured as the
+  // "API key" on the Shiprocket webhook settings page, sent back as the
+  // x-api-key header. Unset means the webhook rejects everything — the
+  // endpoint mutates order and shipment state, so failing open is not an
+  // option. See SHIPROCKET_WEBHOOK_SECRET in .env.example.
+  SHIPROCKET_WEBHOOK_SECRET: process.env.SHIPROCKET_WEBHOOK_SECRET,
+  RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
   PICKUP_PINCODE: process.env.PICKUP_PINCODE || '560001',
 
   SUPER_ADMIN_NAME: process.env.SUPER_ADMIN_NAME,

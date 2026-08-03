@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'fix/**', 'feat/**']
+  pull_request:
+    branches: [main]
+
+# Least privilege: nothing here needs write access to the repo.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run server test suite
+        run: npm test --workspace=apps/server
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      # Production dependencies of the server only. Dev tooling and the two
+      # SPAs are audited separately below and are not gating: a vulnerable
+      # build-time package cannot be reached by a request.
+      - name: Audit server production dependencies
+        working-directory: apps/server
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit everything (advisory only)
+        run: npm audit --audit-level=moderate || true
+
+  secret-scan:
+    name: Secret scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history — a secret committed and later removed is still
+          # exposed and still needs rotating.
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fail if any .env file is tracked
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.[^e]' ; then
+            echo "::error::A .env file is tracked by git. Remove it and rotate every value it contained."
+            exit 1
+          fi
+          echo "No tracked .env files."
+
+  sast:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/javascript
+            p/nodejs
+            p/expressjs
+            p/owasp-top-ten
+            p/secrets
+
+  guardrails:
+    name: Security guardrails
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cheap, specific greps for the exact regressions this codebase has had.
+      # A generic SAST rule would not catch these, and each one was a real bug.
+      # Ratchet, not a clean-slate gate. 17 admin-authenticated CMS sinks are
+      # still unmigrated (blog, faq, testimonial, reel, video-slot, partner,
+      # experience-centre and the admin-side updates for enquiry/service/
+      # site-visit). Every customer-facing and unauthenticated boundary IS
+      # migrated. This fails if the count grows, so the remainder can be
+      # cleared incrementally without new ones creeping in.
+      - name: Raw req.body sinks must not increase
+        run: |
+          BASELINE=19
+          COUNT=$(grep -rcE '\.(create|findByIdAndUpdate)\((req\.params\.[a-zA-Z]+, )?req\.body' \
+                    apps/server/src/controllers apps/server/src/routes \
+                  | awk -F: '{s+=$2} END {print s+0}')
+          echo "Raw req.body sinks: $COUNT (baseline $BASELINE)"
+          if [ "$COUNT" -gt "$BASELINE" ]; then
+            echo "::error::Raw req.body sinks increased to $COUNT. Add a schema in src/schemas and validate() on the route."
+            exit 1
+          fi
+          if [ "$COUNT" -lt "$BASELINE" ]; then
+            echo "::notice::Sinks reduced to $COUNT — lower BASELINE in this workflow to lock the gain in."
+          fi
+
+      - name: No unescaped user input in \$regex
+        run: |
+          if grep -rnE '\$regex:\s*(search|action|query|req\.)' apps/server/src ; then
+            echo "::error::Unescaped input in a \$regex. Use escapeRegex() from utils/sanitize."
+            exit 1
+          fi
+          echo "No unescaped \$regex."
+
+      - name: No unbounded .limit(Number(...))
+        run: |
+          # --include restricts to source; grep -v drops comment lines so the
+          # explanatory note in pagination.js does not trip its own gate.
+          if grep -rnE '\.limit\(\s*(Number|parseInt)\(' apps/server/src \
+               | grep -vE '^\S+:[0-9]+:\s*(//|\*)' ; then
+            echo "::error::Unbounded pagination limit. Use paginate() from utils/pagination."
+            exit 1
+          fi
+          echo "All limits are clamped."
+
+      - name: Wildcard CORS suffix must not return
+        run: |
+          if grep -rnE "endsWith\('\.(vercel|railway|netlify)\.app'\)" apps/server/src ; then
+            echo "::error::Wildcard CORS suffix on a shared deployment domain."
+            exit 1
+          fi
+          echo "CORS uses an explicit allowlist."

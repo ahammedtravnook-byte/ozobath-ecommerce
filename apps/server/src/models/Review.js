@@ -16,6 +16,9 @@ const reviewSchema = new mongoose.Schema({
   isApproved: { type: Boolean, default: false },
   isVerifiedPurchase: { type: Boolean, default: false },
   helpfulCount: { type: Number, default: 0 },
+  // Who voted. Without this the vote endpoint was a bare $inc, so one account
+  // could inflate a review's helpfulness without limit.
+  helpfulVoters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, {
   timestamps: true,
 });

@@ -15,6 +15,12 @@ const startServer = async () => {
     // Connect to MongoDB
     await connectDB();
 
+    // Raise the order-number counter above any existing orders, so switching
+    // from the old countDocuments() scheme does not restart numbering at 1.
+    require('./src/models/Order');
+    const { seedOrderCounter } = require('./src/models/Counter');
+    await seedOrderCounter();
+
     // Start server
     server = app.listen(PORT, () => {
       console.log('');

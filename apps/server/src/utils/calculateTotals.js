@@ -78,6 +78,21 @@ const calculateTotals = (items = [], coupon = null, options = {}) => {
         ? items.filter((i) => i.product && i.product.isActive !== false)
         : items.filter((i) => i.product);
 
+    // Defence in depth. A non-positive or fractional quantity here means a
+    // validation layer upstream has already failed, and the consequences are
+    // silent and financial: a negative line drives the subtotal down (the
+    // total floors at 0, but subtotal, tax and taxableValue all persist
+    // negative), and a fractional line is a straight discount that the
+    // Razorpay reconciliation cannot catch — both sides of that comparison
+    // derive from this number. Fail loudly rather than price the order wrong.
+    for (const i of activeItems) {
+        if (!Number.isInteger(i.quantity) || i.quantity < 1) {
+            throw new Error(
+                `Invalid line item quantity: ${i.quantity}. Quantity must be a positive integer.`
+            );
+        }
+    }
+
     const subtotal = activeItems.reduce(
         (sum, i) => sum + (i.product.price || 0) * i.quantity,
         0

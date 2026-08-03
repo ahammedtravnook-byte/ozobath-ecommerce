@@ -26,7 +26,8 @@ const blogSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-blogSchema.index({ slug: 1 });
+// NOTE: the unique:true on the field above already creates this index;
+// declaring it again produced a duplicate-index warning at boot.
 blogSchema.index({ isPublished: 1, publishedAt: -1 });
 blogSchema.index({ title: 'text', content: 'text', tags: 'text' });
 
