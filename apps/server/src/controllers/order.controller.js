@@ -8,6 +8,8 @@ const Coupon = require('../models/Coupon');
 const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
+const { calculateTotals } = require('../utils/calculateTotals');
+const env = require('../config/env');
 const { createNotification } = require('./notification.controller');
 const { logActivity } = require('./activityLog.controller');
 const { createAdminNotification } = require('./adminNotification.controller');
@@ -19,18 +21,19 @@ const createOrder = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
   if (!cart || cart.items.length === 0) throw new ApiError(400, 'Cart is empty.');
 
-  let subtotal = 0;
-  const items = cart.items.map((item) => {
-    const price = item.product.price;
-    subtotal += price * item.quantity;
-    return {
-      product: item.product._id, name: item.product.name,
-      image: item.product.images?.[0]?.url, price, quantity: item.quantity,
-      variant: item.variant,
-    };
-  });
+  // Price the cart — shared calculator, identical to the Razorpay paths
+  const preCoupon = calculateTotals(cart.items);
+  const subtotal = preCoupon.subtotal;
 
-  let discount = 0;
+  const items = preCoupon.activeItems.map((item) => ({
+    product: item.product._id, name: item.product.name,
+    image: item.product.images?.[0]?.url, price: item.product.price,
+    quantity: item.quantity, variant: item.variant,
+  }));
+
+  if (items.length === 0) throw new ApiError(400, 'No active products in cart.');
+
+  let claimedCoupon = null;
   let couponId = null;
   if (couponCode) {
     // Atomic coupon usage increment — prevents race condition
@@ -56,39 +59,16 @@ const createOrder = asyncHandler(async (req, res) => {
       throw new ApiError(400, 'You have already used this coupon the maximum number of times.');
     }
 
-    discount = coupon.type === 'percentage'
-      ? Math.min((subtotal * coupon.value) / 100, coupon.maxDiscount || Infinity)
-      : coupon.value;
-    discount = Math.round(discount);
+    claimedCoupon = coupon;
     couponId = coupon._id;
   }
 
-  // Per-product delivery logic:
-  // - If ALL items have freeDelivery, shipping = 0
-  // - If any item has a custom deliveryCharge > 0, use the highest one
-  // - Otherwise fall back to global rule (free above ₹999, else ₹99)
-  const productDeliveryData = cart.items.map(i => ({
-    freeDelivery: i.product.freeDelivery || false,
-    deliveryCharge: i.product.deliveryCharge || 0,
-  }));
-  const allFreeDelivery = productDeliveryData.every(p => p.freeDelivery);
-  const maxCustomCharge = Math.max(...productDeliveryData.map(p => p.deliveryCharge));
-
-  let shippingCost;
-  if (allFreeDelivery) {
-    shippingCost = 0;
-  } else if (maxCustomCharge > 0) {
-    shippingCost = maxCustomCharge;
-  } else {
-    shippingCost = subtotal >= 999 ? 0 : 99;
-  }
-
-  const tax = Math.round(subtotal * 0.18);
-  const total = subtotal + shippingCost + tax - discount;
+  const { shippingCost, tax, discount, total, taxableValue } = calculateTotals(cart.items, claimedCoupon);
 
   const order = await Order.create({
     user: req.user._id, items, shippingAddress, subtotal,
     shippingCost, discount, tax, total, coupon: couponId,
+    taxableValue, taxMode: env.TAX_MODE, taxRate: env.TAX_RATE,
     paymentMethod, notes,
     statusHistory: [{ status: 'pending', date: new Date(), note: 'Order placed' }],
   });

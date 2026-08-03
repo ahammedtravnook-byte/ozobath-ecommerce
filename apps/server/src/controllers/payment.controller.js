@@ -7,9 +7,11 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
+const PendingCheckout = require('../models/PendingCheckout');
 const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
+const { calculateTotals } = require('../utils/calculateTotals');
 const env = require('../config/env');
 const { createNotification } = require('./notification.controller');
 const { createAdminNotification } = require('./adminNotification.controller');
@@ -43,31 +45,22 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
     const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
     if (!cart || cart.items.length === 0) throw new ApiError(400, 'Cart is empty.');
 
-    let subtotal = 0;
-    for (const item of cart.items) {
-        if (!item.product || !item.product.isActive) continue;
-        subtotal += item.product.price * item.quantity;
-    }
-
-    let discount = 0;
+    // Look up the coupon for pricing only — usage is claimed at confirm time.
+    let coupon = null;
     if (couponCode) {
-        const coupon = await Coupon.findOne({
+        coupon = await Coupon.findOne({
             code: couponCode.toUpperCase(),
             isActive: true,
             startDate: { $lte: new Date() },
             endDate: { $gte: new Date() },
         });
-        if (coupon && subtotal >= coupon.minOrderAmount) {
-            discount = coupon.type === 'percentage'
-                ? Math.min((subtotal * coupon.value) / 100, coupon.maxDiscount || Infinity)
-                : coupon.value;
-            discount = Math.round(discount);
-        }
     }
 
-    const shippingCost = subtotal >= 999 ? 0 : 99;
-    const tax = Math.round(subtotal * 0.18);
-    const total = subtotal + shippingCost + tax - discount;
+    const { subtotal, shippingCost, tax, discount, total, taxableValue, activeItems } =
+        calculateTotals(cart.items, coupon);
+
+    if (activeItems.length === 0) throw new ApiError(400, 'No active products in cart.');
+    if (total <= 0) throw new ApiError(400, 'Order total must be greater than zero.');
 
     const rzp = getRazorpay();
     const razorpayOrder = await rzp.orders.create({
@@ -77,6 +70,33 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
             customerEmail: req.user.email,
             customerName: req.user.name,
         },
+    });
+
+    // Freeze what we just quoted. Confirm builds the order from this snapshot,
+    // never from the live cart, so editing the cart mid-payment cannot change
+    // what gets charged or what gets recorded.
+    await PendingCheckout.create({
+        razorpayOrderId: razorpayOrder.id,
+        user: req.user._id,
+        items: activeItems.map((item) => ({
+            product: item.product._id,
+            name: item.product.name,
+            image: item.product.images?.[0]?.url,
+            price: item.product.price,
+            quantity: item.quantity,
+            variant: item.variant,
+        })),
+        subtotal,
+        shippingCost,
+        tax,
+        discount,
+        total,
+        // Freeze the tax treatment too — flipping TAX_MODE between quote and
+        // confirm must not change what this already-quoted order records.
+        taxableValue,
+        taxMode: env.TAX_MODE,
+        taxRate: env.TAX_RATE,
+        couponCode: coupon ? coupon.code : undefined,
     });
 
     sendResponse(res, 200, {
@@ -103,47 +123,92 @@ const confirmAndCreateOrder = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Missing required payment confirmation parameters.');
     }
 
-    // 1. Verify Razorpay signature before touching the database
+    // 1. Verify Razorpay signature before touching the database.
+    // timingSafeEqual over a constant-length hex digest — avoids leaking
+    // information through comparison time on a forged signature.
     const body = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSignature = crypto
         .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
         .update(body)
         .digest('hex');
 
-    if (expectedSignature !== razorpay_signature) {
+    const signatureValid =
+        typeof razorpay_signature === 'string' &&
+        razorpay_signature.length === expectedSignature.length &&
+        crypto.timingSafeEqual(
+            Buffer.from(expectedSignature, 'utf8'),
+            Buffer.from(razorpay_signature, 'utf8')
+        );
+
+    if (!signatureValid) {
         throw new ApiError(400, 'Payment verification failed. Invalid signature.');
     }
 
-    // 2. Read cart — must still have items (cart is only cleared here on success)
-    const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
-    if (!cart || cart.items.length === 0) throw new ApiError(400, 'Cart is empty. Order may have already been placed.');
+    // 2. Idempotency: if this payment already produced an order, return it.
+    // A valid replay is not an error — the browser handler and a retry (or a
+    // future webhook) can both legitimately arrive. The unique index on
+    // razorpayOrderId is the real guard; this is the fast, friendly path.
+    const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+    if (existingOrder) {
+        return sendResponse(res, 200, {
+            orderId: existingOrder._id,
+            orderNumber: existingOrder.orderNumber,
+            paymentStatus: existingOrder.paymentStatus,
+        }, 'Order already confirmed for this payment');
+    }
 
-    // 3. Build order items and compute totals
-    let subtotal = 0;
-    const items = cart.items
-        .filter(item => item.product && item.product.isActive)
-        .map((item) => {
-            const price = item.product.price;
-            subtotal += price * item.quantity;
-            return {
-                product: item.product._id,
-                name: item.product.name,
-                image: item.product.images?.[0]?.url,
-                price,
-                quantity: item.quantity,
-                variant: item.variant,
-            };
-        });
+    // 3. Load the frozen quote. This — not the live cart — is what the
+    // customer was charged for.
+    const snapshot = await PendingCheckout.findOne({
+        razorpayOrderId: razorpay_order_id,
+        user: req.user._id,
+    });
 
-    if (items.length === 0) throw new ApiError(400, 'No active products in cart.');
+    if (!snapshot) {
+        throw new ApiError(
+            400,
+            'Checkout session not found or expired. If you were charged, contact support with your payment ID.'
+        );
+    }
 
-    // 4. Apply coupon atomically
-    let discount = 0;
+    const items = snapshot.items.map((item) => ({
+        product: item.product,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+        variant: item.variant,
+    }));
+
+    if (items.length === 0) throw new ApiError(400, 'Checkout session contained no items.');
+
+    const { subtotal, shippingCost, tax, total, taxableValue, taxMode, taxRate } = snapshot;
+
+    // 4. Cross-check against Razorpay: confirm they actually captured the
+    // amount we quoted. The signature proves a payment happened; this proves
+    // it was for the right amount, independent of our own records.
+    const rzp = getRazorpay();
+    const rzpOrder = await rzp.orders.fetch(razorpay_order_id);
+    const expectedPaise = Math.round(total * 100);
+    const paidPaise = Number(rzpOrder?.amount_paid);
+
+    if (!Number.isFinite(paidPaise) || paidPaise !== expectedPaise) {
+        const capturedLabel = Number.isFinite(paidPaise) ? `₹${paidPaise / 100}` : 'an unknown amount';
+        throw new ApiError(
+            400,
+            `Payment amount mismatch. Expected ₹${total}, Razorpay captured ${capturedLabel}. Order not created — contact support with payment ID ${razorpay_payment_id}.`
+        );
+    }
+
+    // 5. Claim coupon usage atomically. Deliberately after the amount check,
+    // so a failed verification never consumes the customer's coupon. Uses the
+    // code recorded in the snapshot — not the client's, which could differ.
     let couponId = null;
-    if (couponCode) {
+    const snapshotCouponCode = snapshot.couponCode;
+    if (snapshotCouponCode) {
         const coupon = await Coupon.findOneAndUpdate(
             {
-                code: couponCode.toUpperCase(),
+                code: snapshotCouponCode.toUpperCase(),
                 isActive: true,
                 startDate: { $lte: new Date() },
                 endDate: { $gte: new Date() },
@@ -153,28 +218,34 @@ const confirmAndCreateOrder = asyncHandler(async (req, res) => {
             { new: false }
         );
 
-        if (!coupon) throw new ApiError(400, 'Coupon is no longer valid.');
-        if (subtotal < coupon.minOrderAmount) throw new ApiError(400, `Minimum order amount for coupon is ₹${coupon.minOrderAmount}.`);
+        // The customer has already paid, and the amount they paid included this
+        // discount. Refusing the order here would strand their money, so an
+        // exhausted coupon is logged and the honoured price stands.
+        if (!coupon) {
+            console.warn(`Coupon ${snapshotCouponCode} no longer claimable at confirm for payment ${razorpay_payment_id}; honouring quoted price.`);
+        } else {
+            couponId = coupon._id;
 
-        const userUsage = coupon.usedBy.filter(id => id.toString() === req.user._id.toString()).length;
-        if (coupon.perUserLimit && userUsage >= coupon.perUserLimit) {
-            await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: -1 }, $pull: { usedBy: req.user._id } });
-            throw new ApiError(400, 'Coupon usage limit reached.');
+            const userUsage = coupon.usedBy.filter(id => id.toString() === req.user._id.toString()).length;
+            if (coupon.perUserLimit && userUsage >= coupon.perUserLimit) {
+                await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: -1 }, $pull: { usedBy: req.user._id } });
+                console.warn(`Coupon ${snapshotCouponCode} per-user limit exceeded at confirm for payment ${razorpay_payment_id}; honouring quoted price.`);
+                couponId = null;
+            }
         }
-
-        discount = coupon.type === 'percentage'
-            ? Math.min((subtotal * coupon.value) / 100, coupon.maxDiscount || Infinity)
-            : coupon.value;
-        discount = Math.round(discount);
-        couponId = coupon._id;
     }
 
-    const shippingCost = subtotal >= 999 ? 0 : 99;
-    const tax = Math.round(subtotal * 0.18);
-    const total = subtotal + shippingCost + tax - discount;
+    const discount = snapshot.discount;
 
-    // 5. Create confirmed order
-    const order = await Order.create({
+    // 6. Create confirmed order.
+    // The unique index on razorpayOrderId is what actually prevents duplicates:
+    // the step-2 lookup can be passed by several concurrent replays before any
+    // of them writes, so the database has to be the arbiter. A duplicate-key
+    // error here means another request won the race — return its order rather
+    // than failing, and do not run the side effects below twice.
+    let order;
+    try {
+        order = await Order.create({
         user: req.user._id,
         items,
         shippingAddress,
@@ -183,6 +254,9 @@ const confirmAndCreateOrder = asyncHandler(async (req, res) => {
         discount,
         tax,
         total,
+        taxableValue,
+        taxMode,
+        taxRate,
         coupon: couponId,
         paymentMethod: 'razorpay',
         paymentStatus: 'paid',
@@ -194,19 +268,38 @@ const confirmAndCreateOrder = asyncHandler(async (req, res) => {
             { status: 'pending', date: new Date(), note: 'Order placed' },
             { status: 'confirmed', date: new Date(), note: `Payment received via Razorpay (${razorpay_payment_id})` },
         ],
-    });
+        });
+    } catch (err) {
+        if (err.code === 11000) {
+            const winner = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+            if (winner) {
+                return sendResponse(res, 200, {
+                    orderId: winner._id,
+                    orderNumber: winner.orderNumber,
+                    paymentStatus: winner.paymentStatus,
+                }, 'Order already confirmed for this payment');
+            }
+        }
+        throw err;
+    }
 
-    // 6. Reduce stock
+    // 6b. Mark the snapshot consumed — the order now owns this payment.
+    await PendingCheckout.updateOne(
+        { _id: snapshot._id },
+        { consumedAt: new Date(), order: order._id }
+    );
+
+    // 7. Reduce stock
     for (const item of items) {
         await Product.findByIdAndUpdate(item.product, {
             $inc: { stock: -item.quantity, salesCount: item.quantity },
         });
     }
 
-    // 7. Clear cart
+    // 8. Clear cart
     await Cart.findOneAndUpdate({ user: req.user._id }, { items: [], totalAmount: 0 });
 
-    // 8. Notify customer and admins
+    // 9. Notify customer and admins
     await createNotification(
         req.user._id,
         'order_placed',

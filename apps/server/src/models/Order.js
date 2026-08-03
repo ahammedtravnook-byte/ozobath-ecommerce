@@ -32,6 +32,11 @@ const orderSchema = new mongoose.Schema({
   shippingCost: { type: Number, default: 0 },
   discount: { type: Number, default: 0 },
   tax: { type: Number, default: 0 },
+  // The value the tax was computed on, and the treatment used. Recorded per
+  // order so a config change never retroactively reinterprets past invoices.
+  taxableValue: { type: Number },
+  taxMode: { type: String, enum: ['inclusive', 'exclusive'] },
+  taxRate: { type: Number },
   total: { type: Number, required: true },
 
   coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
@@ -85,6 +90,13 @@ orderSchema.pre('save', async function (next) {
 
 orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ user: 1 });
+
+// Idempotency guard: one order per Razorpay payment, enforced by the database.
+// Without this, replaying a valid /payment/confirm payload — or a webhook and
+// the browser handler both landing — creates duplicate orders, double-decrements
+// stock and double-burns coupon usage. `sparse` keeps COD orders (which have no
+// razorpayOrderId) exempt; otherwise the second COD order would collide on null.
+orderSchema.index({ razorpayOrderId: 1 }, { unique: true, sparse: true });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 

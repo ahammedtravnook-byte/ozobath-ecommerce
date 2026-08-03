@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import { orderAPI, paymentAPI, couponAPI, couponAutoAPI, addressAPI } from '@api/services';
+import { calculateTotals, TAX_RATE } from '@utils/calculateTotals';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -52,11 +53,10 @@ const CheckoutPage = () => {
     };
 
     const items = cart?.items || [];
-    const subtotal = items.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0);
-    const shipping = subtotal >= 999 ? 0 : 99;
-    const discount = appliedCoupon?.discount || 0;
-    const tax = Math.round(subtotal * 0.18);
-    const total = Math.max(0, subtotal + shipping + tax - discount);
+    // Display only — the server recomputes with the same rules and its value wins.
+    const { subtotal, shippingCost: shipping, tax, discount, total, taxIncluded } =
+        calculateTotals(items, appliedCoupon?.discount || 0);
+    const gstLabel = `${(TAX_RATE * 100).toFixed(TAX_RATE * 100 % 1 === 0 ? 0 : 2)}%`;
 
     useEffect(() => {
         if (!isAuthenticated) { navigate('/login?redirect=/checkout'); return; }
@@ -449,7 +449,9 @@ const CheckoutPage = () => {
                             <div className="space-y-3 text-sm">
                                 <div className="flex justify-between"><span className="text-dark-400">Subtotal ({items.length} items)</span><span className="font-medium">₹{subtotal.toLocaleString()}</span></div>
                                 <div className="flex justify-between"><span className="text-dark-400">Shipping</span><span className={shipping === 0 ? 'text-green-600 font-semibold' : 'font-medium'}>{shipping === 0 ? 'FREE' : `₹${shipping}`}</span></div>
-                                <div className="flex justify-between"><span className="text-dark-400">GST (18%)</span><span className="font-medium">₹{tax.toLocaleString()}</span></div>
+                                {!taxIncluded && (
+                                    <div className="flex justify-between"><span className="text-dark-400">GST ({gstLabel})</span><span className="font-medium">₹{tax.toLocaleString()}</span></div>
+                                )}
                                 {discount > 0 && (
                                     <div className="flex justify-between text-green-600">
                                         <span className="font-medium">Discount ({appliedCoupon?.code})</span>
@@ -458,6 +460,9 @@ const CheckoutPage = () => {
                                 )}
                                 <hr className="border-dark-50" />
                                 <div className="flex justify-between text-lg font-bold"><span>Total</span><span>₹{total.toLocaleString()}</span></div>
+                                {taxIncluded && tax > 0 && (
+                                    <p className="text-xs text-dark-400">Includes ₹{tax.toLocaleString()} GST ({gstLabel})</p>
+                                )}
                                 {shipping > 0 && subtotal < 999 && <p className="text-xs text-accent-500 font-medium">Add ₹{(999 - subtotal).toLocaleString()} more for FREE shipping</p>}
                             </div>
 

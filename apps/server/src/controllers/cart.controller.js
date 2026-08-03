@@ -8,7 +8,7 @@ const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 
 const getCart = asyncHandler(async (req, res) => {
-  let cart = await Cart.findOne({ user: req.user._id }).populate('items.product', 'name slug price images stock isActive');
+  let cart = await Cart.findOne({ user: req.user._id }).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   if (!cart) cart = { items: [], totalAmount: 0 };
   sendResponse(res, 200, cart, 'Cart fetched');
 });
@@ -37,7 +37,7 @@ const addToCart = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   await cart.save();
 
-  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price images stock');
+  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   sendResponse(res, 200, cart, 'Item added to cart');
 });
 
@@ -58,7 +58,7 @@ const updateCartItem = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   await cart.save();
 
-  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock');
+  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   sendResponse(res, 200, populated, 'Cart updated');
 });
 
@@ -70,7 +70,7 @@ const removeFromCart = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   await cart.save();
 
-  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock');
+  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   sendResponse(res, 200, populated, 'Item removed from cart');
 });
 
@@ -119,7 +119,7 @@ const mergeGuestCart = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   await cart.save();
 
-  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price images stock');
+  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   sendResponse(res, 200, cart, 'Guest cart merged');
 });
 
