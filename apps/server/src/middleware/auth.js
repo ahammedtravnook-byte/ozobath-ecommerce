@@ -7,9 +7,12 @@ const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
-    const token =
-      req.cookies?.accessToken ||
-      req.header('Authorization')?.replace('Bearer ', '');
+    // Bearer header only. There was also a `req.cookies.accessToken` branch,
+    // but nothing in the codebase ever set that cookie — it implied a
+    // cookie-auth mode that does not exist, and a cookie-borne access token
+    // would be CSRF-exposed in a way the Bearer header is not.
+    const header = req.header('Authorization') || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
 
     if (!token) {
       throw new ApiError(401, 'Authentication required. Please log in.');

@@ -113,28 +113,47 @@
         <!-- Update Status -->
         <div class="admin-card">
           <h2 class="text-sm font-bold text-gray-900 mb-4">Update Status</h2>
-          <div class="grid grid-cols-3 gap-1.5 mb-4">
+
+          <p class="text-[11px] text-gray-500 mb-3">
+            Current: <span class="font-semibold text-gray-700 capitalize">{{ currentStatus }}</span>
+          </p>
+
+          <!-- Terminal status: nothing further is possible -->
+          <div v-if="isTerminal" class="rounded-xl bg-gray-50 border border-gray-200 px-3 py-3 text-[11px] text-gray-600">
+            This order is <span class="font-semibold capitalize">{{ currentStatus }}</span>, which is final.
+            No further status changes are possible.
+          </div>
+
+          <template v-else>
+            <!-- Only transitions the server will accept are offered -->
+            <div class="grid grid-cols-3 gap-1.5 mb-4">
+              <button
+                v-for="s in availableStatuses"
+                :key="s.value"
+                @click="newStatus = s.value"
+                :class="[
+                  'px-2 py-2 text-[11px] font-semibold rounded-xl border-2 transition-all text-center',
+                  newStatus === s.value ? s.activeClass : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                ]"
+              >{{ s.icon }} {{ s.label }}</button>
+            </div>
+
+            <div v-if="blockedReason" class="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 mb-3 text-[11px] text-amber-800">
+              {{ blockedReason }}
+            </div>
+
+            <div class="mb-3">
+              <label class="admin-label">Note (optional)</label>
+              <input v-model="statusNote" class="admin-input" placeholder="Add a note..." />
+            </div>
             <button
-              v-for="s in statuses"
-              :key="s.value"
-              @click="newStatus = s.value"
-              :class="[
-                'px-2 py-2 text-[11px] font-semibold rounded-xl border-2 transition-all text-center',
-                newStatus === s.value ? s.activeClass : 'border-gray-200 text-gray-500 hover:border-gray-300'
-              ]"
-            >{{ s.icon }} {{ s.label }}</button>
-          </div>
-          <div class="mb-3">
-            <label class="admin-label">Note (optional)</label>
-            <input v-model="statusNote" class="admin-input" placeholder="Add a note..." />
-          </div>
-          <button
-            @click="updateStatus"
-            :disabled="updatingStatus"
-            class="admin-btn-primary w-full flex items-center justify-center gap-2"
-          >
-            {{ updatingStatus ? 'Updating...' : 'Update Status' }}
-          </button>
+              @click="updateStatus"
+              :disabled="updatingStatus || !newStatus || !!blockedReason"
+              class="admin-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ updatingStatus ? 'Updating...' : 'Update Status' }}
+            </button>
+          </template>
         </div>
 
         <!-- Customer Info -->
@@ -232,7 +251,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { orderAPI } from '@/api/services';
 import { useToast } from 'vue-toastification';
@@ -255,7 +274,48 @@ const statuses = [
   { value: 'shipped',    label: 'Shipped',    icon: '🚚', activeClass: 'border-purple-400 bg-purple-50 text-purple-700' },
   { value: 'delivered',  label: 'Delivered',  icon: '🎉', activeClass: 'border-green-400 bg-green-50 text-green-700' },
   { value: 'cancelled',  label: 'Cancelled',  icon: '❌', activeClass: 'border-red-400 bg-red-50 text-red-700' },
+  { value: 'returned',   label: 'Returned',   icon: '↩️', activeClass: 'border-orange-400 bg-orange-50 text-orange-700' },
 ];
+
+// ─── Legal status transitions ────────────────────
+// MUST mirror apps/server/src/utils/orderStateMachine.js. The server rejects
+// anything not listed here with a 400, so offering a button the server will
+// refuse just produces an error toast.
+//
+// Shape: pending → confirmed → processing → shipped → delivered
+// Cancellation only before the courier has the goods; after that it is a
+// return, which is a different business event.
+const ALLOWED_TRANSITIONS = {
+  pending:    ['confirmed', 'cancelled'],
+  confirmed:  ['processing', 'shipped', 'cancelled'],
+  processing: ['shipped', 'cancelled'],
+  shipped:    ['delivered', 'returned'],
+  delivered:  ['returned'],
+  cancelled:  [],
+  returned:   [],
+};
+
+const currentStatus = computed(() => order.value?.status || 'pending');
+
+// Statuses reachable from where this order actually is.
+const availableStatuses = computed(() => {
+  const allowed = ALLOWED_TRANSITIONS[currentStatus.value] || [];
+  return statuses.filter(s => allowed.includes(s.value));
+});
+
+const isTerminal = computed(() => availableStatuses.value.length === 0);
+
+// A prepaid order cannot be confirmed until the money has actually arrived —
+// the server enforces this separately from the transition table.
+const blockedReason = computed(() => {
+  if (newStatus.value !== 'confirmed') return '';
+  const o = order.value;
+  if (!o) return '';
+  if (o.paymentMethod !== 'cod' && o.paymentStatus !== 'paid') {
+    return 'This prepaid order has not been paid yet, so it cannot be confirmed. Payment is recorded by the payment flow.';
+  }
+  return '';
+});
 
 const statusStyle = (s) => ({
   pending:    { chip: 'bg-amber-50 text-amber-700 border-amber-200', icon: '⏳' },
@@ -284,7 +344,11 @@ const fetchOrder = async () => {
     loading.value = true;
     const res = await orderAPI.getById(orderId);
     order.value = res.data || {};
-    newStatus.value = order.value.orderStatus || order.value.status || 'pending';
+    // Preselect the first legal NEXT status, not the current one — the server
+    // rejects a no-op transition, so preselecting the current status meant the
+    // default click always failed. (`orderStatus` was also read here; that
+    // field does not exist on the Order model.)
+    newStatus.value = availableStatuses.value[0]?.value || '';
   } catch { toast.error('Failed to load order'); } finally { loading.value = false; }
 };
 
@@ -295,7 +359,11 @@ const updateStatus = async () => {
     toast.success('Order status updated');
     statusNote.value = '';
     fetchOrder();
-  } catch { toast.error('Failed to update status'); } finally { updatingStatus.value = false; }
+  } catch (err) {
+    // Surface the server's explanation — it names which statuses are actually
+    // reachable, which is more useful than a generic failure.
+    toast.error(err?.message || 'Failed to update status');
+  } finally { updatingStatus.value = false; }
 };
 
 const initiateRefund = async () => {

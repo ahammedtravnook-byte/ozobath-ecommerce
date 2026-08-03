@@ -18,6 +18,32 @@ let retryCount = 0;
 // retryCount, which made MAX_RETRIES never actually cap anything.
 let isConnecting = false;
 
+// ─── Slow Query Logging ──────────────────────────
+// Uses the driver's command monitoring, which reports the actual server-side
+// duration of each operation. (Mongoose's `debug` hook fires when a query is
+// ISSUED, not when it completes, so it cannot measure duration.)
+//
+// A query over the threshold is logged with its collection and shape — enough
+// to spot a missing index without the noise of full query logging.
+const SLOW_QUERY_MS = parseInt(process.env.SLOW_QUERY_MS, 10) || 300;
+
+const MONITORED = new Set(['find', 'aggregate', 'count', 'distinct', 'update', 'delete', 'findAndModify', 'insert']);
+
+const enableSlowQueryLogging = (client) => {
+  if (!client || typeof client.on !== 'function') return;
+
+  client.on('commandSucceeded', (event) => {
+    if (!MONITORED.has(event.commandName)) return;
+    if (event.duration < SLOW_QUERY_MS) return;
+    console.warn(`🐢 Slow query ${event.duration}ms — ${event.commandName} on ${event.address || 'db'}`);
+  });
+
+  client.on('commandFailed', (event) => {
+    if (!MONITORED.has(event.commandName)) return;
+    console.error(`❌ Query failed after ${event.duration}ms — ${event.commandName}: ${event.failure?.message || 'unknown'}`);
+  });
+};
+
 const connectDB = async () => {
   if (isConnecting) return; // A retry loop is already in flight
   isConnecting = true;
@@ -28,7 +54,11 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 10000,
       heartbeatFrequencyMS: 30000,
       socketTimeoutMS: 45000,
+      // Required for the slow-query listeners below.
+      monitorCommands: true,
     });
+
+    enableSlowQueryLogging(conn.connection.getClient());
 
     // mongoose.connect() can resolve without a usable connection. Only report
     // success once the connection is genuinely open (readyState 1), otherwise

@@ -4,6 +4,7 @@
 const AdminNotification = require('../models/AdminNotification');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
+const { clampLimit } = require('../utils/pagination');
 
 // Helper used by other controllers to fire admin notifications
 const createAdminNotification = async (type, title, message, link = null, data = {}) => {
@@ -16,12 +17,12 @@ const createAdminNotification = async (type, title, message, link = null, data =
 
 // GET /admin-notifications — latest 30 admin notifications
 const getAdminNotifications = asyncHandler(async (req, res) => {
-  const { limit = 30 } = req.query;
+  const limit = clampLimit(req.query.limit, 30);
   const adminId = req.user._id;
 
   const notifications = await AdminNotification.find()
     .sort('-createdAt')
-    .limit(Number(limit))
+    .limit(limit)
     .lean();
 
   const unreadCount = notifications.filter(

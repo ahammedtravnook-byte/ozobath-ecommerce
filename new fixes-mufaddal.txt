@@ -1,0 +1,114 @@
+fix(payments): make Razorpay flow reconcile, prevent duplicate orders, unify totals
+
+Four independent problems in the checkout/payment path. Each is described
+below with what was wrong, what it cost, and how it was fixed.
+
+--------------------------------------------------------------------------
+1. Same cart cost a different amount online vs COD
+--------------------------------------------------------------------------
+Totals were computed in four places with two different shipping rules. The
+Razorpay paths used a flat rule (free >= 999, else 99); the COD path used
+per-product delivery (freeDelivery / deliveryCharge). The checkout summary
+in the browser used a third copy.
+
+A 500 product with deliveryCharge 300 cost 890 on COD but 689 online -- 201
+of shipping absorbed on every online order. Inversely, a freeDelivery item
+was charged 99 shipping online, overcharging for delivery advertised as free.
+
+Fixed: one shared calculator, four call sites now import it.
+  + apps/server/src/utils/calculateTotals.js   (source of truth)
+  + apps/client/src/utils/calculateTotals.js   (display mirror)
+
+The cart API was also not sending freeDelivery/deliveryCharge to the browser,
+so the summary could not have computed this even if asked. All five populate()
+calls in cart.controller.js now select the same fields.
+
+--------------------------------------------------------------------------
+2. Books did not reconcile when the cart changed mid-payment
+--------------------------------------------------------------------------
+/payment/confirm re-read the live cart to price the order. A cart edited in
+a second tab between "create order" and "pay" produced an order whose total
+did not match the amount Razorpay actually captured. Quoted 890, captured
+890, recorded 1480.
+
+Fixed: the priced cart is frozen at quote time and confirm reads that
+snapshot, never the live cart. Drift is impossible by construction.
+  + apps/server/src/models/PendingCheckout.js  (TTL-indexed, self-cleaning)
+
+Added rzp.orders.fetch() at confirm as an independent cross-check that
+Razorpay captured what the snapshot says. Signature proves a payment
+happened; this proves it was for the right amount.
+
+Side effect: emptying the cart mid-payment used to throw "Cart is empty"
+and lose the order despite money being captured. It now completes correctly.
+
+--------------------------------------------------------------------------
+3. One payment could create unlimited orders
+--------------------------------------------------------------------------
+Replaying a valid /payment/confirm payload created a second order, decremented
+stock again and burned the coupon again. The only guard was a cart-empty check
+~80 lines before the cart was actually cleared -- and every statement between
+is awaited I/O, so concurrent requests all passed it before any of them wrote.
+No forgery needed: a customer replaying their own valid payload 20 times got
+20 orders for one payment.
+
+Fixed, three layers:
+  - unique sparse index on Order.razorpayOrderId (sparse so COD orders, which
+    have no razorpayOrderId, do not all collide on null)
+  - fast-path lookup returns the existing order with 200 on replay
+  - duplicate-key (11000) catch for concurrent racers; the loser returns the
+    winner's order and runs none of the side effects
+
+Also switched signature comparison to crypto.timingSafeEqual with a length
+guard. Without the guard timingSafeEqual throws on mismatched lengths, which
+would have been a 500 instead of a clean 400.
+
+--------------------------------------------------------------------------
+4. GST treatment made configurable (no behaviour change)
+--------------------------------------------------------------------------
+Three tax questions were hardcoded. All three are now env flags DEFAULTING TO
+EXISTING BEHAVIOUR -- this commit changes no customer's bill. Each needs CA
+confirmation before being switched on.
+
+  TAX_AFTER_DISCOUNT  tax was charged on the pre-discount subtotal. CGST
+                      s.15(3)(a) excludes invoice-time discounts from taxable
+                      value. Overcharges 360 on a 10,000 cart with a 2,000
+                      coupon.
+  TAX_ON_SHIPPING     delivery currently goes out with zero GST. Normally
+                      taxable on a composite supply -- this UNDER-collects,
+                      54 on a 300 delivery charge.
+  TAX_MODE            prices look GST-inclusive (seed data is retail shape:
+                      price 45999 / compareAtPrice 59999) but 18% is added on
+                      top. If 45999 is the shelf price, customers are
+                      overcharged 8280 per unit. Largest of the three by far.
+
+Orders now record taxableValue, taxMode and taxRate as at time of sale, so
+changing config never reinterprets past invoices. Razorpay quotes freeze the
+same values, so a config change mid-payment cannot alter a quoted order.
+
+  + docs/TAX_CONFIGURATION.md   what each flag does, with worked examples
+  + apps/client/.env            VITE_* mirrors (rebuild client after changing)
+
+Known limits, documented and unaddressed: single flat rate for all products
+(no HSN codes), no CGST/SGST/IGST split, no GSTIN capture for B2B.
+
+--------------------------------------------------------------------------
+Verification
+--------------------------------------------------------------------------
+26/26 tax cases, including explicit assertions that defaults reproduce the
+old hardcoded math exactly. 12/12 totals cases. 9/9 client-vs-server parity.
+9/9 payment-flow cases against the real handler (happy path, forged signature,
+replay, concurrent duplicate-key race, amount mismatch, malformed amount_paid,
+expired snapshot, mutated cart). Client builds, server loads.
+
+--------------------------------------------------------------------------
+Deployment notes
+--------------------------------------------------------------------------
+- Run `node src/scripts/checkPaymentIntegrity.js` BEFORE deploying. If the  database already holds duplicate razorpayOrderId values the unique index  will silently fail to build, leaving no replay protection while appearing healthy. The script also confirms the index is actually live.
+- Carts cached in open browser tabs lack the new delivery fields until
+  refreshed.
+- No tax flag needs setting; unset means current behaviour.
+
+Still open: no webhook handler. If the browser dies between payment capture
+and /confirm, money is taken and no order exists. PendingCheckout and the
+unique index are the prerequisites for adding one -- that ordering was deliberate.

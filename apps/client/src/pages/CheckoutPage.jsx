@@ -174,7 +174,14 @@ const CheckoutPage = () => {
             // Step 1: Create Razorpay payment order (server computes amount from cart)
             let payRes;
             try {
-                payRes = await paymentAPI.createOrder({ couponCode: appliedCoupon?.code || undefined });
+                // shippingAddress is sent here as well as at confirm: if the
+                // browser never returns from the Razorpay modal, the payment
+                // webhook builds the order from this snapshot, and without an
+                // address that order would not be shippable.
+                payRes = await paymentAPI.createOrder({
+                    couponCode: appliedCoupon?.code || undefined,
+                    shippingAddress: address,
+                });
             } catch (e) {
                 toast.error(e?.message || 'Payment gateway error. Please try again or use COD.', { duration: 5000 });
                 setStep(2);

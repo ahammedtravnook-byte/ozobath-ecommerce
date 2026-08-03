@@ -11,6 +11,7 @@ const path = require('path');
 
 const env = require('./config/env');
 const errorHandler = require('./middleware/errorHandler');
+const sanitizeMongo = require('./middleware/sanitizeMongo');
 const { apiLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
@@ -28,28 +29,82 @@ if (env.NODE_ENV === 'production') {
 }
 
 // ─── Security ────────────────────────────────────────
-app.use(helmet());
+// helmet() defaults, plus the ones its defaults leave off.
+app.use(helmet({
+  // This is a JSON API — it serves no HTML, so the strictest possible policy
+  // is also the correct one. Relevant if any response is ever rendered
+  // directly by a browser (an error page, a redirect target).
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'none'"],
+      formAction: ["'none'"],
+    },
+  },
+  // Force HTTPS for a year once seen. Only meaningful in production behind
+  // real TLS; sending it from a plain-HTTP dev server would poison localhost.
+  hsts: env.NODE_ENV === 'production'
+    ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+    : false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },  // SPAs are on another origin
+  referrerPolicy: { policy: 'no-referrer' },
+}));
+
+// Do not advertise the framework.
+app.disable('x-powered-by');
+
+// ─── CORS ────────────────────────────────────────────
+// `*.vercel.app` and `*.railway.app` are SHARED public deployment domains.
+// Trusting the whole suffix with `credentials: true` meant anyone could
+// deploy to attacker.vercel.app, call /auth/refresh with the victim's
+// sameSite:'none' cookie attached, and read the fresh access token out of
+// the JSON response.
+//
+// Exact origins only, from config. Preview deployments must match a specific
+// project pattern and are disabled entirely in production.
+const PREVIEW_ORIGIN = /^https:\/\/ozobath-[a-z0-9-]+\.vercel\.app$/;
+
+const isAllowedOrigin = (origin) => {
+  const allowed = [env.CLIENT_URL, env.ADMIN_URL, ...env.EXTRA_CORS_ORIGINS].filter(Boolean);
+  if (allowed.includes(origin)) return true;
+  if (env.NODE_ENV !== 'production' && PREVIEW_ORIGIN.test(origin)) return true;
+  return false;
+};
+
 app.use(cors({
   origin: (origin, callback) => {
-    const allowed = [env.CLIENT_URL, env.ADMIN_URL].filter(Boolean);
-    // Allow requests with no origin (mobile apps, curl, Postman)
+    // Requests with no Origin header (curl, server-to-server, native apps).
+    // Browsers always send Origin cross-origin, so this does not weaken the
+    // browser-facing protection above.
     if (!origin) return callback(null, true);
-    // Allow exact matches or any *.vercel.app preview URL
-    if (allowed.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.railway.app')) {
-      return callback(null, true);
-    }
+    if (isAllowedOrigin(origin)) return callback(null, true);
     callback(new Error(`CORS: ${origin} not allowed`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
 }));
 
 // ─── Body Parsing ────────────────────────────────────
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// 10mb on every route was generous: it is the ceiling on how much a single
+// unauthenticated request to a public POST endpoint can store. Image uploads
+// go through multer (which has its own 10mb limit), not through the JSON
+// parser, so a much smaller cap is sufficient here.
+// `verify` captures the raw bytes before parsing. Webhook signatures are
+// computed over the exact payload sent, so re-serialising the parsed object
+// would produce a different digest and every signature would fail.
+app.use(express.json({
+  limit: '100kb',
+  verify: (req, res, buf) => { req.rawBody = buf; },
+}));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 app.use(compression());
+
+// Strip MongoDB operator keys ($ne, $regex, $where, dotted paths) from body
+// and query before any handler builds a filter from them.
+app.use(sanitizeMongo);
 
 // ─── Logging ─────────────────────────────────────────
 // 'combined' (Apache format) in production so PM2/Nginx logs correlate and
@@ -64,11 +119,12 @@ if (env.NODE_ENV === 'production') {
 app.use('/api/', apiLimiter);
 
 // ─── Health Check ────────────────────────────────────
+// Public liveness probe — deliberately says nothing about the deployment.
+// `environment` was disclosed here, which is free reconnaissance.
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'OZOBATH API is running 🚿',
-    environment: env.NODE_ENV,
     timestamp: new Date().toISOString(),
   });
 });

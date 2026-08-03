@@ -2,7 +2,12 @@
 // OZOBATH - Bulk Product Upload Controller
 // Accepts .xlsx file, creates/updates products
 // ============================================
-const XLSX = require('xlsx');
+// Uses exceljs, not xlsx (SheetJS). The `xlsx` package carries an unfixed
+// prototype-pollution advisory (GHSA-4r6h-8v6p-xvw6) and a ReDoS
+// (GHSA-5pgg-2g8v-p4x9) with no patched release available, and this endpoint
+// parses an uploaded file — exactly the reachable path those advisories
+// describe.
+const ExcelJS = require('exceljs');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const { sendResponse } = require('../utils/apiResponse');
@@ -10,16 +15,65 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/apiError');
 const slugify = require('../utils/slugify');
 
+// Bound how much work one upload can request.
+const MAX_ROWS = 2000;
+
+// Normalise a cell to a plain string. exceljs returns rich objects for
+// formulas, hyperlinks and rich text, so `String(cell.value)` alone would
+// yield "[object Object]".
+const cellText = (cell) => {
+  const v = cell?.value;
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'object') {
+    if (v.text !== undefined) return String(v.text);            // hyperlink / rich text
+    if (v.result !== undefined) return String(v.result);        // formula result
+    if (v.richText) return v.richText.map((r) => r.text).join('');
+    return '';
+  }
+  return String(v);
+};
+
 // POST /products/bulk-upload
 // Body: multipart form with file field "excel"
 const bulkUploadProducts = asyncHandler(async (req, res) => {
   if (!req.file) throw new ApiError(400, 'Please upload an Excel file (.xlsx)');
 
   // Parse workbook
-  const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  const workbook = new ExcelJS.Workbook();
+  try {
+    await workbook.xlsx.load(req.file.buffer);
+  } catch (err) {
+    throw new ApiError(400, 'Could not read that file. Please upload a valid .xlsx workbook.');
+  }
+
+  const sheet = workbook.worksheets[0];
+  if (!sheet) throw new ApiError(400, 'Excel file contains no worksheets');
+
+  // First row is the header; map column index → header name.
+  const headers = {};
+  sheet.getRow(1).eachCell((cell, colNumber) => {
+    const name = cellText(cell).trim();
+    if (name) headers[colNumber] = name;
+  });
+
+  if (!Object.keys(headers).length) {
+    throw new ApiError(400, 'Excel file has no header row');
+  }
+
+  const rows = [];
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;              // header
+    if (rows.length >= MAX_ROWS) return;
+
+    const obj = {};
+    let hasValue = false;
+    for (const [col, name] of Object.entries(headers)) {
+      const text = cellText(row.getCell(Number(col)));
+      obj[name] = text;
+      if (text !== '') hasValue = true;
+    }
+    if (hasValue) rows.push(obj);             // skip blank rows
+  });
 
   if (!rows.length) throw new ApiError(400, 'Excel file is empty or has no data rows');
 
@@ -164,19 +218,22 @@ const downloadTemplate = asyncHandler(async (req, res) => {
     'Meta Description': 'Buy premium partial chrome shower enclosure at ₹559/sqft.',
   };
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet([sampleRow], { header: headers });
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Products');
 
-  // Set column widths
-  ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 5, 20) }));
+  ws.columns = headers.map((h) => ({
+    header: h,
+    key: h,
+    width: Math.max(h.length + 5, 20),
+  }));
+  ws.addRow(sampleRow);
+  ws.getRow(1).font = { bold: true };
 
-  XLSX.utils.book_append_sheet(wb, ws, 'Products');
-
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const buffer = await wb.xlsx.writeBuffer();
 
   res.setHeader('Content-Disposition', 'attachment; filename="ozobath-product-template.xlsx"');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(buffer);
+  res.send(Buffer.from(buffer));
 });
 
 module.exports = { bulkUploadProducts, downloadTemplate };
