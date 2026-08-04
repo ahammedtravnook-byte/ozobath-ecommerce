@@ -5,6 +5,7 @@ import { FiArrowRight, FiClock, FiCalendar } from 'react-icons/fi';
 import { blogAPI } from '@api/services';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const fallbackBlogs = [
     { _id: 'b1', title: 'Modern Minimalist Bathroom Design Trends 2026', slug: 'minimalist-design-2026', category: 'Design', excerpt: 'Discover the latest trends in minimalist bathroom design that combine form and function beautifully.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-24', featuredImage: { url: '/images/promo_shower_enclosure.png' } },
@@ -46,6 +47,10 @@ const BlogListPage = () => {
 
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="Blog"
+                description="Bathroom design ideas, shower enclosure buying guides and maintenance tips from the OzoBath team."
+            />
             <PageHero
                 title="Blog & Tips"
                 subtitle="Expert advice on bathroom design, maintenance, and premium solutions"

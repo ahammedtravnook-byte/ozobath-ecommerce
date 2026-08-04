@@ -1,8 +1,13 @@
 import PageHero from '@components/PageHero';
 import ScrollReveal from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const PrivacyPage = () => (
     <div className="bg-[#ffffff]">
+        <SEO
+            title="Privacy Policy"
+            description="How OzoBath collects, uses and protects your personal information."
+        />
         <PageHero
             title="Privacy Policy"
             subtitle="Your privacy matters to us. Learn how we collect, use, and protect your information."

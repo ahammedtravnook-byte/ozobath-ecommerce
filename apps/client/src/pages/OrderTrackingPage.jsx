@@ -5,6 +5,7 @@ import { useAuth } from '@context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { FiPackage, FiCheckCircle, FiTruck, FiMapPin, FiExternalLink } from 'react-icons/fi';
+import SEO from '@components/SEO';
 
 const steps = [
     { key: 'pending', label: 'Order Placed', icon: FiPackage, color: 'text-blue-500' },
@@ -60,6 +61,10 @@ const OrderTrackingPage = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#F5F9FF] to-white">
+            <SEO
+                title="Track Your Order"
+                description="Track your OzoBath order status and shipment in real time."
+            />
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
                 <motion.div
                     className="text-center mb-10"

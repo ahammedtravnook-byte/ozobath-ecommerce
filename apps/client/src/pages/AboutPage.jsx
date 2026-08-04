@@ -5,6 +5,7 @@ import { useInView } from 'react-intersection-observer';
 import { FiAward, FiTarget, FiHeart, FiZap, FiTruck, FiShield, FiStar, FiArrowRight, FiUsers, FiMapPin, FiCheckCircle, FiShoppingBag } from 'react-icons/fi';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const fadeInUp = {
     hidden: { opacity: 0, y: 40 },
@@ -63,6 +64,10 @@ const timeline = [
 const AboutPage = () => {
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="About Us"
+                description="OzoBath designs and manufactures premium shower enclosures and bathroom fittings for Indian homes. Learn about our craft, materials and warranty."
+            />
             <PageHero
                 title="About OZOBATH"
                 subtitle="Crafting premium bathroom experiences since 2020. We believe every bathroom deserves to be a sanctuary."

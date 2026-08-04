@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FiPlay, FiMessageSquare, FiStar, FiMapPin, FiClock, FiPhone, FiMail, FiArrowRight, FiVideo } from 'react-icons/fi';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const features = [
     { icon: FiPlay, title: 'Live Product Demos', desc: 'See our products in action with hands-on demonstrations by experts', color: 'accent' },
@@ -15,6 +16,10 @@ const features = [
 
 const ExperienceCentrePage = () => (
     <div className="bg-[#ffffff]">
+        <SEO
+            title="Experience Centre"
+            description="Visit the OzoBath Experience Centre in Bangalore to see our shower enclosures and bathroom fittings in person. Open Monday to Saturday, 10 AM to 7 PM."
+        />
         <PageHero
             title="Experience Centre"
             subtitle="Visit our showroom to experience OZOBATH products in person. Touch, feel, and explore premium bathroom solutions."

@@ -1,8 +1,13 @@
 import PageHero from '@components/PageHero';
 import ScrollReveal from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const TermsPage = () => (
     <div className="bg-[#ffffff]">
+        <SEO
+            title="Terms & Conditions"
+            description="Terms and conditions governing purchases and use of the OzoBath website."
+        />
         <PageHero
             title="Terms & Conditions"
             subtitle="Please read these terms carefully before using our website and services."

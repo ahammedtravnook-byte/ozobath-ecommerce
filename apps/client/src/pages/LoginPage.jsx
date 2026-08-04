@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '@context/AuthContext';
 import toast from 'react-hot-toast';
+import SEO from '@components/SEO';
 
 const LoginPage = () => {
     const { login, register } = useAuth();
@@ -61,6 +62,10 @@ const LoginPage = () => {
 
     return (
         <div className="min-h-screen flex bg-[#ffffff] relative overflow-hidden">
+            <SEO
+                title="Login"
+                noindex
+            />
             {/* Background decorative elements */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <motion.div
@@ -133,7 +138,7 @@ const LoginPage = () => {
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary-600/10 overflow-hidden p-2">
-                            <img src="/images/logo.png" alt="OZOBATH" className="w-full h-full object-contain" />
+                            <img src="/logo/ozobath-header.png" alt="OzoBath" className="w-full h-full object-contain" />
                         </div>
                         <h2 className="text-3xl font-display font-bold text-white mb-4">
                             Welcome to <span className="text-accent-400">OZOBATH</span>
@@ -165,7 +170,7 @@ const LoginPage = () => {
                     {/* Mobile logo */}
                     <div className="lg:hidden text-center mb-8">
                         <Link to="/" className="inline-block">
-                            <img src="/images/logo.png" alt="OZOBATH" className="h-10 w-auto mx-auto" />
+                            <img src="/logo/ozobath-header.png" alt="OzoBath" className="h-10 w-auto mx-auto" />
                         </Link>
                     </div>
 

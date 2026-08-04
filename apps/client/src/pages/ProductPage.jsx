@@ -7,6 +7,7 @@ import RecentlyViewed, { addToRecentlyViewed } from '@components/RecentlyViewed'
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import { useWishlist } from '@context/WishlistContext';
+import SEO from '@components/SEO';
 import toast from 'react-hot-toast';
 
 // ─── Helpers ─────────────────────────────────────
@@ -333,8 +334,83 @@ const ProductPage = () => {
     const discountPct = getDiscountPct(product);
     const inWishlist = isInWishlist(product._id);
 
+    // Strip HTML out of the description for meta/schema use.
+    const plainDescription = (product.shortDescription
+        || String(product.description || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+        || `Buy ${product.name} from OzoBath.`).slice(0, 300);
+
+    const productImage = product.images?.[0]?.url || '/og-image.png';
+
+    // Only claim a rating when real reviews exist — Google treats an
+    // aggregateRating with a zero count as invalid markup.
+    const hasRatings = Number(product.reviewCount) > 0 && Number(product.avgRating) > 0;
+
     return (
         <div className="min-h-screen bg-white">
+            <SEO
+                title={product.name}
+                description={plainDescription}
+                image={productImage}
+                type="product"
+                keywords={[product.name, product.category?.name, 'OzoBath', 'buy online India']
+                    .filter(Boolean)
+                    .join(', ')}
+                jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@graph': [
+                        {
+                            '@type': 'Product',
+                            name: product.name,
+                            description: plainDescription,
+                            image: (product.images?.length
+                                ? product.images.map((i) => i.url)
+                                : [productImage]).filter(Boolean),
+                            sku: product.sku || product._id,
+                            brand: { '@type': 'Brand', name: 'OzoBath' },
+                            ...(product.category?.name && { category: product.category.name }),
+                            offers: {
+                                '@type': 'Offer',
+                                url: `https://ozobath.in/product/${product.slug}`,
+                                priceCurrency: 'INR',
+                                price: Number(product.price) || 0,
+                                availability: product.stock > 0
+                                    ? 'https://schema.org/InStock'
+                                    : 'https://schema.org/OutOfStock',
+                                itemCondition: 'https://schema.org/NewCondition',
+                                seller: { '@type': 'Organization', name: 'OzoBath' },
+                            },
+                            ...(hasRatings && {
+                                aggregateRating: {
+                                    '@type': 'AggregateRating',
+                                    ratingValue: Number(product.avgRating).toFixed(1),
+                                    reviewCount: Number(product.reviewCount),
+                                },
+                            }),
+                        },
+                        {
+                            '@type': 'BreadcrumbList',
+                            itemListElement: [
+                                { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ozobath.in/' },
+                                { '@type': 'ListItem', position: 2, name: 'Shop', item: 'https://ozobath.in/shop' },
+                                ...(product.category?.name
+                                    ? [{
+                                        '@type': 'ListItem',
+                                        position: 3,
+                                        name: product.category.name,
+                                        item: `https://ozobath.in/shop/${product.category.slug || ''}`,
+                                    }]
+                                    : []),
+                                {
+                                    '@type': 'ListItem',
+                                    position: product.category?.name ? 4 : 3,
+                                    name: product.name,
+                                },
+                            ],
+                        },
+                    ],
+                }}
+            />
+
             {/* ── Breadcrumb ───────────────────────────── */}
             <div className="bg-dark-50/50 border-b border-dark-100/30">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 pt-2 sm:pt-8">

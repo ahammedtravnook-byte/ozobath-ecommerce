@@ -5,6 +5,7 @@ import { FiArrowLeft, FiCalendar, FiEye, FiClock, FiShare2, FiCopy, FiCheck } fr
 import { blogAPI } from '@api/services';
 import PageHero from '@components/PageHero';
 import ScrollReveal from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const fallbackPost = {
     title: 'Modern Minimalist Bathroom Design Trends 2026',
@@ -103,8 +104,45 @@ const BlogPostPage = () => {
         );
     }
 
+    const excerpt = (post.excerpt
+        || String(post.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+        || `Read ${post.title} on the OzoBath blog.`).slice(0, 300);
+
+    // featuredImage is sometimes an object ({ url }) and sometimes a string.
+    const heroImage = post.featuredImage?.url || post.featuredImage || '/og-image.png';
+    const published = post.publishedAt || post.createdAt;
+
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title={post.title}
+                description={excerpt}
+                image={heroImage}
+                type="article"
+                keywords={[post.category, ...(post.tags || []), 'OzoBath'].filter(Boolean).join(', ')}
+                jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@type': 'BlogPosting',
+                    headline: post.title,
+                    description: excerpt,
+                    image: [heroImage.startsWith('http') ? heroImage : `https://ozobath.in${heroImage}`],
+                    ...(published && {
+                        datePublished: new Date(published).toISOString(),
+                        dateModified: new Date(post.updatedAt || published).toISOString(),
+                    }),
+                    author: { '@type': 'Person', name: post.author?.name || 'OzoBath Team' },
+                    publisher: {
+                        '@type': 'Organization',
+                        name: 'OzoBath',
+                        logo: {
+                            '@type': 'ImageObject',
+                            url: 'https://ozobath.in/favicon-512x512.png',
+                        },
+                    },
+                    ...(post.category && { articleSection: post.category }),
+                }}
+            />
+
             {/* Reading Progress Bar */}
             <div
                 className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-accent-500 via-orange-500 to-primary-500 z-[100] transition-none"

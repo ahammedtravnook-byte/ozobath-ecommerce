@@ -590,11 +590,14 @@ const Navbar = () => {
                             }`}
                     >
                         {/* Logo */}
-                        <Link to="/" className="flex-shrink-0 flex items-center group">
+                        <Link to="/" className="flex-shrink-0 flex items-center group" aria-label="OzoBath - Home">
                             <img
-                                src="/images/logo.png"
-                                alt="OZOBATH"
-                                className="h-10 w-auto group-hover:scale-105 transition-transform duration-300"
+                                src="/logo/ozobath-header.png"
+                                alt="OzoBath - Premium Shower Enclosures & Bathroom Fittings"
+                                width="157"
+                                height="96"
+                                fetchPriority="high"
+                                className="h-12 sm:h-14 w-auto group-hover:scale-105 transition-transform duration-300"
                             />
                         </Link>
 
@@ -824,9 +827,11 @@ const Navbar = () => {
                             <div className="flex items-center justify-between px-6 py-5 border-b border-dark-50">
                                 <Link to="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                                     <img
-                                        src="/images/logo.png"
+                                        src="/logo/ozobath-header.png"
                                         alt="OzoBath"
-                                        className="h-8 w-auto object-contain"
+                                        width="157"
+                                        height="96"
+                                        className="h-11 w-auto object-contain"
                                     />
                                 </Link>
                                 <button

@@ -5,6 +5,7 @@ import { serviceAPI } from '@api/services';
 import toast from 'react-hot-toast';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const ServiceRequestPage = () => {
     const [form, setForm] = useState({ name: '', email: '', phone: '', productName: '', issueType: 'repair', description: '' });
@@ -20,6 +21,10 @@ const ServiceRequestPage = () => {
 
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="Service Request"
+                description="Raise an installation, repair or after-sales service request for your OzoBath product."
+            />
             <PageHero
                 title="Service & Support"
                 subtitle="Need help with an OZOBATH product? Submit a service request and our team will assist you promptly."

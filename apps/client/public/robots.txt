@@ -1,0 +1,32 @@
+# https://ozobath.in/robots.txt
+
+User-agent: *
+Allow: /
+
+# Account and transaction routes: no public content, and crawling them just
+# burns crawl budget on pages that redirect to login.
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-confirmation/
+Disallow: /profile
+Disallow: /orders
+Disallow: /wishlist
+Disallow: /notifications
+Disallow: /login
+Disallow: /register
+
+# Strip tracking params so paginated/filtered shop URLs don't fragment into
+# duplicate results.
+Disallow: /*?*utm_
+Disallow: /*?*fbclid=
+
+# Explicitly allow the assets Google needs to render and to show the site icon.
+Allow: /favicon.ico
+Allow: /favicon.svg
+Allow: /*.png$
+Allow: /*.svg$
+Allow: /*.webp$
+Allow: /*.css$
+Allow: /*.js$
+
+Sitemap: https://ozobath.in/sitemap.xml

@@ -10,7 +10,8 @@
         "test": "node --test \"tests/**/*.test.js\"",
         "seed": "node src/seeds/superAdmin.seed.js",
         "seed:all": "node src/seeds/masterSeed.js",
-        "seed:products": "node src/seeds/productSeed.js"
+        "seed:products": "node src/seeds/productSeed.js",
+        "db:check": "node src/scripts/checkDatabaseTarget.js"
     },
     "dependencies": {
         "bcryptjs": "^2.4.3",
