@@ -10,6 +10,7 @@ const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const { calculateTotals } = require('../utils/calculateTotals');
 const { decrementStock, restoreStock } = require('../utils/stock');
+const { renderInvoicePdf } = require('../services/invoicePdf.service');
 const { canTransition, explainTransition } = require('../utils/orderStateMachine');
 const { paginate } = require('../utils/pagination');
 const { escapeRegex, cleanText } = require('../utils/sanitize');
@@ -33,7 +34,7 @@ const createOrder = asyncHandler(async (req, res) => {
   const items = preCoupon.activeItems.map((item) => ({
     product: item.product._id, name: item.product.name,
     image: item.product.images?.[0]?.url, price: item.product.price,
-    quantity: item.quantity, variant: item.variant,
+    quantity: item.quantity, variant: item.variant, hsn: item.product.hsn,
   }));
 
   if (items.length === 0) throw new ApiError(400, 'No active products in cart.');
@@ -362,4 +363,37 @@ const exportOrders = asyncHandler(async (req, res) => {
   res.send(csv);
 });
 
-module.exports = { createOrder, getMyOrders, getMyOrderById, cancelOrder, getAllOrders, getOrderById, updateOrderStatus, exportOrders };
+// ─── Invoice PDF ─────────────────────────────────
+// Rendered on demand rather than stored. The invoice sub-document is frozen
+// at issue time, so re-rendering always reproduces the same document — there
+// is nothing to gain from keeping a copy, and a stored file is one more
+// thing to keep in sync and to leak.
+//
+// Ownership is enforced by querying on { _id, user } rather than fetching
+// and comparing: an admin route would use a different handler, and a
+// customer must never be able to read another customer's invoice by id.
+const downloadInvoice = asyncHandler(async (req, res) => {
+  const order = await Order.findOne({ _id: req.params.id, user: req.user._id })
+    .populate('user', 'name email')
+    .lean();
+
+  if (!order) throw new ApiError(404, 'Order not found');
+
+  if (!order.invoice?.number) {
+    throw new ApiError(
+      404,
+      'No tax invoice has been issued for this order yet.'
+    );
+  }
+
+  const pdf = await renderInvoicePdf(order);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="${order.invoice.number.replace(/\//g, '-')}.pdf"`
+  );
+  res.send(pdf);
+});
+
+module.exports = { createOrder, getMyOrders, getMyOrderById, cancelOrder, getAllOrders, getOrderById, updateOrderStatus, exportOrders, downloadInvoice };

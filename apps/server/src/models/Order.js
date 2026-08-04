@@ -10,6 +10,10 @@ const orderItemSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   quantity: { type: Number, required: true, min: 1 },
   variant: String,
+  // Copied from the product at order time. HSN is mandatory on a GST
+  // invoice, and a product's classification can be corrected later —
+  // the invoice must keep the code that applied on the day of supply.
+  hsn: String,
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({
@@ -40,6 +44,41 @@ const orderSchema = new mongoose.Schema({
   total: { type: Number, required: true },
 
   coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
+
+  // ─── Tax invoice ─────────────────────────────
+  // Issued once, when payment is confirmed. Every value here is FROZEN at
+  // issue time and copied rather than referenced: the seller's GSTIN, the
+  // rate, and the CGST/SGST/IGST split must read the same in five years as
+  // they did on the day, even if the env config or the customer's address
+  // changes afterwards. A tax invoice is a statutory record, not a view.
+  //
+  // Absent until payment succeeds — unpaid and COD-pending orders have no
+  // invoice, which is why every field here is optional.
+  invoice: {
+    number: { type: String },          // e.g. LAQUA/25-26/000001
+    issuedAt: { type: Date },
+
+    sellerLegalName: String,
+    sellerTradeName: String,
+    sellerGstin: String,
+    sellerState: String,
+    sellerStateCode: String,
+    sellerAddress: String,
+
+    // Delivery state decides the split (IGST Act s.10(1)(a)).
+    placeOfSupply: String,
+    placeOfSupplyCode: String,
+
+    taxType: { type: String, enum: ['cgst_sgst', 'igst'] },
+    cgst: { type: Number, default: 0 },
+    sgst: { type: Number, default: 0 },
+    igst: { type: Number, default: 0 },
+
+    // Cloudinary URL of the rendered PDF, once generated.
+    pdfUrl: String,
+    pdfPublicId: String,
+    emailedAt: { type: Date },
+  },
 
   paymentMethod: {
     type: String,

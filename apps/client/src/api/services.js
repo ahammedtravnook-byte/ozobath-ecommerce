@@ -55,6 +55,10 @@ export const orderAPI = {
   getMyOrder: (id) => api.get(`/orders/my-orders/${id}`),
   cancel: (id, reason) => api.post(`/orders/${id}/cancel`, { reason }),
   track: (orderId) => api.get(`/shipping/track/${orderId}`),
+  // responseType blob — the interceptor parses JSON by default and would
+  // corrupt the PDF bytes.
+  downloadInvoice: (id) =>
+    api.get(`/orders/my-orders/${id}/invoice`, { responseType: 'blob' }),
 };
 
 // ─── Content API (Dynamic CMS) ──────────────────

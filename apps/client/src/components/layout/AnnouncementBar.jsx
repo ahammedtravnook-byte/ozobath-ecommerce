@@ -4,7 +4,7 @@ import { FiX } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 
 const announcements = [
-    '🚿 Free Shipping on orders above ₹999',
+    '🚿 Free Shipping on orders above ₹2,999',
     '✨ Premium Shower Enclosures — Crafted for Perfection',
     '📞 Book a Free Site Visit — Expert Consultation',
     '🔧 5-Year Warranty on All Products',

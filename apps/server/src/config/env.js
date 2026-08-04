@@ -144,6 +144,30 @@ module.exports = {
   MAX_ORDER_QUANTITY,
   TAX_ON_SHIPPING: process.env.TAX_ON_SHIPPING === 'true',
   TAX_AFTER_DISCOUNT: process.env.TAX_AFTER_DISCOUNT === 'true',
+
+  // ─── Seller identity (printed on every tax invoice) ───────
+  // A GST tax invoice must carry the *legal entity*, not the brand. The
+  // storefront trades as OZOBATH; the registered supplier is a different
+  // name, and it is that name the invoice must show.
+  //
+  // SELLER_STATE_CODE is the two-digit GST state code (the first two digits
+  // of the GSTIN). It decides the tax split on every invoice: buyer in the
+  // same state pays CGST+SGST, buyer elsewhere pays IGST. Getting it wrong
+  // makes every invoice legally wrong, so it is validated at boot below.
+  // For a proprietorship the legal name is the proprietor's own name, which
+  // is rarely what a customer recognises. The invoice shows the trade name
+  // prominently and the legal name alongside it — both are required.
+  SELLER_LEGAL_NAME: process.env.SELLER_LEGAL_NAME || '',
+  SELLER_TRADE_NAME: process.env.SELLER_TRADE_NAME || '',
+  SELLER_GSTIN: process.env.SELLER_GSTIN || '',
+  SELLER_STATE: process.env.SELLER_STATE || '',
+  SELLER_STATE_CODE: process.env.SELLER_STATE_CODE || '',
+  SELLER_ADDRESS: process.env.SELLER_ADDRESS || '',
+  SELLER_EMAIL: process.env.SELLER_EMAIL || '',
+  SELLER_PHONE: process.env.SELLER_PHONE || '',
+  // Prefix for the statutory invoice series, e.g. "LAQUA". The financial
+  // year is appended automatically — GST numbering restarts each FY.
+  INVOICE_PREFIX: process.env.INVOICE_PREFIX || 'INV',
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
   ADMIN_URL: process.env.ADMIN_URL || 'http://localhost:5174',
   // Comma-separated additional CORS origins (exact match). Use for a staging
@@ -184,6 +208,9 @@ module.exports = {
   SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 587,
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
+  // Envelope sender. Falls back to SMTP_USER because Gmail rejects a From
+  // that does not match the authenticated account.
+  EMAIL_FROM: process.env.EMAIL_FROM || process.env.SMTP_USER,
 
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 

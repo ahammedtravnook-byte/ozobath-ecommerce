@@ -32,3 +32,22 @@ uploads/
 
 # Coverage
 coverage/
+
+# SSH keys — never commit
+id_ed25519
+id_ed25519.pub
+id_rsa
+id_rsa.pub
+*.pem
+
+# Env backups
+.env.backup*
+
+# Credentials and statutory documents dropped in the repo root.
+# rzp-key*.csv carries a live Razorpay key secret; the GST certificate
+# carries the proprietor's PAN-derived GSTIN and photograph.
+rzp-key*.csv
+*GST Certificate*.pdf
+
+# Generated sample output
+sample-invoice.pdf

@@ -22,6 +22,10 @@ const snapshotItemSchema = new mongoose.Schema({
     price: { type: Number, required: true },   // price at quote time
     quantity: { type: Number, required: true, min: 1 },
     variant: String,
+    // Frozen alongside the price: the webhook path builds its order from
+    // this snapshot alone, so without it a browser-dropout order would
+    // reach the invoice with no HSN.
+    hsn: String,
 }, { _id: false });
 
 const pendingCheckoutSchema = new mongoose.Schema({

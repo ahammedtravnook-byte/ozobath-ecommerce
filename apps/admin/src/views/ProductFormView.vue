@@ -15,6 +15,12 @@
             <div><label class="block text-sm font-medium text-gray-700 mb-1">SKU</label><input v-model="form.sku" class="admin-input w-full" placeholder="e.g. OZO-SHW-001" /></div>
             <div><label class="block text-sm font-medium text-gray-700 mb-1">Brand</label><input v-model="form.brand" class="admin-input w-full" placeholder="OZOBATH" /></div>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">HSN Code</label>
+            <input v-model="form.hsn" class="admin-input w-full" placeholder="e.g. 3922 or 7007" maxlength="8" inputmode="numeric" />
+            <p v-if="hsnError" class="text-xs text-red-600 mt-1">{{ hsnError }}</p>
+            <p v-else class="text-xs text-gray-500 mt-1">4, 6 or 8 digits. Printed on the GST tax invoice — leave blank only if not yet classified.</p>
+          </div>
           <div><label class="block text-sm font-medium text-gray-700 mb-1">Short Description</label><textarea v-model="form.shortDescription" rows="2" class="admin-input w-full" placeholder="Brief product summary..."></textarea></div>
           <div><label class="block text-sm font-medium text-gray-700 mb-1">Full Description</label><textarea v-model="form.description" rows="6" class="admin-input w-full" placeholder="Detailed product description..."></textarea></div>
         </div>
@@ -246,11 +252,19 @@ const badgeOptions = [
 ];
 
 const form = ref({
-  name: '', sku: '', brand: 'OZOBATH', shortDescription: '', description: '',
+  name: '', sku: '', hsn: '', brand: 'OZOBATH', shortDescription: '', description: '',
   price: 0, compareAtPrice: 0, costPrice: 0, stock: 0, category: '', tagsStr: '',
   images: [], variants: [], specifications: [], relatedProducts: [], badges: [],
   metaTitle: '', metaDescription: '', isActive: true, isFeatured: false, isNewArrival: false,
   freeDelivery: false, deliveryCharge: 0,
+});
+
+// Mirrors the server-side validator on Product.hsn. Blank is allowed —
+// products predate the field and the invoice prints "-" when absent.
+const hsnError = computed(() => {
+  const v = (form.value.hsn || '').trim();
+  if (!v) return '';
+  return /^\d{4}(\d{2})?(\d{2})?$/.test(v) ? '' : 'HSN must be 4, 6 or 8 digits.';
 });
 
 const discountPct = computed(() => {
@@ -308,6 +322,10 @@ const handleFileUpload = async (event) => {
 };
 
 const saveProduct = async () => {
+  // Caught here rather than at the API, so the field error stays visible
+  // next to the input instead of arriving as an opaque toast.
+  if (hsnError.value) { toast.error(hsnError.value); return; }
+
   try {
     saving.value = true;
     const data = { ...form.value, tags: form.value.tagsStr.split(',').map(t => t.trim()).filter(Boolean) };

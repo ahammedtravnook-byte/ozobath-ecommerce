@@ -18,8 +18,57 @@ const { logActivity } = require('./activityLog.controller');
 const { cleanText } = require('../utils/sanitize');
 const { withTransaction } = require('../utils/withTransaction');
 const env = require('../config/env');
+const { issueInvoice } = require('../services/invoice.service');
+const { renderInvoicePdf } = require('../services/invoicePdf.service');
+const { sendInvoiceEmail } = require('../services/mailer.service');
 const { createNotification } = require('./notification.controller');
 const { createAdminNotification } = require('./adminNotification.controller');
+
+// ─── Invoice issuance (never fatal) ──────────────
+// Both order-creation paths call this. A tax invoice requires SELLER_GSTIN
+// to be configured; until it is, orders must still be recorded. The order is
+// the record of a payment that actually happened — the invoice is a document
+// about it, and a missing document is recoverable while a missing order is
+// not. Returns the invoice sub-document, or null if it could not be issued.
+const tryIssueInvoice = async (draft, session, ref) => {
+    try {
+        return await issueInvoice(draft, session);
+    } catch (err) {
+        if (err.code === 'INVOICE_NOT_CONFIGURED') {
+            console.warn(`[invoice] Skipped for ${ref}: ${err.message}`);
+        } else {
+            console.error(`[invoice] Issue failed for ${ref}: ${err.message}`);
+        }
+        return null;
+    }
+};
+
+// ─── Confirmation email (fire-and-forget) ────────
+// Renders the invoice PDF and mails it. Never awaited by a request handler:
+// a customer who has paid must get their response immediately, and neither
+// PDF rendering nor SMTP may hold it up or fail it. Every failure mode here
+// is recoverable — the invoice stays downloadable from My Orders.
+const emailInvoice = (order, user) => {
+    Promise.resolve()
+        .then(async () => {
+            const pdf = order.invoice?.number
+                ? await renderInvoicePdf(order.toObject ? order.toObject() : order)
+                : null;
+            const result = await sendInvoiceEmail(order, user, pdf);
+
+            if (result.sent && order.invoice?.number) {
+                // Record the send so support can tell "never sent" apart from
+                // "sent and the customer deleted it".
+                await Order.updateOne(
+                    { _id: order._id },
+                    { $set: { 'invoice.emailedAt': new Date() } }
+                );
+            }
+        })
+        .catch((err) => {
+            console.error(`[invoice] Email failed for ${order.orderNumber}: ${err.message}`);
+        });
+};
 
 // ─── Razorpay Instance ───────────────────────────
 let razorpayInstance = null;
@@ -102,6 +151,7 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
             price: item.product.price,
             quantity: item.quantity,
             variant: item.variant,
+            hsn: item.product.hsn,
         })),
         subtotal,
         shippingCost,
@@ -201,6 +251,7 @@ const confirmAndCreateOrder = asyncHandler(async (req, res) => {
         price: item.price,
         quantity: item.quantity,
         variant: item.variant,
+        hsn: item.hsn,
     }));
 
     if (items.length === 0) throw new ApiError(400, 'Checkout session contained no items.');
@@ -292,6 +343,20 @@ const confirmAndCreateOrder = asyncHandler(async (req, res) => {
             // before any of them writes, so the database has to be the
             // arbiter.
             //
+            // The tax invoice is issued in the same transaction, so its
+            // number is rolled back with the order rather than burned.
+            //
+            // Issuance is deliberately non-fatal: it needs SELLER_GSTIN, and
+            // an order must never fail because the seller's tax config is
+            // incomplete. The customer has already paid at this point —
+            // refusing to record their order would be far worse than
+            // recording it without an invoice, which can be issued later.
+            const invoice = await tryIssueInvoice(
+                { tax, shippingAddress },
+                opts.session,
+                razorpay_order_id
+            );
+
             // Order.create([...], {session}) — the array form is required to
             // pass options through.
             const created = await Order.create([{
@@ -306,6 +371,7 @@ const confirmAndCreateOrder = asyncHandler(async (req, res) => {
                 taxableValue,
                 taxMode,
                 taxRate,
+                ...(invoice ? { invoice } : {}),
                 coupon: couponId,
                 paymentMethod: 'razorpay',
                 paymentStatus: 'paid',
@@ -360,7 +426,13 @@ const confirmAndCreateOrder = asyncHandler(async (req, res) => {
         }, 'Order already confirmed for this payment');
     }
 
-    // 9. Notify customer and admins
+    // 9. Email the confirmation, with the tax invoice attached when one was
+    // issued. Fire-and-forget: the payment is already recorded and the
+    // response must not wait on SMTP, nor fail if the mail server is down.
+    // The customer can always download the invoice from My Orders.
+    emailInvoice(order, req.user);
+
+    // 10. Notify customer and admins
     await createNotification(
         req.user._id,
         'order_placed',
@@ -491,14 +563,25 @@ const handleRazorpayWebhook = asyncHandler(async (req, res) => {
         if (coupon) couponId = coupon._id;
     }
 
+    // The webhook fires when the browser never reached /confirm, so the
+    // snapshot may carry no address. Without a delivery state the place of
+    // supply is unknown and splitTax falls back to IGST — see gst.js for why
+    // that is the safe default rather than a guess at CGST+SGST.
+    const invoice = await tryIssueInvoice(
+        { tax: snapshot.tax, shippingAddress: snapshot.shippingAddress },
+        null,
+        razorpayOrderId
+    );
+
     let order;
     try {
         order = await Order.create({
             user: snapshot.user,
             items: snapshot.items.map((i) => ({
                 product: i.product, name: i.name, image: i.image,
-                price: i.price, quantity: i.quantity, variant: i.variant,
+                price: i.price, quantity: i.quantity, variant: i.variant, hsn: i.hsn,
             })),
+            ...(invoice ? { invoice } : {}),
             // The snapshot holds no address — the browser supplies it at
             // /confirm. Recorded as unset so fulfilment sees it is missing
             // rather than shipping to a blank address.

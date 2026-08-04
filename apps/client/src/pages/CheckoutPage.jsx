@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import { orderAPI, paymentAPI, couponAPI, couponAutoAPI, addressAPI } from '@api/services';
-import { calculateTotals, TAX_RATE } from '@utils/calculateTotals';
+import { calculateTotals, TAX_RATE, FREE_SHIPPING_THRESHOLD } from '@utils/calculateTotals';
+import PhoneInput, { isValidPhone } from '@components/ui/PhoneInput';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -91,8 +92,11 @@ const CheckoutPage = () => {
             setStep(1);
             return false;
         }
-        if (!/^\d{10}$/.test(address.phone)) {
-            toast.error('Please enter a valid 10-digit phone number');
+        // Validated against the selected country's length rather than a
+        // hardcoded 10 — the old check rejected any number carrying a
+        // country code, including ones we now store.
+        if (!isValidPhone(address.phone)) {
+            toast.error('Please enter a valid phone number');
             setStep(1);
             return false;
         }
@@ -350,7 +354,7 @@ const CheckoutPage = () => {
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Full Name *</label><input value={address.fullName} onChange={e => setAddress({ ...address, fullName: e.target.value })} className="form-input-premium" /></div>
-                                            <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Phone *</label><input value={address.phone} onChange={e => setAddress({ ...address, phone: e.target.value })} className="form-input-premium" placeholder="10-digit number" /></div>
+                                            <div><label htmlFor="checkout-phone" className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Phone *</label><PhoneInput id="checkout-phone" value={address.phone} onChange={phone => setAddress({ ...address, phone })} /></div>
                                         </div>
                                         <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Address Line 1 *</label><input value={address.line1} onChange={e => setAddress({ ...address, line1: e.target.value })} className="form-input-premium" placeholder="House/Flat, Building, Street" /></div>
                                         <div><label className="block text-xs font-semibold text-dark-500 mb-1.5 uppercase tracking-wider">Address Line 2</label><input value={address.line2} onChange={e => setAddress({ ...address, line2: e.target.value })} className="form-input-premium" placeholder="Area, Colony (Optional)" /></div>
@@ -470,7 +474,7 @@ const CheckoutPage = () => {
                                 {taxIncluded && tax > 0 && (
                                     <p className="text-xs text-dark-400">Includes ₹{tax.toLocaleString()} GST ({gstLabel})</p>
                                 )}
-                                {shipping > 0 && subtotal < 999 && <p className="text-xs text-accent-500 font-medium">Add ₹{(999 - subtotal).toLocaleString()} more for FREE shipping</p>}
+                                {shipping > 0 && subtotal < FREE_SHIPPING_THRESHOLD && <p className="text-xs text-accent-500 font-medium">Add ₹{(FREE_SHIPPING_THRESHOLD - subtotal).toLocaleString()} more for FREE shipping</p>}
                             </div>
 
                             {/* Coupon Section */}

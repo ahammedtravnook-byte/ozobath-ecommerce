@@ -10,6 +10,20 @@ const productSchema = new mongoose.Schema({
   shortDescription: { type: String, maxlength: 300 },
   sku: { type: String, unique: true, sparse: true },
 
+  // HSN code — the goods classification printed on every GST invoice.
+  // 4, 6 or 8 digits depending on turnover. Not required at the schema
+  // level: products predate the field, and blocking a product edit until
+  // someone sources a code would stall the catalogue. The invoice prints
+  // "-" when absent, which is visible and fixable.
+  hsn: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: (v) => !v || /^\d{4}(\d{2})?(\d{2})?$/.test(v),
+      message: 'HSN must be 4, 6 or 8 digits.',
+    },
+  },
+
   price: { type: Number, required: true, min: 0 },
   compareAtPrice: { type: Number, min: 0 },
   costPrice: { type: Number, min: 0 },

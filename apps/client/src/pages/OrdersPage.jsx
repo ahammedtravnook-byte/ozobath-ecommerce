@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPackage, FiTruck, FiCheckCircle, FiClock, FiXCircle, FiChevronRight, FiRefreshCw, FiShoppingBag, FiX } from 'react-icons/fi';
+import { FiPackage, FiTruck, FiCheckCircle, FiClock, FiXCircle, FiChevronRight, FiRefreshCw, FiShoppingBag, FiX, FiDownload } from 'react-icons/fi';
 import { orderAPI } from '@api/services';
 import { useAuth } from '@context/AuthContext';
 import toast from 'react-hot-toast';
@@ -40,6 +40,7 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
   const [expandedId, setExpandedId] = useState(null);
@@ -84,6 +85,27 @@ const OrdersPage = () => {
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to cancel order');
     } finally { setCancellingId(null); }
+  };
+
+  const handleDownloadInvoice = async (order) => {
+    try {
+      setDownloadingId(order._id);
+      const res = await orderAPI.downloadInvoice(order._id);
+
+      // The server sends the PDF as a stream; turn it into a temporary
+      // object URL so the browser saves it under the invoice number rather
+      // than the route path.
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${order.invoice.number.replace(/\//g, '-')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error('Could not download the invoice. Please try again.');
+    } finally { setDownloadingId(null); }
   };
 
   if (loading) return (
@@ -298,6 +320,16 @@ const OrdersPage = () => {
                             <span className="flex items-center gap-1.5 text-xs px-4 py-2.5 bg-dark-50 text-dark-600 rounded-xl font-mono border border-dark-100">
                               AWB: {order.trackingNumber}
                             </span>
+                          )}
+                          {order.invoice?.number && (
+                            <button
+                              onClick={() => handleDownloadInvoice(order)}
+                              disabled={downloadingId === order._id}
+                              className="flex items-center gap-1.5 text-xs px-4 py-2.5 bg-dark-50 text-dark-700 rounded-xl font-semibold hover:bg-dark-100 transition-colors border border-dark-100 disabled:opacity-50"
+                            >
+                              <FiDownload className="w-3.5 h-3.5" />
+                              {downloadingId === order._id ? 'Preparing...' : 'Invoice'}
+                            </button>
                           )}
                           {canCancel(order) && (
                             <button

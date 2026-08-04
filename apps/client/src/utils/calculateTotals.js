@@ -16,7 +16,7 @@ export const TAX_MODE = (import.meta.env.VITE_TAX_MODE || 'exclusive').toLowerCa
 export const TAX_ON_SHIPPING = import.meta.env.VITE_TAX_ON_SHIPPING === 'true';
 export const TAX_AFTER_DISCOUNT = import.meta.env.VITE_TAX_AFTER_DISCOUNT === 'true';
 
-export const FREE_SHIPPING_THRESHOLD = 999;
+export const FREE_SHIPPING_THRESHOLD = 2999;
 export const FLAT_SHIPPING_COST = 99;
 
 // Precedence: all-free → highest per-product charge → threshold/flat.

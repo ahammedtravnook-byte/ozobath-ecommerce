@@ -15,7 +15,7 @@
 const env = require('../config/env');
 
 const TAX_RATE = env.TAX_RATE;         // GST, as a fraction (0.18 = 18%)
-const FREE_SHIPPING_THRESHOLD = 999;   // subtotal at/above which shipping is free
+const FREE_SHIPPING_THRESHOLD = 2999;  // subtotal at/above which shipping is free
 const FLAT_SHIPPING_COST = 99;         // fallback shipping when no per-product rule applies
 
 // ─── Shipping ────────────────────────────────────

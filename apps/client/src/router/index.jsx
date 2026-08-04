@@ -29,6 +29,7 @@ const SiteVisitPage = lazy(() => import('@pages/SiteVisitPage'));
 const TermsPage = lazy(() => import('@pages/TermsPage'));
 const PrivacyPage = lazy(() => import('@pages/PrivacyPage'));
 const ShippingPolicyPage = lazy(() => import('@pages/ShippingPolicyPage'));
+const RefundPolicyPage = lazy(() => import('@pages/RefundPolicyPage'));
 const WarrantyPage = lazy(() => import('@pages/WarrantyPage'));
 const NotificationsPage = lazy(() => import('@pages/NotificationsPage'));
 const NotFoundPage = lazy(() => import('@pages/NotFoundPage'));
@@ -117,6 +118,7 @@ const AppRouter = () => {
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/privacy" element={<PrivacyPage />} />
                     <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+                    <Route path="/refund-policy" element={<RefundPolicyPage />} />
                     <Route path="/warranty" element={<WarrantyPage />} />
 
                     {/* 404 */}
