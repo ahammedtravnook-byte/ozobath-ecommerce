@@ -28,4 +28,11 @@ const b2bEnquirySchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// ─── Indexes ─────────────────────────────────────
+// This collection had none. It is written by a public endpoint, so it only
+// grows, and the admin table filters by status/businessType and sorts by date.
+b2bEnquirySchema.index({ createdAt: -1 });
+b2bEnquirySchema.index({ status: 1, createdAt: -1 });
+b2bEnquirySchema.index({ businessType: 1, createdAt: -1 });
+
 module.exports = mongoose.model('B2BEnquiry', b2bEnquirySchema);

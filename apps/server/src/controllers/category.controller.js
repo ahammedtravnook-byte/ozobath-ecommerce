@@ -6,6 +6,8 @@ const Product = require('../models/Product');
 const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
+const { paginate } = require('../utils/pagination');
+const { buildSearchFilter, resolveSort, sortableSet, listEnvelope } = require('../utils/listQuery');
 
 // req.body after validate() middleware — already allowlisted and coerced.
 // Named so it is obvious at the call site that this is not raw input.
@@ -49,17 +51,54 @@ const deleteCategory = asyncHandler(async (req, res) => {
   sendResponse(res, 200, null, 'Category deleted');
 });
 
+// GET /categories/admin/all — paginated, searchable, sortable.
+//
+// Two problems with the previous version: it returned every category with no
+// pagination, and it issued one countDocuments() per category (N+1). With 6
+// categories that is 7 round trips; the $lookup below is one.
+const CATEGORY_SORTS = sortableSet(['order', 'name', 'createdAt', 'productCount']);
+
 const getAllCategoriesAdmin = asyncHandler(async (req, res) => {
-  const categories = await Category.find().sort('order').lean();
+  const { page, limit, skip } = paginate(req.query, { defaultLimit: 20, maxLimit: 200 });
+  const sort = resolveSort(req.query.sort, CATEGORY_SORTS, 'order');
+  const { status } = req.query;
 
-  const catsWithCount = await Promise.all(
-    categories.map(async (cat) => ({
-      ...cat,
-      productCount: await Product.countDocuments({ category: cat._id }),
-    }))
+  const filter = {
+    ...(status === 'active' && { isActive: true }),
+    ...(status === 'inactive' && { isActive: false }),
+    ...buildSearchFilter(req.query.search, ['name', 'slug', 'description']),
+  };
+
+  // Translate "-name" into { name: -1 } for the aggregation stage.
+  const direction = sort.startsWith('-') ? -1 : 1;
+  const sortStage = { [sort.replace(/^-/, '')]: direction };
+
+  const [rows, total] = await Promise.all([
+    Category.aggregate([
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: 'category',
+          as: 'linkedProducts',
+        },
+      },
+      { $addFields: { productCount: { $size: '$linkedProducts' } } },
+      { $project: { linkedProducts: 0 } },
+      { $sort: sortStage },
+      { $skip: skip },
+      { $limit: limit },
+    ]),
+    Category.countDocuments(filter),
+  ]);
+
+  sendResponse(
+    res,
+    200,
+    listEnvelope(rows, total, page, limit),
+    'All categories fetched'
   );
-
-  sendResponse(res, 200, catsWithCount, 'All categories fetched');
 });
 
 module.exports = { getCategories, getCategoryBySlug, createCategory, updateCategory, deleteCategory, getAllCategoriesAdmin };

@@ -2,13 +2,15 @@ const router = require('express').Router();
 const auth = require('../middleware/auth');
 const roleGuard = require('../middleware/roleGuard');
 const { uploadSheet } = require('../middleware/upload');
-const { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, getAllProductsAdmin, getProductByIdAdmin } = require('../controllers/product.controller');
+const { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, getAllProductsAdmin, getProductByIdAdmin, getStockSummary } = require('../controllers/product.controller');
 const { bulkUploadProducts, downloadTemplate } = require('../controllers/bulkUpload.controller');
 
 const adminOnly = [auth, roleGuard('admin', 'superadmin')];
 
 router.get('/', getProducts);
 router.get('/admin/all', ...adminOnly, getAllProductsAdmin);
+// Must precede /admin/:id, or "stock-summary" is captured as an id.
+router.get('/admin/stock-summary', ...adminOnly, getStockSummary);
 router.get('/admin/:id', ...adminOnly, getProductByIdAdmin);
 
 // Bulk upload — must be before /:slug

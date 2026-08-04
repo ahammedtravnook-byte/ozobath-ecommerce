@@ -69,4 +69,11 @@ userSchema.methods.toJSON = function () {
   return user;
 };
 
+// ─── Indexes ─────────────────────────────────────
+// The admin Customers table filters by role and sorts by these fields. Without
+// them every page of that table is a full collection scan.
+// `email` is not declared here: unique:true on the field already builds it.
+userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ role: 1, name: 1 });
+
 module.exports = mongoose.model('User', userSchema);
