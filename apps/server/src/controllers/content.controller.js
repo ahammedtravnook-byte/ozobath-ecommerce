@@ -11,18 +11,15 @@ const getPageContent = asyncHandler(async (req, res) => {
   const { page } = req.params;
 
   const now = new Date();
+  // Both windows must hold. These were two `$or` keys in one object literal,
+  // so the second silently overwrote the first and `startDate` was never
+  // enforced — content scheduled for a future date went live immediately.
   const content = await DynamicContent.find({
-    page,
+    page: String(page),
     isActive: true,
-    $or: [
-      { startDate: { $exists: false } },
-      { startDate: null },
-      { startDate: { $lte: now } },
-    ],
-    $or: [
-      { endDate: { $exists: false } },
-      { endDate: null },
-      { endDate: { $gte: now } },
+    $and: [
+      { $or: [{ startDate: { $exists: false } }, { startDate: null }, { startDate: { $lte: now } }] },
+      { $or: [{ endDate: { $exists: false } }, { endDate: null }, { endDate: { $gte: now } }] },
     ],
   }).sort('order').lean();
 

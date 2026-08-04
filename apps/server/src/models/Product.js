@@ -76,11 +76,23 @@ const productSchema = new mongoose.Schema({
 });
 
 // Indexes for performance
-productSchema.index({ slug: 1 });
+// NOTE: the unique:true on the field above already creates this index;
+// declaring it again produced a duplicate-index warning at boot.
 productSchema.index({ category: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ badges: 1 });
 productSchema.index({ isActive: 1, isFeatured: 1 });
+
+// The storefront listing always filters on isActive and then sorts. Without a
+// compound index Mongo filters on isActive, then sorts the whole matching set
+// in memory — which fails outright past 32MB of results.
+productSchema.index({ isActive: 1, createdAt: -1 });
+productSchema.index({ isActive: 1, price: 1 });
+productSchema.index({ isActive: 1, salesCount: -1 });
+productSchema.index({ isActive: 1, category: 1, createdAt: -1 });
+
+// Dashboard low-stock widget.
+productSchema.index({ isActive: 1, stock: 1 });
 productSchema.index({ name: 'text', description: 'text', seoKeywords: 'text' });
 
 module.exports = mongoose.model('Product', productSchema);

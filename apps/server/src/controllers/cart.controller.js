@@ -6,15 +6,21 @@ const Product = require('../models/Product');
 const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
+const { parseQuantity, quantityErrorMessage } = require('../utils/validateQuantity');
 
 const getCart = asyncHandler(async (req, res) => {
-  let cart = await Cart.findOne({ user: req.user._id }).populate('items.product', 'name slug price images stock isActive');
+  let cart = await Cart.findOne({ user: req.user._id }).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   if (!cart) cart = { items: [], totalAmount: 0 };
   sendResponse(res, 200, cart, 'Cart fetched');
 });
 
 const addToCart = asyncHandler(async (req, res) => {
-  const { productId, quantity = 1, variant } = req.body;
+  const { productId, variant } = req.body;
+
+  // Validate before the stock check: `product.stock < quantity` is a
+  // magnitude comparison, so a negative or non-numeric quantity passes it.
+  const quantity = parseQuantity(req.body.quantity ?? 1);
+  if (quantity === null) throw new ApiError(400, quantityErrorMessage());
 
   const product = await Product.findById(productId);
   if (!product || !product.isActive) throw new ApiError(404, 'Product not found.');
@@ -28,7 +34,14 @@ const addToCart = asyncHandler(async (req, res) => {
   );
 
   if (existingIndex > -1) {
-    cart.items[existingIndex].quantity += quantity;
+    // The resulting total is what gets charged, so validate that — not just
+    // the delta. Adding to an existing line must also respect stock, which
+    // the per-request check above cannot see.
+    const newQuantity = parseQuantity(cart.items[existingIndex].quantity + quantity);
+    if (newQuantity === null) throw new ApiError(400, quantityErrorMessage());
+    if (product.stock < newQuantity) throw new ApiError(400, `Only ${product.stock} items in stock.`);
+
+    cart.items[existingIndex].quantity = newQuantity;
     cart.items[existingIndex].price = product.price;
   } else {
     cart.items.push({ product: productId, quantity, variant, price: product.price });
@@ -37,13 +50,17 @@ const addToCart = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   await cart.save();
 
-  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price images stock');
+  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   sendResponse(res, 200, cart, 'Item added to cart');
 });
 
 const updateCartItem = asyncHandler(async (req, res) => {
-  const { itemId, quantity } = req.body;
-  if (quantity < 1) throw new ApiError(400, 'Quantity must be at least 1.');
+  const { itemId } = req.body;
+
+  // `quantity < 1` is false for fractions (2.7), NaN and Infinity, all of
+  // which reached the cart. parseQuantity rejects them.
+  const quantity = parseQuantity(req.body.quantity);
+  if (quantity === null) throw new ApiError(400, quantityErrorMessage());
 
   const cart = await Cart.findOne({ user: req.user._id });
   if (!cart) throw new ApiError(404, 'Cart not found.');
@@ -58,7 +75,7 @@ const updateCartItem = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   await cart.save();
 
-  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock');
+  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   sendResponse(res, 200, populated, 'Cart updated');
 });
 
@@ -70,7 +87,7 @@ const removeFromCart = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   await cart.save();
 
-  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock');
+  const populated = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   sendResponse(res, 200, populated, 'Item removed from cart');
 });
 
@@ -102,14 +119,20 @@ const mergeGuestCart = asyncHandler(async (req, res) => {
       (item) => item.product.toString() === guestItem.productId && item.variant === guestItem.variant
     );
 
-    const qty = Math.min(guestItem.quantity || 1, product.stock);
+    // A guest cart is untrusted localStorage: skip malformed lines rather
+    // than failing the whole merge, matching how invalid product ids are
+    // handled above. Math.min alone let fractions through (0.5 stayed 0.5).
+    const requested = parseQuantity(guestItem.quantity ?? 1);
+    if (requested === null) continue;
+
+    const qty = Math.min(requested, product.stock);
     if (qty < 1) continue;
 
     if (existingIndex > -1) {
-      cart.items[existingIndex].quantity = Math.min(
-        cart.items[existingIndex].quantity + qty,
-        product.stock
-      );
+      const merged = Math.min(cart.items[existingIndex].quantity + qty, product.stock);
+      const newQuantity = parseQuantity(merged);
+      if (newQuantity === null) continue;
+      cart.items[existingIndex].quantity = newQuantity;
       cart.items[existingIndex].price = product.price;
     } else {
       cart.items.push({ product: guestItem.productId, quantity: qty, variant: guestItem.variant, price: product.price });
@@ -119,7 +142,7 @@ const mergeGuestCart = asyncHandler(async (req, res) => {
   cart.totalAmount = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   await cart.save();
 
-  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price images stock');
+  cart = await Cart.findById(cart._id).populate('items.product', 'name slug price mrp images stock isActive freeDelivery deliveryCharge');
   sendResponse(res, 200, cart, 'Guest cart merged');
 });
 

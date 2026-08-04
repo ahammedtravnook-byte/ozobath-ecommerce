@@ -8,6 +8,9 @@ const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const env = require('../config/env');
+const crypto = require('crypto');
+const { canTransition } = require('../utils/orderStateMachine');
+const { paginate } = require('../utils/pagination');
 
 // ─── Create Shipment ─────────────────────────────
 const createShipment = asyncHandler(async (req, res) => {
@@ -16,7 +19,14 @@ const createShipment = asyncHandler(async (req, res) => {
     .populate('items.product', 'name sku weight');
 
   if (!order) throw new ApiError(404, 'Order not found');
-  if (order.orderStatus === 'cancelled') throw new ApiError(400, 'Cannot ship a cancelled order');
+  // `order.orderStatus` is not a field on the Order schema — this guard was
+  // comparing undefined and never fired, so cancelled orders could be shipped.
+  if (['cancelled', 'returned'].includes(order.status)) {
+    throw new ApiError(400, `Cannot ship an order with status "${order.status}"`);
+  }
+  if (order.paymentMethod !== 'cod' && order.paymentStatus !== 'paid') {
+    throw new ApiError(400, 'Cannot ship a prepaid order that has not been paid.');
+  }
 
   // Check if shipment already exists
   const existingShipment = await Shipment.findOne({ order: order._id });
@@ -54,7 +64,7 @@ const createShipment = asyncHandler(async (req, res) => {
       discount: 0,
     })),
     payment_method: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
-    sub_total: order.totalAmount,
+    sub_total: order.total,
     length: 30,
     breadth: 25,
     height: 15,
@@ -77,8 +87,16 @@ const createShipment = asyncHandler(async (req, res) => {
   });
 
   // Update order status
-  order.orderStatus = 'processing';
-  await order.save();
+  if (canTransition(order.status, 'processing')) {
+    order.status = 'processing';
+    order.statusHistory.push({
+      status: 'processing',
+      date: new Date(),
+      note: 'Shipment created on Shiprocket',
+      updatedBy: req.user._id,
+    });
+    await order.save();
+  }
 
   sendResponse(res, 201, shipment, 'Shipment created successfully');
 });
@@ -109,7 +127,20 @@ const getShippingRates = asyncHandler(async (req, res) => {
 
 // ─── Track Shipment ──────────────────────────────
 const trackShipment = asyncHandler(async (req, res) => {
-  const shipment = await Shipment.findOne({ order: req.params.orderId });
+  // Resolve the order scoped to the caller first. Without this, any
+  // authenticated user could read any customer's shipment — including the
+  // delivery address in the Shiprocket tracking payload.
+  //
+  // Admins bypass the ownership filter so support can track any order.
+  const isAdmin = ['admin', 'superadmin'].includes(req.user.role);
+  const orderFilter = isAdmin
+    ? { _id: req.params.orderId }
+    : { _id: req.params.orderId, user: req.user._id };
+
+  const order = await Order.findOne(orderFilter).select('_id').lean();
+  if (!order) throw new ApiError(404, 'Shipment not found');
+
+  const shipment = await Shipment.findOne({ order: order._id });
   if (!shipment) throw new ApiError(404, 'Shipment not found');
 
   let trackingData = null;
@@ -174,11 +205,45 @@ const cancelShipment = asyncHandler(async (req, res) => {
 
 // ─── Shiprocket Webhook ──────────────────────────
 const handleWebhook = asyncHandler(async (req, res) => {
+  // ── Authenticate before anything else ──────────────────────────
+  // This endpoint is public and mutates shipment AND order state. Without
+  // this check anyone could POST an AWB and a status code to mark an order
+  // delivered — which, for COD, is what flips paymentStatus to 'paid'.
+  //
+  // Fails closed: no configured secret means no webhook is trusted.
+  const configuredSecret = env.SHIPROCKET_WEBHOOK_SECRET;
+  if (!configuredSecret) {
+    console.error('[shipping] Webhook rejected: SHIPROCKET_WEBHOOK_SECRET is not configured.');
+    throw new ApiError(401, 'Webhook authentication is not configured.');
+  }
+
+  const presented = req.header('x-api-key') || '';
+  const presentedBuf = Buffer.from(String(presented), 'utf8');
+  const expectedBuf = Buffer.from(configuredSecret, 'utf8');
+
+  // Length check first: timingSafeEqual throws on a length mismatch.
+  const authorised =
+    presentedBuf.length === expectedBuf.length &&
+    crypto.timingSafeEqual(presentedBuf, expectedBuf);
+
+  if (!authorised) {
+    console.warn(`[shipping] Webhook rejected: bad x-api-key from ${req.ip}`);
+    throw new ApiError(401, 'Invalid webhook credentials.');
+  }
+
   const { awb, current_status, current_timestamp, shipment_id, etd } = req.body;
 
-  const shipment = await Shipment.findOne({
-    $or: [{ awbCode: awb }, { shipmentId: String(shipment_id) }],
-  });
+  // Require at least one usable identifier. Without this, an empty body
+  // matched `{awbCode: undefined}` against any shipment lacking an AWB.
+  if (!awb && shipment_id === undefined) {
+    return res.status(200).json({ success: true, message: 'No shipment identifier, ignored' });
+  }
+
+  const identifiers = [];
+  if (awb) identifiers.push({ awbCode: String(awb) });
+  if (shipment_id !== undefined) identifiers.push({ shipmentId: String(shipment_id) });
+
+  const shipment = await Shipment.findOne({ $or: identifiers });
 
   if (!shipment) {
     return res.status(200).json({ success: true, message: 'Shipment not found, ignored' });
@@ -196,11 +261,25 @@ const handleWebhook = asyncHandler(async (req, res) => {
   };
 
   const mappedStatus = statusMap[String(current_status)] || shipment.status;
+
+  // Dedupe: couriers retry, and a replayed delivery event must not re-run the
+  // order transition or append a duplicate history row.
+  const eventTimestamp = current_timestamp ? new Date(current_timestamp) : new Date();
+  const alreadySeen = shipment.statusHistory.some(
+    (h) => h.status === mappedStatus &&
+           h.timestamp &&
+           new Date(h.timestamp).getTime() === eventTimestamp.getTime()
+  );
+
+  if (alreadySeen) {
+    return res.status(200).json({ success: true, message: 'Duplicate event, ignored' });
+  }
+
   shipment.status = mappedStatus;
   shipment.statusHistory.push({
     status: mappedStatus,
     description: `Status update from Shiprocket`,
-    timestamp: current_timestamp ? new Date(current_timestamp) : new Date(),
+    timestamp: eventTimestamp,
   });
 
   if (etd) shipment.estimatedDelivery = new Date(etd);
@@ -208,15 +287,44 @@ const handleWebhook = asyncHandler(async (req, res) => {
 
   await shipment.save();
 
-  // Update order status accordingly
-  const Order = require('../models/Order');
+  // Update order status accordingly.
+  //
+  // This previously wrote `orderStatus`, which is not a field on the Order
+  // schema — Mongoose silently dropped it, so no order was ever updated here.
+  // Now that it writes the real `status` field, the transition has to respect
+  // the state machine: a courier event must not walk a cancelled order back
+  // to `shipped`, and must not mark an unpaid order delivered out of sequence.
   const orderStatusMap = {
     'picked_up': 'shipped', 'in_transit': 'shipped',
     'out_for_delivery': 'shipped', 'delivered': 'delivered',
     'cancelled': 'cancelled', 'rto_initiated': 'processing',
   };
-  if (orderStatusMap[mappedStatus]) {
-    await Order.findByIdAndUpdate(shipment.order, { orderStatus: orderStatusMap[mappedStatus] });
+
+  const targetStatus = orderStatusMap[mappedStatus];
+  if (targetStatus) {
+    const order = await Order.findById(shipment.order);
+    if (order && order.status !== targetStatus) {
+      if (canTransition(order.status, targetStatus)) {
+        order.status = targetStatus;
+        if (targetStatus === 'delivered') {
+          order.deliveredAt = new Date();
+          // Cash collected on delivery, for COD orders still awaiting payment.
+          if (order.paymentMethod === 'cod' && order.paymentStatus === 'pending') {
+            order.paymentStatus = 'paid';
+          }
+        }
+        order.statusHistory.push({
+          status: targetStatus,
+          date: new Date(),
+          note: `Status update from Shiprocket (${mappedStatus})`,
+        });
+        await order.save();
+      } else {
+        console.warn(
+          `[shipping] Ignoring illegal order transition from webhook: order ${order._id} is "${order.status}", courier reported "${targetStatus}".`
+        );
+      }
+    }
   }
 
   res.status(200).json({ success: true, message: 'Webhook processed' });
@@ -224,20 +332,21 @@ const handleWebhook = asyncHandler(async (req, res) => {
 
 // ─── Get all shipments for admin ─────────────────
 const getAllShipments = asyncHandler(async (req, res) => {
-  const { status, page = 1, limit = 20 } = req.query;
+  const { status } = req.query;
+  const { page, limit, skip } = paginate(req.query);
   const filter = {};
-  if (status) filter.status = status;
+  if (status) filter.status = String(status);
 
   const shipments = await Shipment.find(filter)
-    .populate('order', 'orderNumber totalAmount orderStatus user')
+    .populate('order', 'orderNumber total status user')
     .sort('-createdAt')
-    .skip((page - 1) * limit)
-    .limit(parseInt(limit))
+    .skip(skip)
+    .limit(limit)
     .lean();
 
   const total = await Shipment.countDocuments(filter);
 
-  sendResponse(res, 200, { shipments, total, page: parseInt(page), pages: Math.ceil(total / limit) }, 'Shipments fetched');
+  sendResponse(res, 200, { shipments, total, page, pages: Math.ceil(total / limit) }, 'Shipments fetched');
 });
 
 module.exports = {

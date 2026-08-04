@@ -21,7 +21,8 @@ const categorySchema = new mongoose.Schema({
   timestamps: true,
 });
 
-categorySchema.index({ slug: 1 });
+// NOTE: the unique:true on the field above already creates this index;
+// declaring it again produced a duplicate-index warning at boot.
 categorySchema.index({ parent: 1 });
 
 module.exports = mongoose.model('Category', categorySchema);

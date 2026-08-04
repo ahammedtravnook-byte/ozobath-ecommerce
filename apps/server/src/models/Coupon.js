@@ -27,6 +27,7 @@ const couponSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-couponSchema.index({ code: 1 });
+// NOTE: the unique:true on the field above already creates this index;
+// declaring it again produced a duplicate-index warning at boot.
 
 module.exports = mongoose.model('Coupon', couponSchema);

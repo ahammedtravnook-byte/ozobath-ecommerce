@@ -4,6 +4,7 @@
 const Notification = require('../models/Notification');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
+const { paginate } = require('../utils/pagination');
 
 // Helper to create a notification (used internally from other controllers)
 const createNotification = async (userId, type, title, message, data = {}) => {
@@ -16,13 +17,13 @@ const createNotification = async (userId, type, title, message, data = {}) => {
 
 // GET /notifications — get user's notifications
 const getNotifications = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, unreadOnly } = req.query;
+  const { unreadOnly } = req.query;
+  const { page, limit, skip } = paginate(req.query);
   const filter = { user: req.user._id };
   if (unreadOnly === 'true') filter.isRead = false;
 
-  const skip = (page - 1) * limit;
   const [notifications, total, unreadCount] = await Promise.all([
-    Notification.find(filter).sort('-createdAt').skip(skip).limit(Number(limit)).lean(),
+    Notification.find(filter).sort('-createdAt').skip(skip).limit(limit).lean(),
     Notification.countDocuments(filter),
     Notification.countDocuments({ user: req.user._id, isRead: false }),
   ]);
@@ -30,7 +31,7 @@ const getNotifications = asyncHandler(async (req, res) => {
   sendResponse(res, 200, {
     notifications,
     unreadCount,
-    pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / Number(limit)) },
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
   }, 'Notifications fetched');
 });
 

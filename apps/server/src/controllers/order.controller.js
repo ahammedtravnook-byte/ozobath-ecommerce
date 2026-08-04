@@ -8,6 +8,13 @@ const Coupon = require('../models/Coupon');
 const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
+const { calculateTotals } = require('../utils/calculateTotals');
+const { decrementStock, restoreStock } = require('../utils/stock');
+const { canTransition, explainTransition } = require('../utils/orderStateMachine');
+const { paginate } = require('../utils/pagination');
+const { escapeRegex, cleanText } = require('../utils/sanitize');
+const { withTransaction } = require('../utils/withTransaction');
+const env = require('../config/env');
 const { createNotification } = require('./notification.controller');
 const { logActivity } = require('./activityLog.controller');
 const { createAdminNotification } = require('./adminNotification.controller');
@@ -19,89 +26,81 @@ const createOrder = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
   if (!cart || cart.items.length === 0) throw new ApiError(400, 'Cart is empty.');
 
-  let subtotal = 0;
-  const items = cart.items.map((item) => {
-    const price = item.product.price;
-    subtotal += price * item.quantity;
-    return {
-      product: item.product._id, name: item.product.name,
-      image: item.product.images?.[0]?.url, price, quantity: item.quantity,
-      variant: item.variant,
-    };
-  });
+  // Price the cart — shared calculator, identical to the Razorpay paths
+  const preCoupon = calculateTotals(cart.items);
+  const subtotal = preCoupon.subtotal;
 
-  let discount = 0;
-  let couponId = null;
-  if (couponCode) {
-    // Atomic coupon usage increment — prevents race condition
-    const coupon = await Coupon.findOneAndUpdate(
-      {
-        code: couponCode.toUpperCase(),
-        isActive: true,
-        startDate: { $lte: new Date() },
-        endDate: { $gte: new Date() },
-        $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
-      },
-      { $inc: { usedCount: 1 }, $push: { usedBy: req.user._id } },
-      { new: false }
-    );
+  const items = preCoupon.activeItems.map((item) => ({
+    product: item.product._id, name: item.product.name,
+    image: item.product.images?.[0]?.url, price: item.product.price,
+    quantity: item.quantity, variant: item.variant,
+  }));
 
-    if (!coupon) throw new ApiError(400, 'Invalid, expired, or usage-limit-reached coupon code.');
-    if (subtotal < coupon.minOrderAmount) throw new ApiError(400, `Minimum order amount is ₹${coupon.minOrderAmount}.`);
+  if (items.length === 0) throw new ApiError(400, 'No active products in cart.');
 
-    const userUsage = coupon.usedBy.filter((id) => id.toString() === req.user._id.toString()).length;
-    if (coupon.perUserLimit && userUsage >= coupon.perUserLimit) {
-      // Rollback the increment we just did
-      await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: -1 }, $pull: { usedBy: req.user._id } });
-      throw new ApiError(400, 'You have already used this coupon the maximum number of times.');
+  // Coupon claim, order create, stock decrement and cart clear are one unit:
+  // a crash partway through previously burned a coupon with no order, or
+  // created an order whose stock was never decremented.
+  const order = await withTransaction(async (session) => {
+    const opts = session ? { session } : {};
+
+    let claimedCoupon = null;
+    let couponId = null;
+    if (couponCode) {
+      // Atomic coupon usage increment — prevents race condition
+      const coupon = await Coupon.findOneAndUpdate(
+        {
+          code: couponCode.toUpperCase(),
+          isActive: true,
+          startDate: { $lte: new Date() },
+          endDate: { $gte: new Date() },
+          $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
+        },
+        { $inc: { usedCount: 1 }, $push: { usedBy: req.user._id } },
+        { new: false, ...opts }
+      );
+
+      if (!coupon) throw new ApiError(400, 'Invalid, expired, or usage-limit-reached coupon code.');
+      if (subtotal < coupon.minOrderAmount) throw new ApiError(400, `Minimum order amount is ₹${coupon.minOrderAmount}.`);
+
+      const userUsage = coupon.usedBy.filter((id) => id.toString() === req.user._id.toString()).length;
+      if (coupon.perUserLimit && userUsage >= coupon.perUserLimit) {
+        // Inside a transaction the throw rolls the increment back; the
+        // explicit rollback covers the no-transaction fallback path.
+        if (!session) {
+          await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: -1 }, $pull: { usedBy: req.user._id } });
+        }
+        throw new ApiError(400, 'You have already used this coupon the maximum number of times.');
+      }
+
+      claimedCoupon = coupon;
+      couponId = coupon._id;
     }
 
-    discount = coupon.type === 'percentage'
-      ? Math.min((subtotal * coupon.value) / 100, coupon.maxDiscount || Infinity)
-      : coupon.value;
-    discount = Math.round(discount);
-    couponId = coupon._id;
-  }
+    const { shippingCost, tax, discount, total, taxableValue } = calculateTotals(cart.items, claimedCoupon);
 
-  // Per-product delivery logic:
-  // - If ALL items have freeDelivery, shipping = 0
-  // - If any item has a custom deliveryCharge > 0, use the highest one
-  // - Otherwise fall back to global rule (free above ₹999, else ₹99)
-  const productDeliveryData = cart.items.map(i => ({
-    freeDelivery: i.product.freeDelivery || false,
-    deliveryCharge: i.product.deliveryCharge || 0,
-  }));
-  const allFreeDelivery = productDeliveryData.every(p => p.freeDelivery);
-  const maxCustomCharge = Math.max(...productDeliveryData.map(p => p.deliveryCharge));
+    const created = await Order.create([{
+      user: req.user._id, items, shippingAddress, subtotal,
+      shippingCost, discount, tax, total, coupon: couponId,
+      taxableValue, taxMode: env.TAX_MODE, taxRate: env.TAX_RATE,
+      paymentMethod, notes,
+      statusHistory: [{ status: 'pending', date: new Date(), note: 'Order placed' }],
+    }], opts);
 
-  let shippingCost;
-  if (allFreeDelivery) {
-    shippingCost = 0;
-  } else if (maxCustomCharge > 0) {
-    shippingCost = maxCustomCharge;
-  } else {
-    shippingCost = subtotal >= 999 ? 0 : 99;
-  }
+    const newOrder = created[0];
 
-  const tax = Math.round(subtotal * 0.18);
-  const total = subtotal + shippingCost + tax - discount;
+    // Update product stock and sales
+    for (const item of items) {
+      await decrementStock(item.product, item.quantity, session);
+    }
 
-  const order = await Order.create({
-    user: req.user._id, items, shippingAddress, subtotal,
-    shippingCost, discount, tax, total, coupon: couponId,
-    paymentMethod, notes,
-    statusHistory: [{ status: 'pending', date: new Date(), note: 'Order placed' }],
+    // Clear cart (COD path — Razorpay path clears cart in payment.controller.js)
+    await Cart.findOneAndUpdate({ user: req.user._id }, { items: [], totalAmount: 0 }, opts);
+
+    return newOrder;
   });
 
-  // Update product stock and sales
-  for (const item of items) {
-    await Product.findByIdAndUpdate(item.product, {
-      $inc: { stock: -item.quantity, salesCount: item.quantity },
-    });
-  }
-
-  // Clear cart (COD path — Razorpay path clears cart in payment.controller.js)
-  await Cart.findOneAndUpdate({ user: req.user._id }, { items: [], totalAmount: 0 });
+  const total = order.total;
 
   // Notify customer
   await createNotification(
@@ -121,18 +120,21 @@ const createOrder = asyncHandler(async (req, res) => {
     { orderId: order._id, orderNumber: order.orderNumber, total }
   );
 
-  // Check for low stock after order
-  for (const item of items) {
-    const updatedProduct = await Product.findById(item.product).select('name stock').lean();
-    if (updatedProduct && updatedProduct.stock <= 5) {
-      await createAdminNotification(
-        'low_stock',
-        'Low Stock Alert',
-        `${updatedProduct.name} has only ${updatedProduct.stock} unit(s) remaining`,
-        `/inventory`,
-        { productId: item.product, stock: updatedProduct.stock }
-      );
-    }
+  // Check for low stock after order.
+  // One query for all items rather than one per item.
+  const lowStock = await Product.find({
+    _id: { $in: items.map((i) => i.product) },
+    stock: { $lte: 5 },
+  }).select('name stock').lean();
+
+  for (const p of lowStock) {
+    await createAdminNotification(
+      'low_stock',
+      'Low Stock Alert',
+      `${p.name} has only ${p.stock} unit(s) remaining`,
+      `/inventory`,
+      { productId: p._id, stock: p.stock }
+    );
   }
 
   sendResponse(res, 201, order, 'Order placed successfully');
@@ -140,15 +142,14 @@ const createOrder = asyncHandler(async (req, res) => {
 
 // GET /orders/my-orders
 const getMyOrders = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = paginate(req.query, { defaultLimit: 10 });
 
   const [orders, total] = await Promise.all([
-    Order.find({ user: req.user._id }).sort('-createdAt').skip(skip).limit(Number(limit)).lean(),
+    Order.find({ user: req.user._id }).sort('-createdAt').skip(skip).limit(limit).lean(),
     Order.countDocuments({ user: req.user._id }),
   ]);
 
-  sendResponse(res, 200, { orders, pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / limit) } }, 'Orders fetched');
+  sendResponse(res, 200, { orders, pagination: { page, limit, total, pages: Math.ceil(total / limit) } }, 'Orders fetched');
 });
 
 // GET /orders/my-orders/:id
@@ -163,7 +164,9 @@ const cancelOrder = asyncHandler(async (req, res) => {
   const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
   if (!order) throw new ApiError(404, 'Order not found.');
 
-  if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
+  // Same transition table the admin path uses, so "can this be cancelled?"
+  // has one answer rather than two that can drift apart.
+  if (!canTransition(order.status, 'cancelled')) {
     throw new ApiError(400, `Order cannot be cancelled — current status is "${order.status}".`);
   }
 
@@ -174,24 +177,30 @@ const cancelOrder = asyncHandler(async (req, res) => {
 
   const { reason = 'Cancelled by customer' } = req.body;
 
-  order.status = 'cancelled';
-  order.statusHistory.push({ status: 'cancelled', date: new Date(), note: reason });
-  await order.save();
+  // Cancel, restore stock and release the coupon as one unit — otherwise a
+  // crash could cancel the order without returning the stock, or return the
+  // stock without releasing the coupon.
+  await withTransaction(async (session) => {
+    const opts = session ? { session } : {};
 
-  // Restore product stock
-  for (const item of order.items) {
-    await Product.findByIdAndUpdate(item.product, {
-      $inc: { stock: item.quantity, salesCount: -item.quantity },
-    });
-  }
+    order.status = 'cancelled';
+    order.statusHistory.push({ status: 'cancelled', date: new Date(), note: reason });
+    await order.save(opts);
 
-  // Rollback coupon usage if coupon was applied
-  if (order.coupon) {
-    await Coupon.findByIdAndUpdate(order.coupon, {
-      $inc: { usedCount: -1 },
-      $pull: { usedBy: req.user._id },
-    });
-  }
+    // Restore product stock
+    for (const item of order.items) {
+      await restoreStock(item.product, item.quantity, session);
+    }
+
+    // Rollback coupon usage if coupon was applied
+    if (order.coupon) {
+      await Coupon.findByIdAndUpdate(
+        order.coupon,
+        { $inc: { usedCount: -1 }, $pull: { usedBy: req.user._id } },
+        opts
+      );
+    }
+  });
 
   // Notify user
   await createNotification(
@@ -207,20 +216,22 @@ const cancelOrder = asyncHandler(async (req, res) => {
 
 // GET /orders — Admin: all orders
 const getAllOrders = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, status, search } = req.query;
+  const { status, search } = req.query;
+  const { page, limit, skip } = paginate(req.query);
   const filter = {};
-  if (status) filter.status = status;
-  if (search) filter.$or = [
-    { orderNumber: { $regex: search, $options: 'i' } },
-  ];
+  if (status) filter.status = String(status);
+  if (search) {
+    filter.$or = [
+      { orderNumber: { $regex: escapeRegex(String(search).slice(0, 100)), $options: 'i' } },
+    ];
+  }
 
-  const skip = (page - 1) * limit;
   const [orders, total] = await Promise.all([
-    Order.find(filter).populate('user', 'name email phone').sort('-createdAt').skip(skip).limit(Number(limit)).lean(),
+    Order.find(filter).populate('user', 'name email phone').sort('-createdAt').skip(skip).limit(limit).lean(),
     Order.countDocuments(filter),
   ]);
 
-  sendResponse(res, 200, { orders, pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / limit) } }, 'All orders fetched');
+  sendResponse(res, 200, { orders, pagination: { page, limit, total, pages: Math.ceil(total / limit) } }, 'All orders fetched');
 });
 
 // GET /orders/:id — Admin
@@ -237,17 +248,41 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (!order) throw new ApiError(404, 'Order not found.');
 
+  // Enforce the state machine. Previously any status could be set from any
+  // state, so an unpaid order could be shipped and a refunded order could be
+  // walked back to `delivered`.
+  if (!canTransition(order.status, status)) {
+    throw new ApiError(400, explainTransition(order.status, status));
+  }
+
+  // A prepaid order must not enter fulfilment unless the money actually
+  // arrived. `confirmed` used to SET paymentStatus='paid'; it now REQUIRES it,
+  // which is the difference between recording a payment and inventing one.
+  if (status === 'confirmed' && order.paymentMethod !== 'cod' && order.paymentStatus !== 'paid') {
+    throw new ApiError(
+      400,
+      'Cannot confirm a prepaid order that has not been paid. Payment is recorded by the payment flow, not by a status change.'
+    );
+  }
+
   order.status = status;
   if (trackingNumber) order.trackingNumber = trackingNumber;
   if (trackingUrl) order.trackingUrl = trackingUrl;
   if (status === 'delivered') {
     order.deliveredAt = new Date();
-    // Auto-mark COD as paid when delivered (cash collected on delivery)
-    if (order.paymentMethod === 'cod' && order.paymentStatus !== 'paid') {
+    // Cash collected on delivery. Restricted to COD orders that are still
+    // awaiting payment — it must never overwrite a `refunded` or `failed`
+    // state, which the previous `!== 'paid'` check allowed.
+    if (order.paymentMethod === 'cod' && order.paymentStatus === 'pending') {
       order.paymentStatus = 'paid';
+      order.statusHistory.push({
+        status: 'payment_collected',
+        date: new Date(),
+        note: 'COD cash collected on delivery',
+        updatedBy: req.user._id,
+      });
     }
   }
-  if (status === 'confirmed') order.paymentStatus = 'paid';
 
   order.statusHistory.push({
     status, date: new Date(), note: note || `Status updated to ${status}`,
@@ -282,17 +317,32 @@ const exportOrders = asyncHandler(async (req, res) => {
     if (to) filter.createdAt.$lte = new Date(to);
   }
 
+  // Bounded. This previously had no limit at all: one request materialised
+  // every order plus populated user PII in memory.
+  const MAX_EXPORT_ROWS = 5000;
   const orders = await Order.find(filter)
     .populate('user', 'name email phone')
     .sort('-createdAt')
+    .limit(MAX_EXPORT_ROWS)
     .lean();
+
+  // CSV injection: a cell beginning with = + - @ is evaluated as a formula
+  // when the file is opened in Excel or Sheets. A customer registering as
+  // `=HYPERLINK("http://evil","click")` would execute in an admin's
+  // spreadsheet. Prefix with a quote to neutralise, then quote-escape.
+  const csvCell = (value) => {
+    if (value === null || value === undefined) return '';
+    let s = String(value);
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
 
   const rows = [
     ['Order Number', 'Date', 'Customer', 'Email', 'Phone', 'Status', 'Payment', 'Subtotal', 'Shipping', 'Tax', 'Discount', 'Total', 'Items'].join(','),
     ...orders.map(o => [
       o.orderNumber,
       new Date(o.createdAt).toLocaleDateString('en-IN'),
-      `"${o.user?.name || ''}"`,
+      o.user?.name || '',
       o.user?.email || '',
       o.user?.phone || '',
       o.status,
@@ -303,7 +353,7 @@ const exportOrders = asyncHandler(async (req, res) => {
       o.discount,
       o.total,
       o.items?.length || 0,
-    ].join(',')),
+    ].map(csvCell).join(',')),
   ];
 
   const csv = rows.join('\n');
