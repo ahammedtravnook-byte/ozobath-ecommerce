@@ -32,6 +32,37 @@ import { useRoute, useRouter } from 'vue-router';
  * @param {Function} [options.transform]  (payload) => ({ items, pagination })
  * @param {Function} [options.onError]
  */
+/**
+ * Normalise a list response into { items, pagination }.
+ *
+ * The admin talks to a server that may be older than the frontend — Vercel
+ * deploys the SPA on merge, while the API is updated by hand on the VPS. So
+ * this must read both shapes:
+ *
+ *   new: { items: [...], products: [...], pagination: {...} }
+ *   old: { products: [...], pagination: {...} }        <- no `items`
+ *   old: [ ... ]                                        <- bare array
+ *
+ * Reading only `items` is what left tables blank against a not-yet-deployed
+ * API: rows came back empty while `pagination.total` still read 17, so the
+ * footer said "1–17 of 17" above an empty table.
+ */
+const LEGACY_LIST_KEYS = ['items', 'products', 'orders', 'categories', 'enquiries', 'customers', 'users'];
+
+export const defaultShape = (payload) => {
+  if (Array.isArray(payload)) {
+    return { items: payload, pagination: undefined };
+  }
+
+  for (const key of LEGACY_LIST_KEYS) {
+    if (Array.isArray(payload?.[key])) {
+      return { items: payload[key], pagination: payload.pagination };
+    }
+  }
+
+  return { items: [], pagination: payload?.pagination };
+};
+
 export function useDataTable(options) {
   const {
     fetcher,
@@ -123,15 +154,7 @@ export function useDataTable(options) {
       if (signal.aborted) return;
 
       const payload = res?.data ?? res;
-      const shaped = transform
-        ? transform(payload)
-        : {
-            // Endpoints return the shared `items` key; several also keep a
-            // legacy named key (`products`, `orders`) for compatibility, and
-            // a few still return a bare array.
-            items: payload?.items ?? (Array.isArray(payload) ? payload : []),
-            pagination: payload?.pagination,
-          };
+      const shaped = transform ? transform(payload) : defaultShape(payload);
 
       items.value = shaped.items || [];
       total.value = shaped.pagination?.total ?? items.value.length;
