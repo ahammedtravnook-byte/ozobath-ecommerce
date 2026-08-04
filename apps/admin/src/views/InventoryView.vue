@@ -1,254 +1,272 @@
 <template>
-  <div class="space-y-8 animate-fade-in-up">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Inventory</h1>
-        <p class="text-xs sm:text-sm text-gray-400 mt-1 font-medium italic italic">Fine-tune your stock levels and monitor product availability</p>
-      </div>
+  <div>
+    <!-- ─── Page header ─────────────────────────── -->
+    <div class="mb-5">
+      <h1 class="text-xl font-semibold text-slate-900">Inventory</h1>
+      <p class="text-[13px] text-slate-500 mt-0.5">Monitor and adjust stock levels</p>
     </div>
 
-    <!-- Enhanced Summary Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-      <div class="admin-card p-6 text-center relative overflow-hidden group hover:scale-[1.02] transition-all">
-        <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500/80 rounded-l-2xl"></div>
-        <p class="text-3xl font-black text-gray-900">{{ products.length }}</p>
-        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">Total Catalog</p>
-      </div>
-      <div class="admin-card p-6 text-center relative overflow-hidden group hover:scale-[1.02] transition-all">
-        <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500/80 rounded-l-2xl"></div>
-        <p class="text-3xl font-black text-emerald-600">{{ healthyStock }}</p>
-        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 line-clamp-1">In Stock</p>
-      </div>
-      <div class="admin-card p-6 text-center relative overflow-hidden group hover:scale-[1.02] transition-all">
-        <div class="absolute top-0 left-0 w-1.5 h-full bg-amber-400/80 rounded-l-2xl"></div>
-        <p class="text-3xl font-black text-amber-500">{{ lowStock }}</p>
-        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 line-clamp-1">Low Warning</p>
-      </div>
-      <div class="admin-card p-6 text-center relative overflow-hidden group hover:scale-[1.02] transition-all">
-        <div class="absolute top-0 left-0 w-1.5 h-full bg-red-500/80 rounded-l-2xl"></div>
-        <p class="text-3xl font-black text-red-500">{{ outOfStock }}</p>
-        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 line-clamp-1">Sold Out</p>
-      </div>
-    </div>
-
-    <!-- Controls & Filters -->
-    <div class="admin-card p-6 flex flex-col lg:flex-row gap-6 items-stretch lg:items-center">
-      <div class="relative flex-1">
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🔍</span>
-        <input
-          v-model="searchQuery"
-          class="admin-input pl-12 h-14"
-          placeholder="Search product or SKU..."
-        />
-      </div>
-      <div class="flex gap-2 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
-        <button
-          v-for="f in stockFilters"
-          :key="f.value"
-          @click="stockFilter = f.value"
-          :class="[
-            'px-5 py-3 text-[11px] font-black uppercase tracking-widest rounded-2xl border-2 transition-all shrink-0 whitespace-nowrap shadow-sm',
-            stockFilter === f.value ? f.activeClass : 'border-gray-100 text-gray-400 hover:border-gray-200 bg-white'
-          ]"
-        >{{ f.label }}</button>
-      </div>
-    </div>
-
-    <!-- Content Container -->
-    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[400px]">
-      <div v-if="loading" class="flex-1 flex items-center justify-center py-24">
-        <div class="flex flex-col items-center gap-6">
-          <div class="animate-spin w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full"></div>
-          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory Syncing...</p>
+    <!-- ─── Summary ─────────────────────────────────
+         Counted by the server across the whole catalogue. These used to be
+         derived from the loaded page, so they silently under-reported once the
+         catalogue exceeded the fetch limit.
+    -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <button
+        v-for="card in summaryCards"
+        :key="card.key"
+        type="button"
+        class="dt-surface px-4 py-3 text-left transition-colors hover:bg-slate-50"
+        :class="table.filters.value.stockStatus === card.filterValue ? 'ring-2 ring-blue-500/40 border-blue-300' : ''"
+        @click="toggleStockCard(card.filterValue)"
+      >
+        <div class="flex items-center gap-1.5">
+          <span v-if="card.dot" class="w-1.5 h-1.5 rounded-full" :class="card.dot" />
+          <p class="text-[12px] text-slate-500">{{ card.label }}</p>
         </div>
-      </div>
+        <p class="text-[22px] font-semibold tabular-nums mt-0.5" :class="card.textClass">
+          <span v-if="summaryLoading" class="dt-skel inline-block w-10 h-6 align-middle" />
+          <span v-else>{{ card.value }}</span>
+        </p>
+      </button>
+    </div>
 
-      <div v-else-if="filtered.length === 0" class="flex-1 flex flex-col items-center justify-center py-24 text-center px-6">
-        <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-5xl mb-8 shadow-inner">📦</div>
-        <h4 class="text-base font-black text-gray-900 uppercase tracking-widest">No Matches Found</h4>
-        <p class="text-sm text-gray-400 mt-2 max-w-xs font-medium italic">Adjust your search or status filters to locate specific items.</p>
-      </div>
+    <!-- ─── Table ───────────────────────────────── -->
+    <div class="dt-surface">
+      <DataToolbar
+        v-model:search="table.search.value"
+        search-placeholder="Search product or SKU…"
+        :active-filters="table.activeFilters.value"
+        :filter-meta="filterMeta"
+        :total="table.total.value"
+        :loading="table.loading.value"
+        @clear-filter="table.clearFilter"
+        @clear-all="table.clearAll"
+      >
+        <template #filters>
+          <FilterSelect
+            v-model="table.filters.value.stockStatus"
+            label="Stock level"
+            placeholder="All stock levels"
+            :options="STOCK_OPTIONS"
+          />
+          <FilterSelect
+            v-model="table.filters.value.category"
+            label="Category"
+            placeholder="All categories"
+            :options="categoryOptions"
+          />
+        </template>
+      </DataToolbar>
 
-      <div v-else class="flex-1 flex flex-col">
-        <!-- Desktop Table View -->
-        <div class="hidden lg:block overflow-x-auto custom-scrollbar">
-          <table class="w-full text-left border-collapse min-w-[1000px]">
-            <thead>
-              <tr class="bg-gray-50/50">
-                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16 text-center">#</th>
-                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Information</th>
-                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory Status</th>
-                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Global Status</th>
-                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Update Stock</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50">
-              <tr v-for="(p, i) in filtered" :key="p._id" class="hover:bg-blue-50/10 transition-colors group">
-                <td class="px-8 py-5 text-center text-xs font-black text-gray-300">{{ i + 1 }}</td>
-                <td class="px-8 py-5">
-                  <div class="flex items-center gap-5">
-                    <img
-                      :src="p.images?.[0]?.url || '/placeholder.jpg'"
-                      class="w-14 h-14 rounded-2xl object-cover bg-gray-50 border border-gray-100 shrink-0 group-hover:scale-110 transition-transform"
-                    />
-                    <div class="min-w-0">
-                      <p class="text-sm font-black text-gray-900 truncate max-w-[280px] group-hover:text-blue-600 transition-colors">{{ p.name }}</p>
-                      <code class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1 block">SKU: {{ p.sku || 'N/A' }}</code>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-8 py-5">
-                  <div class="flex flex-col gap-2">
-                    <div class="flex items-baseline justify-between">
-                      <span :class="['text-sm font-black tracking-tight', p.stock === 0 ? 'text-red-600' : p.stock < 10 ? 'text-amber-600' : 'text-emerald-600']">
-                        {{ p.stock }} <span class="text-[10px] uppercase opacity-70">Units</span>
-                      </span>
-                    </div>
-                    <div class="w-32 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                      <div
-                        :class="['h-full rounded-full transition-all duration-700', p.stock === 0 ? 'bg-red-500' : p.stock < 10 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500']"
-                        :style="{ width: Math.min(p.stock / 100 * 100, 100) + '%' }"
-                      ></div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-8 py-5">
-                  <span :class="[
-                    'inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm',
-                    p.stock === 0 ? 'bg-red-50 text-red-700 border-red-100' : p.stock < 10 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                  ]">
-                    {{ p.stock === 0 ? '⛔ Out of stock' : p.stock < 10 ? '⚠️ Low stock' : '✅ In stock' }}
-                  </span>
-                </td>
-                <td class="px-8 py-5 text-right">
-                  <div class="flex items-center justify-end gap-3">
-                    <input
-                      :value="p.newStock ?? p.stock"
-                      @input="p.newStock = parseInt($event.target.value)"
-                      type="number"
-                      min="0"
-                      class="admin-input w-24 text-sm font-black py-2.5 text-center border-gray-100"
-                    />
-                    <button
-                      @click="updateStock(p)"
-                      :disabled="p.updating"
-                      class="h-11 px-6 bg-gray-900 hover:bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-gray-900/10 disabled:opacity-50 active:scale-95 flex items-center justify-center min-w-[80px]"
-                    >
-                      <span v-if="!p.updating">Update</span>
-                      <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Mobile Grid View -->
-        <div class="lg:hidden p-4 space-y-4 bg-gray-50/30 overflow-y-auto max-h-[70vh] custom-scrollbar">
-          <div v-for="p in filtered" :key="p._id" class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-5 flex flex-col gap-5 animate-fade-in-up">
-            <!-- Product Identity -->
-            <div class="flex items-center gap-4">
-              <img :src="p.images?.[0]?.url || '/placeholder.jpg'" class="w-16 h-16 rounded-[1.25rem] object-cover bg-gray-100 border border-gray-50" />
-              <div class="flex-1 min-w-0">
-                <h4 class="text-sm font-black text-gray-900 line-clamp-2 leading-tight uppercase tracking-tight">{{ p.name }}</h4>
-                <code class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1 block">SKU: {{ p.sku || 'N/A' }}</code>
-              </div>
-            </div>
-
-            <!-- Health Indicator -->
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
-               <div class="flex flex-col gap-1.5">
-                  <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Inventory Status</p>
-                  <p :class="['text-sm font-black uppercase tracking-tight', p.stock === 0 ? 'text-red-600' : p.stock < 10 ? 'text-amber-600' : 'text-emerald-600']">
-                    {{ p.stock === 0 ? 'Sold Out' : p.stock < 10 ? 'Running Low' : 'Adequate' }}
-                  </p>
-               </div>
-               <div class="text-right">
-                  <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Stock Level</p>
-                  <p class="text-lg font-black text-gray-900">{{ p.stock }} <span class="text-[10px] text-gray-400">UNITs</span></p>
-               </div>
-            </div>
-
-            <!-- Mobile Stock Updater -->
-            <div class="flex items-center gap-3">
-               <div class="flex-1 flex items-center bg-gray-50 rounded-2xl border border-gray-100 px-4 h-14">
-                  <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-3">New Qty</p>
-                  <input
-                    :value="p.newStock ?? p.stock"
-                    @input="p.newStock = parseInt($event.target.value)"
-                    type="number"
-                    min="0"
-                    class="bg-transparent font-black text-gray-900 border-none focus:ring-0 w-full text-right"
-                  />
-               </div>
-               <button 
-                 @click="updateStock(p)"
-                 :disabled="p.updating"
-                 class="h-14 px-8 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center shadow-lg shadow-gray-900/10 active:scale-95 transition-transform"
-               >
-                 <span v-if="!p.updating">Update</span>
-                 <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-               </button>
+      <DataTable
+        :columns="columns"
+        :rows="table.items.value"
+        :loading="table.loading.value"
+        :sort="table.sort.value"
+        min-width-class="min-w-[820px]"
+        empty-title="No products found"
+        empty-message="Try a different search or stock filter."
+        @sort="table.toggleSort"
+      >
+        <template #cell-name="{ row }">
+          <div class="flex items-center gap-3 min-w-0">
+            <img
+              :src="row.images?.[0]?.url || '/placeholder.jpg'"
+              :alt="row.name"
+              class="w-9 h-9 rounded object-cover bg-slate-100 border border-slate-200 shrink-0"
+              loading="lazy"
+            />
+            <div class="min-w-0">
+              <p class="font-medium text-slate-900 truncate max-w-[280px]">{{ row.name }}</p>
+              <p class="text-[12px] text-slate-400 truncate">{{ row.sku || 'No SKU' }}</p>
             </div>
           </div>
-        </div>
-      </div>
+        </template>
+
+        <template #cell-stock="{ row }">
+          <div class="flex items-center justify-end gap-2">
+            <div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden xl:block">
+              <div class="h-full rounded-full" :class="barClass(row.stock)" :style="{ width: barWidth(row.stock) }" />
+            </div>
+            <span class="tabular-nums font-medium w-10 text-right" :class="stockTextClass(row.stock)">
+              {{ row.stock ?? 0 }}
+            </span>
+          </div>
+        </template>
+
+        <template #cell-status="{ row }">
+          <StatusBadge :status="stockStatusOf(row.stock)" :label="stockLabel(row.stock)" dot />
+        </template>
+
+        <!-- Inline stock adjustment -->
+        <template #cell-adjust="{ row }">
+          <div class="flex items-center justify-end gap-1.5" @click.stop>
+            <input
+              :value="draft[row._id] ?? row.stock"
+              type="number"
+              min="0"
+              inputmode="numeric"
+              class="dt-input w-20 h-8 text-center tabular-nums"
+              :aria-label="`Stock for ${row.name}`"
+              @input="draft[row._id] = $event.target.value"
+              @keyup.enter="saveStock(row)"
+            />
+            <button
+              class="dt-btn h-8 px-2.5 text-[12px]"
+              :class="isDirty(row) ? 'bg-slate-900 border-slate-900 text-white hover:bg-slate-800' : ''"
+              :disabled="!isDirty(row) || savingId === row._id"
+              @click="saveStock(row)"
+            >
+              {{ savingId === row._id ? '…' : 'Save' }}
+            </button>
+          </div>
+        </template>
+      </DataTable>
+
+      <Pagination
+        :page="table.page.value"
+        :pages="table.pages.value"
+        :total="table.total.value"
+        :limit="table.limit.value"
+        :range-start="table.rangeStart.value"
+        :range-end="table.rangeEnd.value"
+        @update:page="table.goToPage"
+        @update:limit="table.limit.value = $event"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { productAPI } from '@/api/services';
+import { ref, reactive, computed, onMounted } from 'vue';
+import { productAPI, categoryAPI } from '@/api/services';
 import { useToast } from 'vue-toastification';
+import { useDataTable } from '@/composables/useDataTable';
+import { DataTable, DataToolbar, Pagination, FilterSelect, StatusBadge } from '@/components/ui';
 
 const toast = useToast();
-const loading = ref(true);
-const products = ref([]);
-const searchQuery = ref('');
-const stockFilter = ref('all');
 
-const stockFilters = [
-  { value: 'all', label: 'All', activeClass: 'border-brand-500 text-brand-600 bg-brand-50' },
-  { value: 'low', label: '⚠️ Low', activeClass: 'border-amber-400 text-amber-600 bg-amber-50' },
-  { value: 'out', label: '⛔ Out', activeClass: 'border-red-400 text-red-600 bg-red-50' },
+// Mirrors LOW_STOCK_THRESHOLD in the product controller.
+const LOW_STOCK = 10;
+
+const STOCK_OPTIONS = [
+  { value: 'healthy', label: 'In stock' },
+  { value: 'low', label: 'Low stock' },
+  { value: 'out', label: 'Out of stock' },
 ];
 
-const filtered = computed(() => {
-  let list = products.value;
-  if (stockFilter.value === 'low') list = list.filter(p => p.stock > 0 && p.stock < 10);
-  if (stockFilter.value === 'out') list = list.filter(p => p.stock === 0);
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase();
-    list = list.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q));
-  }
-  return list;
+const columns = [
+  { key: 'name', label: 'Product', sortable: true, primary: true },
+  { key: 'stock', label: 'On hand', sortable: true, align: 'right' },
+  { key: 'status', label: 'Status', badge: true },
+  { key: 'adjust', label: 'Adjust', align: 'right', width: 'w-44', hideOnMobile: true },
+];
+
+// ─── Data ──────────────────────────────────────
+// stockStatus and search are both applied by the database now. Previously this
+// view fetched limit=200 (silently clamped to 100 by MAX_LIMIT) and filtered
+// that array in the browser, so any product past the cap could not be found.
+const table = useDataTable({
+  fetcher: (params, config) => productAPI.getAll(params, config),
+  filters: { stockStatus: '', category: '' },
+  defaultSort: 'stock',
+  defaultLimit: 20,
+  onError: () => toast.error('Failed to load inventory'),
 });
 
-const healthyStock = computed(() => products.value.filter(p => p.stock >= 10).length);
-const lowStock = computed(() => products.value.filter(p => p.stock > 0 && p.stock < 10).length);
-const outOfStock = computed(() => products.value.filter(p => p.stock === 0).length);
+const categories = ref([]);
+const categoryOptions = computed(() =>
+  categories.value.map((c) => ({ value: c._id, label: c.name }))
+);
 
-const fetchProducts = async () => {
+const filterMeta = computed(() => ({
+  stockStatus: { label: 'Stock', options: STOCK_OPTIONS },
+  category: { label: 'Category', options: categoryOptions.value },
+}));
+
+// ─── Summary ───────────────────────────────────
+const summary = ref({ total: 0, healthy: 0, low: 0, out: 0 });
+const summaryLoading = ref(true);
+
+const summaryCards = computed(() => [
+  { key: 'total', label: 'Total products', value: summary.value.total, filterValue: '', textClass: 'text-slate-900' },
+  { key: 'healthy', label: 'In stock', value: summary.value.healthy, filterValue: 'healthy', textClass: 'text-emerald-600', dot: 'bg-emerald-500' },
+  { key: 'low', label: 'Low stock', value: summary.value.low, filterValue: 'low', textClass: 'text-amber-600', dot: 'bg-amber-500' },
+  { key: 'out', label: 'Out of stock', value: summary.value.out, filterValue: 'out', textClass: 'text-red-600', dot: 'bg-red-500' },
+]);
+
+const loadSummary = async () => {
   try {
-    loading.value = true;
-    const res = await productAPI.getAll({ limit: 200 });
-    products.value = (res.data?.products || []).map(p => ({ ...p, newStock: p.stock, updating: false }));
-  } catch { toast.error('Failed to load inventory'); } finally { loading.value = false; }
+    summaryLoading.value = true;
+    const res = await productAPI.getStockSummary();
+    summary.value = res.data || summary.value;
+  } catch {
+    // Non-fatal: the table is still usable without the headline counts.
+  } finally {
+    summaryLoading.value = false;
+  }
 };
 
-const updateStock = async (p) => {
-  const newStock = parseInt(p.newStock);
-  if (isNaN(newStock) || newStock < 0) { toast.error('Enter a valid stock value'); return; }
-  try {
-    p.updating = true;
-    await productAPI.update(p._id, { stock: newStock });
-    toast.success(`Stock updated to ${newStock}`);
-    p.stock = newStock;
-  } catch { toast.error('Failed to update stock'); } finally { p.updating = false; }
+// Cards double as filters; clicking the active one clears it.
+const toggleStockCard = (value) => {
+  table.filters.value.stockStatus = table.filters.value.stockStatus === value ? '' : value;
 };
 
-onMounted(fetchProducts);
+// ─── Presentation ──────────────────────────────
+const stockStatusOf = (s) => (s <= 0 ? 'out' : s < LOW_STOCK ? 'low' : 'healthy');
+const stockLabel = (s) => (s <= 0 ? 'Out of stock' : s < LOW_STOCK ? 'Low stock' : 'In stock');
+const stockTextClass = (s) =>
+  s <= 0 ? 'text-red-600' : s < LOW_STOCK ? 'text-amber-600' : 'text-slate-900';
+const barClass = (s) => (s <= 0 ? 'bg-red-500' : s < LOW_STOCK ? 'bg-amber-500' : 'bg-emerald-500');
+// Capped at 50 units so the common 0–50 range stays legible rather than every
+// bar sitting near-empty against a 100-unit scale.
+const barWidth = (s) => `${Math.min(((s || 0) / 50) * 100, 100)}%`;
+
+// ─── Inline stock edit ─────────────────────────
+// Drafts are keyed by id rather than mutated onto the row, so a refetch cannot
+// silently discard an unsaved edit.
+const draft = reactive({});
+const savingId = ref(null);
+
+const isDirty = (row) => {
+  const value = draft[row._id];
+  if (value === undefined || value === '') return false;
+  return Number(value) !== row.stock;
+};
+
+const saveStock = async (row) => {
+  if (!isDirty(row)) return;
+  const next = Number(draft[row._id]);
+
+  if (!Number.isInteger(next) || next < 0) {
+    toast.error('Stock must be a whole number of 0 or more');
+    return;
+  }
+
+  try {
+    savingId.value = row._id;
+    await productAPI.update(row._id, { stock: next });
+    row.stock = next;
+    delete draft[row._id];
+    toast.success(`${row.name}: stock set to ${next}`);
+    // A stock change can move a product between buckets, so the headline
+    // counts need refreshing too.
+    loadSummary();
+  } catch (e) {
+    toast.error(e.response?.data?.message || 'Failed to update stock');
+  } finally {
+    savingId.value = null;
+  }
+};
+
+onMounted(async () => {
+  loadSummary();
+  try {
+    const res = await categoryAPI.getAll({ limit: 200 });
+    categories.value = res.data?.items || res.data || [];
+  } catch {
+    // Non-fatal.
+  }
+});
 </script>

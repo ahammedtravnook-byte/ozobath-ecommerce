@@ -5,6 +5,7 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
+const User = require('../models/User');
 const ApiError = require('../utils/apiError');
 const { sendResponse } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
@@ -13,6 +14,7 @@ const { decrementStock, restoreStock } = require('../utils/stock');
 const { renderInvoicePdf } = require('../services/invoicePdf.service');
 const { canTransition, explainTransition } = require('../utils/orderStateMachine');
 const { paginate } = require('../utils/pagination');
+const { resolveSort, sortableSet, listEnvelope } = require('../utils/listQuery');
 const { escapeRegex, cleanText } = require('../utils/sanitize');
 const { withTransaction } = require('../utils/withTransaction');
 const env = require('../config/env');
@@ -216,23 +218,78 @@ const cancelOrder = asyncHandler(async (req, res) => {
 });
 
 // GET /orders — Admin: all orders
+//
+// The admin search box is labelled "Order ID or Name", but only orderNumber
+// was ever matched — searching a customer name silently returned nothing.
+// Names live on the User document, so matching them needs a lookup first.
+const ORDER_SORTS = sortableSet(['createdAt', 'orderNumber', 'total', 'status']);
+const ORDER_STATUSES = new Set([
+  'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned',
+]);
+const PAYMENT_STATUSES = new Set(['pending', 'paid', 'failed', 'refunded']);
+
 const getAllOrders = asyncHandler(async (req, res) => {
-  const { status, search } = req.query;
-  const { page, limit, skip } = paginate(req.query);
-  const filter = {};
-  if (status) filter.status = String(status);
-  if (search) {
+  const { status, search, paymentStatus, dateFrom, dateTo } = req.query;
+  const { page, limit, skip } = paginate(req.query, { defaultLimit: 20, maxLimit: 200 });
+  const sort = resolveSort(req.query.sort, ORDER_SORTS, '-createdAt');
+
+  const filter = {
+    // Validated against the enum: an unrecognised status would match nothing
+    // and be indistinguishable from "no orders".
+    ...(ORDER_STATUSES.has(status) && { status }),
+    ...(PAYMENT_STATUSES.has(paymentStatus) && { paymentStatus }),
+  };
+
+  // Inclusive date range. dateTo is pushed to the end of that day so picking
+  // the same day for both bounds returns that day's orders.
+  if (dateFrom || dateTo) {
+    filter.createdAt = {};
+    if (dateFrom && !Number.isNaN(Date.parse(dateFrom))) {
+      filter.createdAt.$gte = new Date(dateFrom);
+    }
+    if (dateTo && !Number.isNaN(Date.parse(dateTo))) {
+      const end = new Date(dateTo);
+      end.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = end;
+    }
+    if (!Object.keys(filter.createdAt).length) delete filter.createdAt;
+  }
+
+  const term = String(search ?? '').trim();
+  if (term) {
+    const safe = escapeRegex(term.slice(0, 100));
+    // Resolve matching customers first, then match orders by orderNumber OR
+    // by those user ids. Capped so a broad term cannot pull an unbounded id
+    // list into the query.
+    const matchedUsers = await User.find({
+      $or: [
+        { name: { $regex: safe, $options: 'i' } },
+        { email: { $regex: safe, $options: 'i' } },
+        { phone: { $regex: safe, $options: 'i' } },
+      ],
+    }).select('_id').limit(500).lean();
+
     filter.$or = [
-      { orderNumber: { $regex: escapeRegex(String(search).slice(0, 100)), $options: 'i' } },
+      { orderNumber: { $regex: safe, $options: 'i' } },
+      ...(matchedUsers.length ? [{ user: { $in: matchedUsers.map((u) => u._id) } }] : []),
     ];
   }
 
   const [orders, total] = await Promise.all([
-    Order.find(filter).populate('user', 'name email phone').sort('-createdAt').skip(skip).limit(limit).lean(),
+    Order.find(filter)
+      .populate('user', 'name email phone')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Order.countDocuments(filter),
   ]);
 
-  sendResponse(res, 200, { orders, pagination: { page, limit, total, pages: Math.ceil(total / limit) } }, 'All orders fetched');
+  // `orders` retained alongside the shared `items` key for compatibility.
+  sendResponse(res, 200, {
+    orders,
+    ...listEnvelope(orders, total, page, limit),
+  }, 'All orders fetched');
 });
 
 // GET /orders/:id — Admin

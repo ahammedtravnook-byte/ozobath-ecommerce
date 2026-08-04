@@ -24,5 +24,8 @@ const categorySchema = new mongoose.Schema({
 // NOTE: the unique:true on the field above already creates this index;
 // declaring it again produced a duplicate-index warning at boot.
 categorySchema.index({ parent: 1 });
+// Admin Categories table sorts by order/name and filters by active state.
+categorySchema.index({ isActive: 1, order: 1 });
+categorySchema.index({ name: 1 });
 
 module.exports = mongoose.model('Category', categorySchema);

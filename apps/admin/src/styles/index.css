@@ -62,6 +62,98 @@ body {
         @apply admin-card flex flex-col gap-2 relative overflow-hidden;
     }
 
+    /* ─────────────────────────────────────────────────────────
+       Data tables — classic admin surface
+
+       Deliberately quieter than the .admin-* classes above. Those use
+       rounded-[2rem], font-black and uppercase tracking-widest, which reads
+       well on dashboard cards but fights a dense table: all-caps at 10px is
+       slow to scan, and 2rem radii waste horizontal room per row.
+
+       These follow the convention operators already know from Shopify,
+       Stripe and Linear — 8px radii, medium weight, sentence case, 13px
+       body. Additive only: no existing class is redefined, so pages that
+       have not moved to <DataTable> are untouched.
+       ───────────────────────────────────────────────────────── */
+
+    .dt-surface {
+        @apply bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden;
+    }
+
+    .dt-toolbar {
+        @apply flex flex-col gap-3 px-4 py-3 border-b border-slate-200 bg-white
+               lg:flex-row lg:items-center lg:justify-between;
+    }
+
+    .dt-input {
+        @apply w-full h-9 px-3 bg-white border border-slate-300 rounded-md text-[13px]
+               text-slate-900 placeholder:text-slate-400 transition-colors
+               focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15;
+    }
+
+    .dt-select {
+        @apply h-9 pl-3 pr-8 bg-white border border-slate-300 rounded-md text-[13px]
+               text-slate-700 cursor-pointer transition-colors appearance-none
+               focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15;
+    }
+
+    .dt-btn {
+        @apply inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-md
+               border border-slate-300 bg-white text-[13px] font-medium text-slate-700
+               transition-colors hover:bg-slate-50 active:bg-slate-100
+               disabled:opacity-50 disabled:pointer-events-none
+               focus:outline-none focus:ring-2 focus:ring-blue-500/15;
+    }
+
+    .dt-btn-primary {
+        @apply dt-btn bg-slate-900 border-slate-900 text-white
+               hover:bg-slate-800 active:bg-slate-950;
+    }
+
+    /* Column header. Sorting affordance is applied by <DataTable>. */
+    .dt-th {
+        @apply px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500
+               uppercase tracking-wide whitespace-nowrap bg-slate-50
+               border-b border-slate-200 select-none;
+    }
+
+    .dt-th-sortable {
+        @apply cursor-pointer transition-colors hover:text-slate-900 hover:bg-slate-100;
+    }
+
+    .dt-td {
+        @apply px-4 py-3 text-[13px] text-slate-700 align-middle;
+    }
+
+    .dt-row {
+        @apply border-b border-slate-100 transition-colors hover:bg-slate-50/70;
+    }
+
+    /* Filter chips: each removable, so an operator can see and undo exactly
+       what is narrowing the result set. */
+    .dt-chip {
+        @apply inline-flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-md
+               bg-blue-50 border border-blue-200 text-[12px] font-medium text-blue-700;
+    }
+
+    .dt-chip-x {
+        @apply w-4 h-4 inline-flex items-center justify-center rounded
+               text-blue-400 transition-colors hover:bg-blue-200 hover:text-blue-800;
+    }
+
+    .dt-badge {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px]
+               font-medium border whitespace-nowrap;
+    }
+
+    .dt-empty {
+        @apply flex flex-col items-center justify-center px-6 py-16 text-center;
+    }
+
+    .dt-skel {
+        @apply bg-slate-100 rounded animate-pulse;
+    }
+
     .animate-fade-in {
         animation: fadeIn 0.5s ease-out;
     }

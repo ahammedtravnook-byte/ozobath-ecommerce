@@ -337,7 +337,13 @@ const saveProduct = async () => {
 };
 
 onMounted(async () => {
-  try { const catRes = await categoryAPI.getAll(); categories.value = catRes.data || []; } catch (e) {}
+  // categories/admin/all is paginated now and returns { items, pagination }.
+  // Ask for enough to fill the dropdown in one call, and keep the bare-array
+  // fallback so this still works against an older server build.
+  try {
+    const catRes = await categoryAPI.getAll({ limit: 200 });
+    categories.value = catRes.data?.items || catRes.data || [];
+  } catch (e) {}
   try { const prodRes = await productAPI.getAll(); allProducts.value = (prodRes.data?.products || prodRes.data || []); } catch (e) {}
   if (isEdit.value) {
     try {

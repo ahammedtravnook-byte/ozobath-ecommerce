@@ -14,12 +14,15 @@ export const authAPI = {
 export const analyticsAPI = {
   getDashboard: () => api.get('/analytics/dashboard'),
   getSalesReport: (period) => api.get('/analytics/sales', { params: { period } }),
-  getCustomers: () => api.get('/analytics/customers'),
+  // config carries the AbortController signal from useDataTable, so a
+  // superseded request is cancelled instead of racing the newer one.
+  getCustomers: (params, config) => api.get('/analytics/customers', { params, ...config }),
 };
 
 // ─── Products ────────────────────────────────────
 export const productAPI = {
-  getAll: (params) => api.get('/products/admin/all', { params }),
+  getAll: (params, config) => api.get('/products/admin/all', { params, ...config }),
+  getStockSummary: (config) => api.get('/products/admin/stock-summary', { ...config }),
   getById: (id) => api.get(`/products/admin/${id}`),
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
@@ -34,7 +37,7 @@ export const productAPI = {
 
 // ─── Categories ──────────────────────────────────
 export const categoryAPI = {
-  getAll: () => api.get('/categories/admin/all'),
+  getAll: (params, config) => api.get('/categories/admin/all', { params, ...config }),
   create: (data) => api.post('/categories', data),
   update: (id, data) => api.put(`/categories/${id}`, data),
   delete: (id) => api.delete(`/categories/${id}`),
@@ -42,7 +45,7 @@ export const categoryAPI = {
 
 // ─── Orders ──────────────────────────────────────
 export const orderAPI = {
-  getAll: (params) => api.get('/orders', { params }),
+  getAll: (params, config) => api.get('/orders', { params, ...config }),
   getById: (id) => api.get(`/orders/${id}`),
   updateStatus: (id, data) => api.put(`/orders/${id}/status`, data),
 };
@@ -105,7 +108,7 @@ export const testimonialAPI = {
 
 // ─── Enquiries ───────────────────────────────────
 export const enquiryAPI = {
-  getAll: (params) => api.get('/enquiries/b2b', { params }),
+  getAll: (params, config) => api.get('/enquiries/b2b', { params, ...config }),
   update: (id, data) => api.put(`/enquiries/b2b/${id}`, data),
 };
 

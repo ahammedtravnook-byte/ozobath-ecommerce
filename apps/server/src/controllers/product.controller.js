@@ -10,7 +10,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const slugify = require('../utils/slugify');
 const { logActivity } = require('./activityLog.controller');
 const { paginate } = require('../utils/pagination');
-const { escapeRegex } = require('../utils/sanitize');
+const { buildSearchFilter, resolveSort, sortableSet, listEnvelope } = require('../utils/listQuery');
 
 // GET /products - List with filters, sort, pagination, search
 const getProducts = asyncHandler(async (req, res) => {
@@ -154,33 +154,65 @@ const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 // GET /products/admin/all (Admin - include inactive)
-const getAllProductsAdmin = asyncHandler(async (req, res) => {
-  const { search, category, status } = req.query;
-  const { page, limit, skip } = paginate(req.query);
-  const filter = {};
+//
+// Backs both the Products table and Inventory. Inventory used to request
+// limit=200 and filter stock levels in the browser; MAX_LIMIT silently clamped
+// that to 100, so anything past the 100th product was invisible AND
+// unsearchable. stockStatus moves that filter to the database.
+const ADMIN_PRODUCT_SORTS = sortableSet([
+  'createdAt', 'name', 'price', 'stock', 'salesCount',
+]);
 
-  if (category && mongoose.Types.ObjectId.isValid(category)) filter.category = category;
-  if (status === 'active') filter.isActive = true;
-  if (status === 'inactive') filter.isActive = false;
-  // Escape before it reaches $regex — an unescaped `(a+)+$` is a
-  // catastrophically backtracking pattern executed inside MongoDB.
-  if (search) {
-    const safe = escapeRegex(String(search).slice(0, 100));
-    filter.$or = [
-      { name: { $regex: safe, $options: 'i' } },
-      { sku: { $regex: safe, $options: 'i' } },
-    ];
-  }
+// Matches the low-stock threshold the admin UI highlights in red.
+const LOW_STOCK_THRESHOLD = 10;
+
+const getAllProductsAdmin = asyncHandler(async (req, res) => {
+  const { category, status, stockStatus } = req.query;
+  // Admin tables legitimately page larger than the public catalogue.
+  const { page, limit, skip } = paginate(req.query, { defaultLimit: 20, maxLimit: 200 });
+  const sort = resolveSort(req.query.sort, ADMIN_PRODUCT_SORTS, '-createdAt');
+
+  const filter = {
+    ...(category && mongoose.Types.ObjectId.isValid(category) && { category }),
+    ...(status === 'active' && { isActive: true }),
+    ...(status === 'inactive' && { isActive: false }),
+    ...(stockStatus === 'out' && { stock: { $lte: 0 } }),
+    ...(stockStatus === 'low' && { stock: { $gt: 0, $lt: LOW_STOCK_THRESHOLD } }),
+    ...(stockStatus === 'healthy' && { stock: { $gte: LOW_STOCK_THRESHOLD } }),
+    ...buildSearchFilter(req.query.search, ['name', 'sku']),
+  };
 
   const [products, total] = await Promise.all([
-    Product.find(filter).populate('category', 'name slug').sort('-createdAt').skip(skip).limit(limit).lean(),
+    Product.find(filter)
+      .populate('category', 'name slug')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Product.countDocuments(filter),
   ]);
 
+  // `products` is kept alongside the shared `items` key so this response stays
+  // backward compatible with any caller not yet migrated.
   sendResponse(res, 200, {
     products,
-    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    ...listEnvelope(products, total, page, limit),
   }, 'All products fetched');
+});
+
+// GET /products/admin/stock-summary
+// Inventory shows healthy/low/out counts. Deriving them in the browser
+// required loading every product; this counts them in the database, so the
+// figures stay correct no matter how many products exist.
+const getStockSummary = asyncHandler(async (req, res) => {
+  const [healthy, low, out, total] = await Promise.all([
+    Product.countDocuments({ stock: { $gte: LOW_STOCK_THRESHOLD } }),
+    Product.countDocuments({ stock: { $gt: 0, $lt: LOW_STOCK_THRESHOLD } }),
+    Product.countDocuments({ stock: { $lte: 0 } }),
+    Product.countDocuments({}),
+  ]);
+
+  sendResponse(res, 200, { healthy, low, out, total }, 'Stock summary fetched');
 });
 
 // GET /products/admin/:id (Admin - fully fetch product by ID)
@@ -192,4 +224,4 @@ const getProductByIdAdmin = asyncHandler(async (req, res) => {
   sendResponse(res, 200, product, 'Product fetched');
 });
 
-module.exports = { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, getAllProductsAdmin, getProductByIdAdmin };
+module.exports = { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, getAllProductsAdmin, getProductByIdAdmin, getStockSummary };

@@ -28,6 +28,7 @@ const { createAdminNotification } = require('./adminNotification.controller');
 const { cleanText, cleanImages, isSafeUrl } = require('../utils/sanitize');
 const { isValidObjectId } = require('mongoose');
 const { paginate } = require('../utils/pagination');
+const { buildSearchFilter, resolveSort, sortableSet, listEnvelope } = require('../utils/listQuery');
 const { logActivity } = require('./activityLog.controller');
 
 // ─── REVIEW ──────────────────────────────────────
@@ -562,12 +563,45 @@ const createB2BEnquiry = asyncHandler(async (req, res) => {
   sendResponse(res, 201, enquiry, 'Enquiry submitted');
 });
 
+// GET /enquiries/b2b — paginated, searchable, filterable.
+//
+// Was an unbounded find(): every enquiry ever submitted, in one response, on
+// every page load. This is a public write endpoint, so the collection only
+// grows.
+const ENQUIRY_SORTS = sortableSet(['createdAt', 'companyName', 'status']);
+const ENQUIRY_STATUSES = new Set(['new', 'contacted', 'in-progress', 'converted', 'closed']);
+const BUSINESS_TYPES = new Set(['dealer', 'builder', 'architect', 'interior-designer', 'other']);
+
 const getB2BEnquiries = asyncHandler(async (req, res) => {
-  const { status } = req.query;
-  const filter = {};
-  if (status) filter.status = status;
-  const enquiries = await B2BEnquiry.find(filter).sort('-createdAt').lean();
-  sendResponse(res, 200, enquiries, 'Enquiries fetched');
+  const { status, businessType } = req.query;
+  const { page, limit, skip } = paginate(req.query, { defaultLimit: 20, maxLimit: 200 });
+  const sort = resolveSort(req.query.sort, ENQUIRY_SORTS, '-createdAt');
+
+  const filter = {
+    // Validate against the schema enum. An unknown value would otherwise
+    // silently match nothing and read as "no enquiries exist".
+    ...(ENQUIRY_STATUSES.has(status) && { status }),
+    ...(BUSINESS_TYPES.has(businessType) && { businessType }),
+    ...buildSearchFilter(req.query.search, [
+      'companyName',
+      'contactPerson',
+      'email',
+      'phone',
+      'city',
+    ]),
+  };
+
+  const [enquiries, total] = await Promise.all([
+    B2BEnquiry.find(filter).sort(sort).skip(skip).limit(limit).lean(),
+    B2BEnquiry.countDocuments(filter),
+  ]);
+
+  sendResponse(
+    res,
+    200,
+    listEnvelope(enquiries, total, page, limit),
+    'Enquiries fetched'
+  );
 });
 
 const updateB2BEnquiry = asyncHandler(async (req, res) => {
@@ -927,10 +961,38 @@ const getSalesReport = asyncHandler(async (req, res) => {
   sendResponse(res, 200, sales, 'Sales report fetched');
 });
 
+// GET /analytics/customers — paginated, searchable customer list.
+//
+// This previously returned `.limit(50)` with no pagination and no search, and
+// the admin table filtered that array in the browser. Customer 51 was not
+// merely on another page, it was unreachable from the UI entirely.
+const CUSTOMER_SORTS = sortableSet(['createdAt', 'name', 'email']);
+
 const getCustomerAnalytics = asyncHandler(async (req, res) => {
-  const customers = await User.find({ role: 'customer' })
-    .select('name email phone createdAt').sort('-createdAt').limit(50).lean();
-  sendResponse(res, 200, customers, 'Customer analytics fetched');
+  const { page, limit, skip } = paginate(req.query, { defaultLimit: 20, maxLimit: 200 });
+  const sort = resolveSort(req.query.sort, CUSTOMER_SORTS, '-createdAt');
+
+  const filter = {
+    role: 'customer',
+    ...buildSearchFilter(req.query.search, ['name', 'email', 'phone']),
+  };
+
+  const [customers, total] = await Promise.all([
+    User.find(filter)
+      .select('name email phone createdAt')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    User.countDocuments(filter),
+  ]);
+
+  sendResponse(
+    res,
+    200,
+    listEnvelope(customers, total, page, limit),
+    'Customer analytics fetched'
+  );
 });
 
 // ─── ADMIN USER MANAGEMENT (SuperAdmin) ──────────
