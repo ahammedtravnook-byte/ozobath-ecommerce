@@ -597,7 +597,7 @@ const Navbar = () => {
                                 width="157"
                                 height="96"
                                 fetchPriority="high"
-                                className="h-12 sm:h-14 w-auto group-hover:scale-105 transition-transform duration-300"
+                                className="h-9 sm:h-10 w-auto group-hover:scale-105 transition-transform duration-300"
                             />
                         </Link>
 
@@ -831,7 +831,7 @@ const Navbar = () => {
                                         alt="OzoBath"
                                         width="157"
                                         height="96"
-                                        className="h-11 w-auto object-contain"
+                                        className="h-9 w-auto object-contain"
                                     />
                                 </Link>
                                 <button
