@@ -5,6 +5,7 @@ import { FiPackage, FiTruck, FiCheckCircle, FiClock, FiXCircle, FiChevronRight, 
 import { orderAPI } from '@api/services';
 import { useAuth } from '@context/AuthContext';
 import toast from 'react-hot-toast';
+import SEO from '@components/SEO';
 
 const statusConfig = {
   pending:    { label: 'Pending',    bg: 'bg-amber-50',    text: 'text-amber-700',   border: 'border-amber-200',  dot: 'bg-amber-400',  bar: 'bg-amber-400',   icon: FiClock },
@@ -122,6 +123,10 @@ const OrdersPage = () => {
 
   return (
     <div className="min-h-screen bg-dark-50/40">
+        <SEO
+            title="My Orders"
+            noindex
+        />
       {/* Page Header */}
       <div className="bg-white border-b border-dark-100/40 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-20 sm:pt-6">

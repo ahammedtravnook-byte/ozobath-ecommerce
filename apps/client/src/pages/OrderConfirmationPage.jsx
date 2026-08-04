@@ -1,9 +1,14 @@
 import { Link, useParams } from 'react-router-dom';
+import SEO from '@components/SEO';
 
 const OrderConfirmationPage = () => {
     const { orderId } = useParams();
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8 sm:py-0">
+            <SEO
+                title="Order Confirmed"
+                noindex
+            />
             <div className="max-w-md w-full text-center">
                 <div className="bg-white rounded-2xl p-8 shadow-soft">
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><span className="text-4xl">🎉</span></div>

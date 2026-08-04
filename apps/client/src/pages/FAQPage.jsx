@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { faqAPI } from '@api/services';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const fallbackFAQs = [
     { _id: 'f1', question: 'What types of shower enclosures do you offer?', answer: 'We offer a wide range of premium shower enclosures including frameless glass, semi-frameless, sliding door, corner, walk-in, and custom-built options. All our enclosures use ISI-certified toughened glass for maximum safety.', category: 'Products' },
@@ -49,6 +50,10 @@ const FAQPage = () => {
 
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="Frequently Asked Questions"
+                description="Answers about OzoBath shower enclosures: sizing, glass thickness, installation, shipping, warranty, returns and payment options."
+            />
             <PageHero
                 title="Frequently Asked Questions"
                 subtitle="Everything you need to know about OZOBATH products, installation, warranty, and more."

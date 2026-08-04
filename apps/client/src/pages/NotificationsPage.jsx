@@ -5,6 +5,7 @@ import { FiBell, FiTrash2, FiCheckCircle, FiPackage, FiStar, FiTag, FiTruck, FiA
 import { useNotifications } from '@context/NotificationContext';
 import PageHero from '@components/PageHero';
 import toast from 'react-hot-toast';
+import SEO from '@components/SEO';
 
 /* ─── Constants ──────────────────────────────── */
 const NOTIF_META = {
@@ -154,6 +155,10 @@ const NotificationsPage = () => {
 
     return (
         <div className="bg-[#fafafa] min-h-screen">
+            <SEO
+                title="Notifications"
+                noindex
+            />
             <PageHero
                 title="Notifications"
                 subtitle="Stay updated with your orders, offers, and account activity."

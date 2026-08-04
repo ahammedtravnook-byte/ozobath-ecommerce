@@ -6,6 +6,7 @@ import { orderAPI, paymentAPI, couponAPI, couponAutoAPI, addressAPI } from '@api
 import { calculateTotals, TAX_RATE } from '@utils/calculateTotals';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import SEO from '@components/SEO';
 
 const CheckoutPage = () => {
     const { cart, clearCart } = useCart();
@@ -208,9 +209,11 @@ const CheckoutPage = () => {
                 key: razorpayOrder.keyId,
                 amount: razorpayOrder.amount,
                 currency: razorpayOrder.currency,
-                name: 'OZOBATH',
+                name: 'OzoBath',
                 description: 'Premium Bath Solutions',
-                image: '/images/logo.png',
+                // Absolute — the Razorpay modal renders in its own iframe and
+                // will not resolve a site-relative path.
+                image: `${window.location.origin}/apple-touch-icon.png`,
                 order_id: razorpayOrder.orderId,
                 handler: async (response) => {
                     // Step 4: Payment succeeded — now create order in DB
@@ -270,6 +273,10 @@ const CheckoutPage = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#F5F9FF] to-white">
+            <SEO
+                title="Checkout"
+                noindex
+            />
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
                 <motion.h1
                     className="text-3xl font-display font-bold text-dark-900 mb-2"

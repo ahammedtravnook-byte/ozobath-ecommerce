@@ -43,9 +43,23 @@ if (OLD_URI === NEW_URI) {
 // Hide credentials when printing a URI.
 const redact = (uri) => uri.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@');
 
+// Read the database name from the path segment after the host list.
+//
+// A naive /\/([^/?]+)(\?|$)/ matches the "//user:pass@host" part first and
+// returns the credentials as the database name, which would silently create a
+// database named after the password. Strip the scheme and userinfo first, then
+// take only what follows the host.
 const dbNameFrom = (uri) => {
-  const m = uri.match(/\/([^/?]+)(\?|$)/);
-  return m ? m[1] : null;
+  const afterScheme = uri.replace(/^mongodb(\+srv)?:\/\//, '');
+  const afterAuth = afterScheme.includes('@')
+    ? afterScheme.slice(afterScheme.indexOf('@') + 1)
+    : afterScheme;
+
+  const slash = afterAuth.indexOf('/');
+  if (slash === -1) return null; // host only, no database in the URI
+
+  const name = afterAuth.slice(slash + 1).split('?')[0].trim();
+  return name || null;
 };
 
 const migrate = async () => {
@@ -53,8 +67,20 @@ const migrate = async () => {
   const newName = dbNameFrom(NEW_URI);
 
   if (!oldName || !newName) {
+    console.error('');
     console.error('FATAL: Could not read a database name from one of the URIs.');
-    console.error('       Expected .../<dbname>?... — check the path segment.');
+    console.error('');
+    if (!oldName) console.error(`       SOURCE has no /<dbname>:  ${redact(OLD_URI)}`);
+    if (!newName) console.error(`       TARGET has no /<dbname>:  ${redact(NEW_URI)}`);
+    console.error('');
+    console.error('       Atlas\'s "Connect" dialog omits it. Add the database name');
+    console.error('       between the host and the query string:');
+    console.error('');
+    console.error('         mongodb+srv://user:pass@cluster0.xxx.mongodb.net/ozobath?retryWrites=true&w=majority');
+    console.error('                                                          ^^^^^^^^');
+    console.error('');
+    console.error('       Without it the driver would silently use the "test" database.');
+    console.error('');
     process.exit(1);
   }
 
@@ -138,20 +164,31 @@ const migrate = async () => {
 
       let copied = 0;
       if (count > 0) {
+        // Upsert by _id rather than insertMany: on a --force re-run into a
+        // populated target, insertMany throws on the first duplicate _id and
+        // aborts the collection mid-way. replaceOne+upsert is idempotent, so
+        // re-running after a partial failure resumes cleanly.
+        const flush = async (batch) => {
+          if (!batch.length) return 0;
+          const res = await newDb.collection(name).bulkWrite(
+            batch.map((doc) => ({
+              replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true },
+            })),
+            { ordered: false }
+          );
+          return (res.upsertedCount || 0) + (res.modifiedCount || 0) + (res.matchedCount || 0);
+        };
+
         const cursor = src.find({});
         let batch = [];
         while (await cursor.hasNext()) {
           batch.push(await cursor.next());
           if (batch.length >= BATCH_SIZE) {
-            await newDb.collection(name).insertMany(batch, { ordered: false });
-            copied += batch.length;
+            copied += await flush(batch);
             batch = [];
           }
         }
-        if (batch.length) {
-          await newDb.collection(name).insertMany(batch, { ordered: false });
-          copied += batch.length;
-        }
+        copied += await flush(batch);
       } else {
         // Preserve empty collections so the schema shape survives.
         await newDb.createCollection(name).catch(() => {});
@@ -163,7 +200,15 @@ const migrate = async () => {
       // silently permits duplicate orders.
       let idxOk = 0;
       for (const idx of custom) {
-        const { key, name: idxName, v, ns, background, ...opts } = idx;
+        // Copy only real index options. Server-generated bookkeeping fields
+        // (v, ns, background, and the 2dsphere/text internals below) are
+        // rejected by createIndex or are meaningless on the new cluster.
+        const {
+          key, name: idxName,
+          v, ns, background,
+          textIndexVersion, '2dsphereIndexVersion': sphereVersion,
+          ...opts
+        } = idx;
         try {
           await newDb.collection(name).createIndex(key, { name: idxName, ...opts });
           idxOk++;

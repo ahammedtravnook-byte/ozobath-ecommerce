@@ -19,6 +19,12 @@
   "devDependencies": {
     "concurrently": "^9.1.2"
   },
+  "overridesComment": {
+    "axios": "razorpay@2.9.6 depends on axios ^1.6.8 and resolved to 1.13.5, which carries 11 advisories including SSRF and prototype pollution reachable from the payment path. 1.19.0 satisfies razorpay's own range, so this pins the fix without forking the SDK. Remove once razorpay ships a release that resolves axios >= 1.19.0 itself."
+  },
+  "overrides": {
+    "axios": "^1.19.0"
+  },
   "engines": {
     "node": ">=18.0.0"
   }

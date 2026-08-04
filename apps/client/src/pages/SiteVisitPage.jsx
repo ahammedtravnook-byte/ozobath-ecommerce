@@ -6,6 +6,7 @@ import { bookingAPI } from '@api/services';
 import toast from 'react-hot-toast';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const steps = [
     { icon: FiClipboard, title: 'Free Measurement', desc: 'Professional space analysis', color: 'accent' },
@@ -42,6 +43,10 @@ const SiteVisitPage = () => {
 
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="Book a Site Visit"
+                description="Book a free site visit with an OzoBath consultant for measurement and bathroom design advice."
+            />
             <PageHero
                 title="Book a Site Visit"
                 subtitle="Our experts will visit your space to help you choose the perfect bathroom solutions."

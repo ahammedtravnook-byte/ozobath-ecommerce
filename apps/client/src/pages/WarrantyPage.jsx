@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FiShield } from 'react-icons/fi';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const warrantyData = [
     { type: 'Shower Systems', period: '5 Years' },
@@ -12,6 +13,10 @@ const warrantyData = [
 
 const WarrantyPage = () => (
     <div className="bg-[#ffffff]">
+        <SEO
+            title="Warranty"
+            description="OzoBath warranty coverage: 5 years on shower enclosures, 3 years on faucets and mixers, 2 years on accessories against manufacturing defects."
+        />
         <PageHero
             title="Warranty Information"
             subtitle="Your OZOBATH products are protected. Learn about our comprehensive warranty coverage."

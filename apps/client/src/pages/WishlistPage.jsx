@@ -5,6 +5,7 @@ import { FiHeart, FiShoppingCart, FiTrash2, FiArrowRight } from 'react-icons/fi'
 import { useAuth } from '@context/AuthContext';
 import { useCart } from '@context/CartContext';
 import toast from 'react-hot-toast';
+import SEO from '@components/SEO';
 
 const fadeInUp = {
     hidden: { opacity: 0, y: 20 },
@@ -88,6 +89,10 @@ const WishlistPage = () => {
 
     return (
         <div className="min-h-screen bg-[#ffffff] pt-20 sm:pt-28 pb-16 sm:pb-20">
+            <SEO
+                title="My Wishlist"
+                noindex
+            />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

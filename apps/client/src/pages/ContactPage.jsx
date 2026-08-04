@@ -4,6 +4,7 @@ import { FiMapPin, FiPhone, FiMail, FiClock, FiSend, FiInstagram, FiFacebook, Fi
 import toast from 'react-hot-toast';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const contactInfo = [
     { icon: FiMapPin, title: 'Visit Us', text: 'Bangalore, Karnataka, India', color: 'accent' },
@@ -39,6 +40,10 @@ const ContactPage = () => {
 
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="Contact Us"
+                description="Get in touch with OzoBath for product enquiries, bulk orders, installation support or showroom visits. Call, email or send us a message."
+            />
             <PageHero
                 title="Contact Us"
                 subtitle="Have a question or need assistance? We're here to help you create your dream bathroom."

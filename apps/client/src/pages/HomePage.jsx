@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import { useWishlist } from '@context/WishlistContext';
+import SEO from '@components/SEO';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -280,6 +281,23 @@ const HomePage = () => {
 
     return (
         <div className="bg-white min-h-screen text-dark-900 font-sans overflow-hidden">
+
+            {/* The FAQ block below is already on the page, so exposing it as
+                FAQPage data is legitimate markup — it can surface as an
+                expandable rich result. */}
+            <SEO
+                canonical="https://ozobath.in/"
+                keywords="shower enclosure, frameless shower, glass shower partition, bathroom fittings India, OzoBath"
+                jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@type': 'FAQPage',
+                    mainEntity: homeFAQs.map((f) => ({
+                        '@type': 'Question',
+                        name: f.question,
+                        acceptedAnswer: { '@type': 'Answer', text: f.answer },
+                    })),
+                }}
+            />
 
             {/* ═══════════════════════════════════════════
                 1. HERO SECTION
