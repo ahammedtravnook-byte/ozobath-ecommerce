@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiUser, FiMapPin, FiPlus, FiEdit2, FiTrash2, FiCheck, FiX, FiHome, FiBriefcase, FiStar, FiLogOut } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import SEO from '@components/SEO';
 
 const LABEL_OPTIONS = [
     { value: 'Home', icon: FiHome, color: 'text-blue-600 bg-blue-50 border-blue-200' },
@@ -134,6 +135,10 @@ const ProfilePage = () => {
 
     return (
         <div className="min-h-screen bg-dark-50/40">
+            <SEO
+                title="My Profile"
+                noindex
+            />
             <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pt-20 sm:pt-8 pb-24 sm:pb-10">
                 <motion.h1
                     className="text-2xl sm:text-3xl font-display font-bold text-dark-900 mb-8"

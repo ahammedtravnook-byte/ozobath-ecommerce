@@ -7,6 +7,7 @@ import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import { useWishlist } from '@context/WishlistContext';
 import toast from 'react-hot-toast';
+import SEO from '@components/SEO';
 
 const fadeInUp = {
     hidden: { opacity: 0, y: 30 },
@@ -130,6 +131,10 @@ const ShopPage = () => {
 
     return (
         <div className="min-h-screen bg-[#ffffff]">
+            <SEO
+                title="Shop All Products"
+                description="Browse premium shower enclosures, glass partitions, shower panels and bathroom fittings from OzoBath. Free shipping above Rs.999 across India."
+            />
             {/* Hero Banner */}
             <section className="relative bg-dark-900 text-white pt-8 sm:pt-16 md:pt-20 pb-8 sm:pb-10 md:pb-16 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-dark-950 via-dark-900 to-dark-800" />

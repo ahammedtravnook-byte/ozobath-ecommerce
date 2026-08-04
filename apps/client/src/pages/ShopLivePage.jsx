@@ -5,6 +5,7 @@ import { bookingAPI } from '@api/services';
 import toast from 'react-hot-toast';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const perks = [
     { icon: FiVideo, title: 'Live Video Tour', desc: 'See products in real time via HD video', color: 'accent' },
@@ -36,6 +37,10 @@ const ShopLivePage = () => {
 
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="Shop Live"
+                description="Shop OzoBath products live with a consultant over video and get personalised recommendations."
+            />
             <PageHero
                 title="Shop Live via Video Call"
                 subtitle="Get a personal product tour from our experts. See products up close, ask questions, and make the best choice — all from home."

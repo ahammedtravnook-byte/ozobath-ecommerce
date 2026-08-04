@@ -5,6 +5,7 @@ import { enquiryAPI } from '@api/services';
 import toast from 'react-hot-toast';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const benefits = [
     { icon: FiPercent, title: 'Bulk Pricing', desc: 'Competitive wholesale rates for large orders', color: 'accent' },
@@ -27,6 +28,10 @@ const B2BEnquiryPage = () => {
 
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="B2B & Bulk Enquiry"
+                description="Bulk and trade pricing on OzoBath shower enclosures and bathroom fittings for builders, architects, hotels and interior designers."
+            />
             <PageHero
                 title="B2B / Bulk Orders"
                 subtitle="Partner with OZOBATH for premium bathroom solutions at scale. Special pricing for architects, builders, and interior designers."

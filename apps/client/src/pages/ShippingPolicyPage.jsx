@@ -1,8 +1,13 @@
 import PageHero from '@components/PageHero';
 import ScrollReveal from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const ShippingPolicyPage = () => (
     <div className="bg-[#ffffff]">
+        <SEO
+            title="Shipping Policy"
+            description="OzoBath shipping timelines, charges and coverage across India. Free shipping on orders above Rs.2999."
+        />
         <PageHero
             title="Shipping Policy"
             subtitle="Everything you need to know about delivery, shipping charges, and order tracking."

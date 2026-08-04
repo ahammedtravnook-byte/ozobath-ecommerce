@@ -5,13 +5,14 @@ import { Link } from 'react-router-dom';
 import { faqAPI } from '@api/services';
 import PageHero from '@components/PageHero';
 import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
+import SEO from '@components/SEO';
 
 const fallbackFAQs = [
     { _id: 'f1', question: 'What types of shower enclosures do you offer?', answer: 'We offer a wide range of premium shower enclosures including frameless glass, semi-frameless, sliding door, corner, walk-in, and custom-built options. All our enclosures use ISI-certified toughened glass for maximum safety.', category: 'Products' },
     { _id: 'f2', question: 'How long does installation take?', answer: 'Professional installation typically takes 2-4 hours depending on the complexity. Our certified installers ensure precise measurements and a flawless fit. We schedule installations at your convenience.', category: 'Installation' },
     { _id: 'f3', question: 'Do you provide a warranty?', answer: 'Yes! All OZOBATH products come with a comprehensive 5-year warranty covering manufacturing defects, hardware issues, and glass integrity. Extended warranty options are also available.', category: 'Warranty' },
     { _id: 'f4', question: 'Can I customize the dimensions of my enclosure?', answer: 'Absolutely! We specialize in bespoke solutions. Our team will visit your site, take precise measurements, and craft a shower enclosure tailored perfectly to your bathroom space.', category: 'Products' },
-    { _id: 'f5', question: 'What is your delivery timeline?', answer: 'Standard delivery takes 7-14 business days. Express delivery (3-5 days) is available for select products. Free shipping is available on orders above ₹999.', category: 'Delivery' },
+    { _id: 'f5', question: 'What is your delivery timeline?', answer: 'Standard delivery takes 7-14 business days. Express delivery (3-5 days) is available for select products. Free shipping is available on orders above ₹2,999.', category: 'Delivery' },
     { _id: 'f6', question: 'Do you offer site visits for consultation?', answer: 'Yes, we offer free site visits across major cities in India. Our design consultants will assess your bathroom, discuss your preferences, and recommend the best solution. Book a visit through our website.', category: 'Installation' },
     { _id: 'f7', question: 'What payment methods do you accept?', answer: 'We accept all major payment methods including credit/debit cards, UPI, net banking, and EMI options. Cash on delivery is also available for select locations.', category: 'Orders' },
     { _id: 'f8', question: 'How do I track my order?', answer: 'Once your order is shipped, you will receive a tracking link via email and SMS. You can also track your order anytime from the "Track Order" section on our website.', category: 'Orders' },
@@ -49,6 +50,10 @@ const FAQPage = () => {
 
     return (
         <div className="bg-[#ffffff]">
+            <SEO
+                title="Frequently Asked Questions"
+                description="Answers about OzoBath shower enclosures: sizing, glass thickness, installation, shipping, warranty, returns and payment options."
+            />
             <PageHero
                 title="Frequently Asked Questions"
                 subtitle="Everything you need to know about OZOBATH products, installation, warranty, and more."

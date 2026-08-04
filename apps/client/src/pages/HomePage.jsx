@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
 import { useAuth } from '@context/AuthContext';
 import { useWishlist } from '@context/WishlistContext';
+import SEO from '@components/SEO';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -14,7 +15,7 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 // ─── FAQ DATA ──────────────────────────────
 const homeFAQs = [
     { question: 'What types of shower enclosures does OZOBATH offer?', answer: 'We offer frameless, semi-frameless, sliding door, corner/neo-angle, and walk-in shower enclosures. All use premium tempered safety glass (8mm, 10mm, 12mm) with optional anti-limescale nano coating.' },
-    { question: 'Do you provide free shipping?', answer: 'Yes! Free shipping on all orders above ₹999 across India. Metro cities receive delivery in 3-5 business days, while other cities take 5-7 business days.' },
+    { question: 'Do you provide free shipping?', answer: 'Yes! Free shipping on all orders above ₹2,999 across India. Metro cities receive delivery in 3-5 business days, while other cities take 5-7 business days.' },
     { question: 'What warranty coverage do you provide?', answer: 'Shower enclosures come with a 5-year comprehensive warranty. Faucets and basin mixers have 3 years, and accessories have 2 years coverage against manufacturing defects.' },
     { question: 'Can I visit your showroom to see products?', answer: 'Absolutely! Visit our Experience Centre in Bangalore, Karnataka. Open Monday to Saturday, 10 AM to 7 PM. Our design consultants are available for personalized recommendations.' },
     { question: 'Do you offer professional installation?', answer: 'Yes, we offer professional installation services in Bangalore within 3 days of delivery. For other metro cities, installation is available on request. All products include detailed DIY installation guides.' },
@@ -135,7 +136,7 @@ const fallbackTestimonials = [
 ];
 
 const trustBadges = [
-    { icon: FiTruck, label: 'Free Shipping', sublabel: 'Orders above ₹999' },
+    { icon: FiTruck, label: 'Free Shipping', sublabel: 'Orders above ₹2,999' },
     { icon: FiShield, label: '5-Year Warranty', sublabel: 'Complete protection' },
     { icon: FiAward, label: 'Premium Quality', sublabel: 'ISI Certified glass' },
     { icon: FiCheckCircle, label: 'Expert Install', sublabel: 'Professional fitting' },
@@ -280,6 +281,23 @@ const HomePage = () => {
 
     return (
         <div className="bg-white min-h-screen text-dark-900 font-sans overflow-hidden">
+
+            {/* The FAQ block below is already on the page, so exposing it as
+                FAQPage data is legitimate markup — it can surface as an
+                expandable rich result. */}
+            <SEO
+                canonical="https://ozobath.in/"
+                keywords="shower enclosure, frameless shower, glass shower partition, bathroom fittings India, OzoBath"
+                jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@type': 'FAQPage',
+                    mainEntity: homeFAQs.map((f) => ({
+                        '@type': 'Question',
+                        name: f.question,
+                        acceptedAnswer: { '@type': 'Answer', text: f.answer },
+                    })),
+                }}
+            />
 
             {/* ═══════════════════════════════════════════
                 1. HERO SECTION

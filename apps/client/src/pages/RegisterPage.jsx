@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '@context/AuthContext';
 import toast from 'react-hot-toast';
+import SEO from '@components/SEO';
 
 const RegisterPage = () => {
     const { register } = useAuth();
@@ -23,6 +24,10 @@ const RegisterPage = () => {
 
     return (
         <div className="min-h-screen flex bg-[#ffffff] relative overflow-hidden">
+            <SEO
+                title="Create Account"
+                noindex
+            />
             {/* Left Panel — Decorative Image */}
             <div className="hidden lg:flex w-1/2 relative items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-dark-950">

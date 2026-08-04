@@ -1,10 +1,16 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiHome, FiShoppingBag, FiSearch, FiArrowRight } from 'react-icons/fi';
+import SEO from '@components/SEO';
 
 const NotFoundPage = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#ffffff] px-4 py-20 relative overflow-hidden">
+            <SEO
+                title="Page Not Found"
+                description="The page you are looking for does not exist."
+                noindex
+            />
             {/* Decorative background elements */}
             <div className="absolute inset-0 pointer-events-none">
                 <motion.div
