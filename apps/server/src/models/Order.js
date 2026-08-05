@@ -173,5 +173,11 @@ orderSchema.index({ status: 1, createdAt: -1 });
 // Revenue aggregations and the coupon analytics grouping.
 orderSchema.index({ paymentStatus: 1, createdAt: -1 });
 orderSchema.index({ coupon: 1, paymentStatus: 1 });
+// Dashboard: the COD/prepaid split and the collected-revenue predicate both
+// filter on payment method alongside status.
+orderSchema.index({ paymentMethod: 1, status: 1 });
+// Dashboard: top-products and category revenue unwind items and group by
+// product id.
+orderSchema.index({ 'items.product': 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

@@ -154,6 +154,115 @@ body {
         @apply bg-slate-100 rounded animate-pulse;
     }
 
+    /* ─────────────────────────────────────────────────────────
+       Dashboard
+
+       Denser and quieter than the table surface: a dashboard is read at a
+       glance, so numbers carry the emphasis and chrome recedes. Tabular
+       figures everywhere that digits are compared vertically — proportional
+       numerals make columns of currency impossible to scan.
+       ───────────────────────────────────────────────────────── */
+
+    .db-card {
+        @apply bg-white border border-slate-200 rounded-xl p-5;
+    }
+
+    .db-eyebrow {
+        @apply text-[10.5px] font-medium tracking-[0.1em] uppercase text-slate-400;
+    }
+
+    .db-title {
+        @apply text-[15px] font-semibold text-slate-900 tracking-[-0.01em];
+    }
+
+    .db-sub {
+        @apply text-[12px] text-slate-400 mt-0.5;
+    }
+
+    .db-num {
+        @apply tabular-nums tracking-[-0.02em];
+    }
+
+    /* KPI tile — a button, because every tile drills through to its source. */
+    .db-kpi {
+        @apply bg-white border border-slate-200 rounded-xl px-4 pt-4 pb-3
+               text-left w-full block transition-colors hover:border-slate-300
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40;
+    }
+
+    .db-kpi-val {
+        @apply text-[26px] font-semibold tabular-nums tracking-[-0.03em] text-slate-900 my-2;
+    }
+
+    .db-delta {
+        @apply inline-flex items-center gap-1 text-[12px] font-medium tabular-nums;
+    }
+
+    .db-delta-up { @apply text-emerald-700; }
+    .db-delta-down { @apply text-red-700; }
+    .db-delta-flat { @apply text-slate-400; }
+
+    /* Needs-action strip: bordered rectangles, evenly spaced, no counters
+       badge and no underline. The count sits inline as a muted figure so the
+       row reads as a legend rather than a list of alerts. */
+    .db-action-bar {
+        @apply flex items-center gap-x-4 gap-y-2.5 flex-wrap
+               bg-amber-50/60 border border-amber-200/70 rounded-xl px-4 py-3;
+    }
+
+    .db-action-link {
+        @apply inline-flex items-center gap-2 no-underline
+               border border-amber-200 bg-white rounded-lg
+               px-3 h-8 text-[12.5px] text-slate-700 whitespace-nowrap
+               transition-colors hover:border-amber-300 hover:bg-amber-50/50
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40;
+    }
+
+    .db-action-count {
+        @apply tabular-nums font-semibold text-amber-700;
+    }
+
+    /* Horizontal bar rows, for breakdowns. */
+    .db-row-label {
+        @apply flex justify-between items-baseline text-[12.5px] mb-1.5;
+    }
+
+    .db-track {
+        @apply h-1.5 bg-slate-100 rounded-full overflow-hidden;
+    }
+
+    .db-fill {
+        @apply h-full rounded-full bg-[#12596E] transition-[width] duration-500;
+    }
+
+    .db-fill-mute { @apply bg-slate-300; }
+    .db-fill-warn { @apply bg-amber-500; }
+    .db-fill-bad { @apply bg-red-500; }
+
+    /* Ranking rows. */
+    .db-rank {
+        @apply flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0;
+    }
+
+    .db-rank-n {
+        @apply text-[10.5px] tabular-nums text-slate-400 w-4 shrink-0;
+    }
+
+    /* Segmented range control. */
+    .db-seg {
+        @apply flex bg-white border border-slate-200 rounded-lg p-[3px];
+    }
+
+    .db-seg-btn {
+        @apply px-2.5 py-1 rounded-md text-[12.5px] text-slate-500 whitespace-nowrap
+               transition-colors hover:text-slate-900
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40;
+    }
+
+    .db-seg-btn-on {
+        @apply bg-slate-900 text-white hover:text-white;
+    }
+
     .animate-fade-in {
         animation: fadeIn 0.5s ease-out;
     }

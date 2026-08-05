@@ -29,6 +29,7 @@ const { cleanText, cleanImages, isSafeUrl } = require('../utils/sanitize');
 const { isValidObjectId } = require('mongoose');
 const { paginate } = require('../utils/pagination');
 const { buildSearchFilter, resolveSort, sortableSet, listEnvelope } = require('../utils/listQuery');
+const dashboardService = require('../services/analytics/dashboard.service');
 const { logActivity } = require('./activityLog.controller');
 
 // ─── REVIEW ──────────────────────────────────────
@@ -892,55 +893,33 @@ const deletePartner = asyncHandler(async (req, res) => {
 
 // ─── ANALYTICS (Dashboard) ──────────────────────
 const getDashboard = asyncHandler(async (req, res) => {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+  // Assembly lives in services/analytics so the same figures can back a
+  // scheduled report or an export without going through HTTP. Revenue
+  // recognition is defined once, in services/analytics/revenueRules.js.
+  const payload = await dashboardService.getDashboard(req.query);
 
-  const [
-    totalOrders, totalRevenue, totalProducts, totalCustomers,
-    recentOrders, pendingOrders, topProducts,
-    orderStatusCounts, customerGrowth, lowStockProducts,
-    pendingReviews, newEnquiries,
-  ] = await Promise.all([
-    Order.countDocuments(),
-    Order.aggregate([{ $match: { paymentStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$total' } } }]),
-    Product.countDocuments({ isActive: true }),
-    User.countDocuments({ role: 'customer' }),
-    Order.find().sort('-createdAt').limit(10).populate('user', 'name email').lean(),
-    Order.countDocuments({ status: 'pending' }),
-    Product.find({ isActive: true }).sort('-salesCount').limit(10).select('name images price salesCount stock').lean(),
-    Order.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
-    User.aggregate([
-      { $match: { role: 'customer', createdAt: { $gte: thirtyDaysAgo } } },
-      { $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-        count: { $sum: 1 },
-      }},
-      { $sort: { _id: 1 } },
-    ]),
-    Product.find({ isActive: true, stock: { $lt: 10 } })
-      .select('name stock images sku lowStockThreshold').sort('stock').limit(10).lean(),
-    Review.countDocuments({ isApproved: false }),
-    B2BEnquiry.countDocuments({ status: 'new' }),
-  ]);
-
-  const orderStatusDistribution = {};
-  orderStatusCounts.forEach(s => { orderStatusDistribution[s._id] = s.count; });
-
-  sendResponse(res, 200, {
+  // Legacy keys retained alongside the new shape: the deployed admin may be
+  // older than this server, and a dashboard that renders nothing is worse
+  // than one showing slightly stale figures.
+  const legacy = {
     stats: {
-      totalOrders,
-      totalRevenue: totalRevenue[0]?.total || 0,
-      totalProducts,
-      totalCustomers,
-      pendingOrders,
-      pendingReviews,
-      newEnquiries,
+      totalOrders: payload.metrics.orders.value,
+      totalRevenue: payload.metrics.netRevenue.value,
+      totalProducts: payload.metrics.totalProducts.value,
+      totalCustomers: payload.metrics.totalCustomers.value,
+      pendingOrders: payload.metrics.awaitingFulfilment.value,
+      pendingReviews: payload.metrics.pendingReviews.value,
+      newEnquiries: payload.metrics.newEnquiries.value,
     },
-    recentOrders,
-    topProducts,
-    orderStatusDistribution,
-    customerGrowth,
-    lowStockProducts,
-  }, 'Dashboard data fetched');
+    recentOrders: payload.lists.recentOrders,
+    topProducts: payload.lists.topProducts,
+    orderStatusDistribution: Object.fromEntries(
+      Object.entries(payload.statusDistribution).map(([k, v]) => [k, v.count])
+    ),
+    lowStockProducts: payload.lists.deadStock,
+  };
+
+  sendResponse(res, 200, { ...payload, ...legacy }, 'Dashboard data fetched');
 });
 
 const getSalesReport = asyncHandler(async (req, res) => {
