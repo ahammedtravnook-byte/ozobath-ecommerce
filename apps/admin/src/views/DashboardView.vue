@@ -45,6 +45,24 @@
       <button class="dt-btn mt-3" @click="refresh">Try again</button>
     </div>
 
+    <!-- ─── Legacy API notice ───────────────────────
+         The deployed API predates this dashboard. It has no period
+         comparison and computes revenue with the old paid-only rule, which
+         reports ₹0 for COD orders — so say that rather than presenting a
+         wrong figure as though it were correct.
+    -->
+    <div
+      v-if="!loading && payload?.legacy"
+      class="db-card border-amber-200 bg-amber-50/60 mb-4 py-3"
+    >
+      <p class="text-[13px] text-amber-900">
+        <span class="font-medium">Showing limited data.</span>
+        The API this admin is connected to predates the new analytics, so
+        period comparison, trends and most metrics are unavailable — and
+        revenue still uses the old rule that excludes COD orders.
+      </p>
+    </div>
+
     <!-- ─── Needs action ────────────────────────── -->
     <NeedsAction v-if="!loading" :items="needsAction" />
 

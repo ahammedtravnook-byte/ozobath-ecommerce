@@ -3,6 +3,81 @@ import { useRoute, useRouter } from 'vue-router';
 import { analyticsAPI } from '@/api/services';
 
 /**
+ * Adapt an older server's response into the shape this dashboard renders.
+ *
+ * Vercel deploys the admin on merge; the API is updated by hand on the VPS,
+ * so the frontend is routinely newer than the server it talks to. The server
+ * emits `metrics` (plus legacy keys for back-compat), but an older build
+ * returns ONLY `{ stats, recentOrders, topProducts, orderStatusDistribution,
+ * lowStockProducts }`. Reading `metrics` alone left every tile blank against
+ * such a server — the API call succeeded, so it looked purely like a render
+ * bug.
+ *
+ * The legacy payload has no period comparison, so `previous`/`change` are
+ * null: the tiles render a dash rather than inventing a trend.
+ */
+const LEGACY_TO_METRIC = {
+  totalRevenue: 'netRevenue',
+  totalOrders: 'orders',
+  totalProducts: 'totalProducts',
+  totalCustomers: 'totalCustomers',
+  pendingOrders: 'awaitingFulfilment',
+  pendingReviews: 'pendingReviews',
+  newEnquiries: 'newEnquiries',
+};
+
+export const normalise = (raw) => {
+  if (!raw || typeof raw !== 'object') return null;
+  if (raw.metrics) return raw; // already the current shape
+
+  const stats = raw.stats || {};
+  const metrics = {};
+  for (const [legacyKey, metricId] of Object.entries(LEGACY_TO_METRIC)) {
+    if (stats[legacyKey] !== undefined) {
+      metrics[metricId] = { value: stats[legacyKey], previous: null, change: null };
+    }
+  }
+
+  // Derivable from what the old payload does carry.
+  if (stats.totalRevenue !== undefined && stats.totalOrders) {
+    metrics.averageOrderValue = {
+      value: stats.totalRevenue / stats.totalOrders,
+      previous: null,
+      change: null,
+    };
+  }
+
+  const statusDistribution = {};
+  for (const [status, count] of Object.entries(raw.orderStatusDistribution || {})) {
+    statusDistribution[status] = { count, value: 0 };
+  }
+
+  return {
+    ...raw,
+    legacy: true,
+    metrics,
+    statusDistribution,
+    // The old endpoint has no timeseries; the chart shows its empty state.
+    series: { current: [], previous: [] },
+    paymentSplit: raw.paymentSplit || {},
+    catalogueHealth: raw.catalogueHealth || {},
+    lists: {
+      recentOrders: raw.recentOrders || [],
+      topProducts: raw.topProducts || [],
+      worstProducts: [],
+      topCustomers: [],
+      categories: [],
+      deadStock: raw.lowStockProducts || [],
+    },
+    needsAction: [
+      { id: 'fulfil', label: 'Orders to fulfil', count: stats.pendingOrders || 0, to: '/orders?status=confirmed' },
+      { id: 'reviews', label: 'Reviews to moderate', count: stats.pendingReviews || 0, to: '/reviews' },
+      { id: 'enquiries', label: 'New enquiries', count: stats.newEnquiries || 0, to: '/enquiries?status=new' },
+    ].filter((a) => a.count > 0),
+  };
+};
+
+/**
  * Dashboard data source: range selection, fetching, URL sync and sparkline
  * derivation.
  *
@@ -34,7 +109,7 @@ export function useDashboard({ defaultRange = '30d', syncUrl = true } = {}) {
     try {
       const res = await analyticsAPI.getDashboard({ range: range.value }, { signal });
       if (signal.aborted) return;
-      payload.value = res?.data ?? res;
+      payload.value = normalise(res?.data ?? res);
     } catch (err) {
       if (err?.name === 'CanceledError' || err?.name === 'AbortError' || signal.aborted) return;
       error.value = err;
