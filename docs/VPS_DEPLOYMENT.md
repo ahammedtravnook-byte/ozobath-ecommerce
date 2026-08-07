@@ -198,6 +198,35 @@ rate limiting counts every request as one client and is effectively decorative.
 TLS is **mandatory**: refresh cookies are `secure; sameSite=none`, so auth cannot
 work over plain HTTP.
 
+### Frontend server block
+
+`/etc/nginx/sites-available/ozobath-client` — copy from
+[`deploy/nginx-ozobath-client.conf`](../deploy/nginx-ozobath-client.conf).
+
+```bash
+sudo cp deploy/nginx-ozobath-client.conf /etc/nginx/sites-available/ozobath-client
+sudo ln -sf /etc/nginx/sites-available/ozobath-client /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Adjust `root` to wherever `apps/client/dist` is published before reloading.
+
+**Why it matters.** Measured against the live site on nginx/1.24.0, stock config
+gzipped only `text/html`, so the CSS and JS bundles went out uncompressed —
+140,831 bytes of CSS and 495,148 bytes of JS on every cold load. Widening
+`gzip_types` takes the stylesheet from 138 KB to 20 KB (−85%). The same block
+also enables HTTP/2 and TLS 1.3, and serves `/llms.txt` as Markdown instead of
+letting the SPA catch-all return `index.html`.
+
+Verify after reloading:
+
+```bash
+curl -sI -H 'Accept-Encoding: gzip' https://ozobath.in/assets/<hashed>.css \
+  | grep -i content-encoding          # expect: content-encoding: gzip
+curl -sI https://ozobath.in/llms.txt | grep -i content-type   # expect: text/markdown
+curl -s -o /dev/null -w '%{http_version}\n' https://ozobath.in/   # expect: 2
+```
+
 ---
 
 ## Deploy script

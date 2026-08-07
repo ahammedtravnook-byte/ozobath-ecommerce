@@ -135,6 +135,12 @@ export default {
   plugins: [
     require('@tailwindcss/typography'),
     require('@tailwindcss/forms'),
-    require('@tailwindcss/aspect-ratio'),
+    // NOTE: @tailwindcss/aspect-ratio is intentionally NOT loaded.
+    //
+    // That plugin is the pre-v3 compatibility shim (`aspect-w-16 aspect-h-9`),
+    // and loading it *disables* Tailwind's native `aspect-*` utilities. With it
+    // installed, `aspect-video` silently compiled to nothing — any element
+    // relying on it collapsed to zero height. Tailwind 3.4 supports
+    // `aspect-video` / `aspect-square` / `aspect-[16/9]` natively.
   ],
 };
