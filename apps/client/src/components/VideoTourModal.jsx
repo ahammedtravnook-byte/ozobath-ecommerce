@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiPlay } from 'react-icons/fi';
+import { FiX, FiPlay, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 /**
  * Full-screen video player with a playlist rail.
@@ -14,6 +14,8 @@ import { FiX, FiPlay } from 'react-icons/fi';
  * The iframe is only mounted while the modal is open, so a closed player is
  * not sitting in the background holding a YouTube connection.
  */
+
+const RAIL_WIDTH = 336; // px — desktop playlist column
 
 const buildEmbedUrl = (video, { autoplay = true } = {}) => {
   if (!video?.videoId) return '';
@@ -38,6 +40,7 @@ const buildEmbedUrl = (video, { autoplay = true } = {}) => {
 const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
   const [index, setIndex] = useState(initialIndex);
   const panelRef = useRef(null);
+  const railRef = useRef(null);
   const previouslyFocused = useRef(null);
 
   const active = videos[index] || videos[0] || null;
@@ -53,31 +56,50 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
   }, [open, initialIndex]);
 
   // Lock the page behind the modal and restore focus to the trigger on close.
+  // The scrollbar is compensated with padding so the page underneath does not
+  // shift sideways as the overlay opens.
   useEffect(() => {
     if (!open) return;
 
     previouslyFocused.current = document.activeElement;
-    const { overflow } = document.body.style;
+    const { overflow, paddingRight } = document.body.style;
+    const gutter = window.innerWidth - document.documentElement.clientWidth;
+
     document.body.style.overflow = 'hidden';
+    if (gutter > 0) document.body.style.paddingRight = `${gutter}px`;
 
     panelRef.current?.focus();
 
     return () => {
       document.body.style.overflow = overflow;
+      document.body.style.paddingRight = paddingRight;
       previouslyFocused.current?.focus?.();
     };
   }, [open]);
 
+  // Keep the playing item visible when the selection moves by keyboard.
+  useEffect(() => {
+    if (!open || !hasPlaylist) return;
+    railRef.current
+      ?.querySelector('[data-active="true"]')
+      ?.scrollIntoView({ block: 'nearest' });
+  }, [index, open, hasPlaylist]);
+
+  const go = useCallback(
+    (delta) => setIndex((i) => (i + delta + videos.length) % videos.length),
+    [videos.length]
+  );
+
   const handleKey = useCallback(
     (e) => {
       if (e.key === 'Escape') { onClose?.(); return; }
-      // Arrow keys move through the playlist, but not while the user is
-      // interacting with the iframe.
+      // Arrow keys move through the playlist. Focus inside the iframe belongs
+      // to the player, so those events never reach this handler anyway.
       if (videos.length < 2) return;
-      if (e.key === 'ArrowDown') { e.preventDefault(); setIndex((i) => Math.min(i + 1, videos.length - 1)); }
-      if (e.key === 'ArrowUp') { e.preventDefault(); setIndex((i) => Math.max(i - 1, 0)); }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
     },
-    [onClose, videos.length]
+    [onClose, videos.length, go]
   );
 
   useEffect(() => {
@@ -92,7 +114,7 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
     <AnimatePresence>
       {open && active && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 lg:p-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -101,109 +123,175 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
           aria-modal="true"
           aria-label="Video tours"
         >
-          <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" onClick={onClose} />
+          <div
+            className="absolute inset-0 bg-dark-950/90 backdrop-blur-md"
+            onClick={onClose}
+          />
 
           {/*
-            Fixed dimensions, independent of how many videos exist.
+            The panel is sized *from the player*, not the other way around.
 
-            Previously the panel was only `max-w-6xl` with an auto-height
-            playlist, so the dialog grew as videos were added and shrank to a
-            letterbox with one video. The player now owns a 16:9 box and the
-            rail is a fixed 320px column that scrolls internally.
+            An earlier version gave the panel a fixed height and asked the
+            iframe wrapper to derive its width from `aspect-video` inside a
+            flex row — which collapses to a small centred box, leaving the
+            video floating in dead space. Here the player owns a real
+            `aspect-video` box whose width is capped so that
+            player + rail + padding still fit the viewport in both axes, and
+            the panel wraps tightly around it. No letterboxing, no dead space.
           */}
           <motion.div
             ref={panelRef}
             tabIndex={-1}
-            className={`relative w-full bg-[#0d0d0f] rounded-xl sm:rounded-2xl
-                       overflow-hidden shadow-2xl outline-none flex flex-col lg:flex-row
-                       max-h-[92vh] lg:h-[min(560px,85vh)]
-                       ${hasPlaylist ? 'max-w-[min(1100px,95vw)]' : 'max-w-[min(900px,95vw)]'}`}
-            initial={{ scale: 0.97, y: 12 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.97, y: 12 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="relative flex w-full flex-col overflow-hidden rounded-2xl bg-dark-950
+                       shadow-[0_30px_90px_-20px_rgba(0,0,0,0.9)] ring-1 ring-white/10
+                       outline-none max-h-[94vh] lg:w-auto lg:flex-row"
+            initial={{ scale: 0.96, y: 16, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.96, y: 16, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* ── Player ──
-                Height-driven on desktop so the 16:9 frame fills the fixed
-                panel; width-driven on mobile where the rail sits below. */}
-            <div className="flex-1 min-w-0 bg-black flex items-center justify-center">
-              <div className="w-full aspect-video lg:h-full lg:w-auto lg:aspect-video">
-                <iframe
-                  key={active.videoId}
-                  src={buildEmbedUrl(active)}
-                  title={active.title}
-                  className="w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
+            {/* ── Player ──────────────────────────────────────────────
+                The player always keeps 16:9. What differs per breakpoint is
+                which axis is the binding constraint:
+
+                  mobile  — width is whatever the viewport gives; the rail
+                            stacks underneath and gets the remaining 40vh.
+                  desktop — width is capped so 16:9 stays inside the viewport
+                            height *and* leaves room for the rail beside it. */}
+            <div
+              className="relative aspect-video w-full shrink-0 bg-black
+                         lg:w-[min(1280px,calc(96vw-var(--rail-w)-4rem),calc((94vh-4rem)*16/9))]"
+              style={{ '--rail-w': hasPlaylist ? `${RAIL_WIDTH}px` : '0px' }}
+            >
+              <iframe
+                key={active.videoId}
+                src={buildEmbedUrl(active)}
+                title={active.title}
+                className="absolute inset-0 h-full w-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+
+              {/* Prev / next sit on the player so the primary interaction is
+                  reachable without travelling to the rail. */}
+              {hasPlaylist && (
+                <>
+                  <button
+                    onClick={() => go(-1)}
+                    aria-label="Previous video"
+                    className="group absolute left-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center
+                               justify-center rounded-full border border-white/15 bg-black/50 text-white/70
+                               backdrop-blur-sm transition hover:bg-black/75 hover:text-white
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400
+                               sm:flex"
+                  >
+                    <FiChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+                  </button>
+                  <button
+                    onClick={() => go(1)}
+                    aria-label="Next video"
+                    className="group absolute right-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center
+                               justify-center rounded-full border border-white/15 bg-black/50 text-white/70
+                               backdrop-blur-sm transition hover:bg-black/75 hover:text-white
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400
+                               sm:flex"
+                  >
+                    <FiChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Single video: no rail to show, so the close control floats
-                over the player instead of occupying a 320px column. */}
+                over the player instead of occupying a rail header. */}
             {!hasPlaylist && (
               <button
                 onClick={onClose}
                 aria-label="Close video player"
-                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80
-                           backdrop-blur-sm border border-white/15 text-white/80 hover:text-white
-                           flex items-center justify-center transition-colors"
+                className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center
+                           rounded-full border border-white/15 bg-black/60 text-white/80 backdrop-blur-sm
+                           transition hover:bg-black/85 hover:text-white focus-visible:outline-none
+                           focus-visible:ring-2 focus-visible:ring-accent-400"
               >
-                <FiX className="w-4 h-4" />
+                <FiX className="h-4 w-4" />
               </button>
             )}
 
-            {/* ── Playlist ── */}
+            {/* ── Playlist ─────────────────────────────────────────────
+                Fixed column on desktop; a bounded, scrollable drawer below
+                the player on mobile. */}
             <aside
-              className={`w-full lg:w-[320px] shrink-0 bg-[#141416] border-t lg:border-t-0 lg:border-l border-white/10
-                         flex-col min-h-0 max-h-[38vh] lg:max-h-none lg:h-full ${hasPlaylist ? 'flex' : 'hidden'}`}
+              className={`min-h-0 w-full shrink-0 flex-col border-t border-white/10 bg-dark-900
+                          max-h-[40vh] lg:max-h-none lg:w-[var(--rail-w)] lg:border-l lg:border-t-0
+                          ${hasPlaylist ? 'flex' : 'hidden'}`}
+              style={{ '--rail-w': `${RAIL_WIDTH}px` }}
             >
-              <header className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4 border-b border-white/10 shrink-0">
+              <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
                 <div className="min-w-0">
-                  <h2 className="text-white font-display text-base sm:text-lg leading-tight truncate">Video Tours</h2>
-                  <p className="text-white/40 text-[11px] sm:text-xs mt-0.5">{videos.length} videos</p>
+                  <h2 className="truncate font-display text-base leading-tight text-white sm:text-lg">
+                    Video Tours
+                  </h2>
+                  <p className="mt-0.5 text-[11px] text-white/40 sm:text-xs">
+                    {index + 1} of {videos.length}
+                  </p>
                 </div>
                 <button
                   onClick={onClose}
-                  className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm transition-colors shrink-0"
                   aria-label="Close video player"
+                  className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5
+                             text-sm text-white/60 transition hover:border-white/25 hover:bg-white/5
+                             hover:text-white focus-visible:outline-none focus-visible:ring-2
+                             focus-visible:ring-accent-400"
                 >
-                  <FiX className="w-4 h-4" />
+                  <FiX className="h-4 w-4" />
                   <span className="hidden sm:inline">Close</span>
                 </button>
               </header>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-3 space-y-1.5 sm:space-y-2">
+              <div
+                ref={railRef}
+                className="custom-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto p-2 sm:p-3"
+              >
                 {videos.map((video, i) => {
                   const isActive = i === index;
                   return (
                     <button
                       key={video._id || video.videoId}
                       onClick={() => setIndex(i)}
+                      data-active={isActive}
                       aria-current={isActive ? 'true' : undefined}
-                      className={`w-full flex items-center gap-3 p-2 rounded-xl text-left transition-colors group
-                        ${isActive ? 'bg-white/[0.12]' : 'hover:bg-white/[0.06]'}`}
+                      className={`group relative flex w-full items-center gap-3 rounded-xl p-2 text-left
+                                  transition-colors focus-visible:outline-none focus-visible:ring-2
+                                  focus-visible:ring-accent-400
+                        ${isActive ? 'bg-white/[0.10]' : 'hover:bg-white/[0.06]'}`}
                     >
-                      <div className="relative w-[92px] h-[52px] rounded-lg overflow-hidden bg-white/5 shrink-0">
+                      {/* Active marker — a rail cue that survives at a glance. */}
+                      <span
+                        className={`absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full
+                                    bg-accent-500 transition-opacity ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                        aria-hidden="true"
+                      />
+
+                      <div className="relative aspect-video w-[104px] shrink-0 overflow-hidden rounded-lg bg-white/5">
                         {video.thumbnail?.url ? (
                           <img
                             src={video.thumbnail.url}
                             alt=""
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
                           />
                         ) : null}
-                        <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/20">
                           <span
-                            className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors
-                              ${isActive ? 'bg-accent-500' : 'bg-black/60 group-hover:bg-black/75'}`}
+                            className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors
+                              ${isActive ? 'bg-accent-500' : 'bg-black/60 group-hover:bg-black/80'}`}
                           >
-                            <FiPlay className="w-2.5 h-2.5 text-white ml-0.5" />
+                            <FiPlay className="ml-0.5 h-2.5 w-2.5 text-white" />
                           </span>
                         </span>
                         {video.duration && (
-                          <span className="absolute bottom-1 right-1 px-1 rounded bg-black/80 text-white text-[9px] tabular-nums">
+                          <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 text-[9px] tabular-nums text-white">
                             {video.duration}
                           </span>
                         )}
@@ -211,13 +299,17 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
 
                       <div className="min-w-0 flex-1">
                         <p
-                          className={`text-[13px] leading-snug line-clamp-2 transition-colors
-                            ${isActive ? 'text-white font-medium' : 'text-white/70 group-hover:text-white'}`}
+                          className={`line-clamp-2 text-[13px] leading-snug transition-colors
+                            ${isActive ? 'font-medium text-white' : 'text-white/70 group-hover:text-white'}`}
                         >
                           {video.title}
                         </p>
                         {isActive && (
-                          <p className="text-accent-400 text-[10px] font-semibold uppercase tracking-wider mt-1">
+                          <p className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-accent-400">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-400 opacity-75" />
+                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent-400" />
+                            </span>
                             Now playing
                           </p>
                         )}
