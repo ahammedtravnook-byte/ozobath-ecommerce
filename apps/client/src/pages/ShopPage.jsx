@@ -19,14 +19,14 @@ const stagger = {
 };
 
 const fallbackProducts = [
-    { _id: '1', name: 'Frameless Glass Enclosure', slug: 'frameless-glass', category: { name: 'Shower Enclosures' }, price: 15599, mrp: 21999, avgRating: 5, reviewCount: 24, images: [{ url: '/images/product_shower_1.png' }] },
-    { _id: '2', name: 'Sliding Door System', slug: 'sliding-door', category: { name: 'Shower Enclosures' }, price: 12499, mrp: 17999, avgRating: 4, reviewCount: 18, images: [{ url: '/images/product_shower_2.png' }] },
-    { _id: '3', name: 'Corner Glass Partition', slug: 'corner-partition', category: { name: 'Shower Enclosures' }, price: 18999, mrp: 24999, avgRating: 5, reviewCount: 31, images: [{ url: '/images/product_shower_1.png' }] },
-    { _id: '4', name: 'Walk-in Shower Screen', slug: 'walkin-screen', category: { name: 'Shower Enclosures' }, price: 9999, mrp: 14999, avgRating: 5, reviewCount: 42, images: [{ url: '/images/product_shower_2.png' }] },
-    { _id: '5', name: 'Swing Door Enclosure', slug: 'swing-door', category: { name: 'Shower Enclosures' }, price: 13499, mrp: 18999, avgRating: 4, reviewCount: 15, images: [{ url: '/images/product_shower_1.png' }] },
-    { _id: '6', name: 'Semi-Frameless Panel', slug: 'semi-frameless', category: { name: 'Shower Enclosures' }, price: 8999, mrp: 12999, avgRating: 5, reviewCount: 27, images: [{ url: '/images/product_shower_2.png' }] },
-    { _id: '7', name: 'L-Shape Double Door', slug: 'l-shape-double', category: { name: 'Shower Enclosures' }, price: 22999, mrp: 29999, avgRating: 5, reviewCount: 19, images: [{ url: '/images/product_shower_1.png' }] },
-    { _id: '8', name: 'Curved Glass Enclosure', slug: 'curved-glass', category: { name: 'Shower Enclosures' }, price: 26999, mrp: 34999, avgRating: 5, reviewCount: 12, images: [{ url: '/images/product_shower_2.png' }] },
+    { _id: '1', name: 'Frameless Glass Enclosure', slug: 'frameless-glass', category: { name: 'Shower Enclosures' }, price: 15599, mrp: 21999, avgRating: 5, reviewCount: 24, images: [{ url: '/images/product_shower_1.webp' }] },
+    { _id: '2', name: 'Sliding Door System', slug: 'sliding-door', category: { name: 'Shower Enclosures' }, price: 12499, mrp: 17999, avgRating: 4, reviewCount: 18, images: [{ url: '/images/product_shower_2.webp' }] },
+    { _id: '3', name: 'Corner Glass Partition', slug: 'corner-partition', category: { name: 'Shower Enclosures' }, price: 18999, mrp: 24999, avgRating: 5, reviewCount: 31, images: [{ url: '/images/product_shower_1.webp' }] },
+    { _id: '4', name: 'Walk-in Shower Screen', slug: 'walkin-screen', category: { name: 'Shower Enclosures' }, price: 9999, mrp: 14999, avgRating: 5, reviewCount: 42, images: [{ url: '/images/product_shower_2.webp' }] },
+    { _id: '5', name: 'Swing Door Enclosure', slug: 'swing-door', category: { name: 'Shower Enclosures' }, price: 13499, mrp: 18999, avgRating: 4, reviewCount: 15, images: [{ url: '/images/product_shower_1.webp' }] },
+    { _id: '6', name: 'Semi-Frameless Panel', slug: 'semi-frameless', category: { name: 'Shower Enclosures' }, price: 8999, mrp: 12999, avgRating: 5, reviewCount: 27, images: [{ url: '/images/product_shower_2.webp' }] },
+    { _id: '7', name: 'L-Shape Double Door', slug: 'l-shape-double', category: { name: 'Shower Enclosures' }, price: 22999, mrp: 29999, avgRating: 5, reviewCount: 19, images: [{ url: '/images/product_shower_1.webp' }] },
+    { _id: '8', name: 'Curved Glass Enclosure', slug: 'curved-glass', category: { name: 'Shower Enclosures' }, price: 26999, mrp: 34999, avgRating: 5, reviewCount: 12, images: [{ url: '/images/product_shower_2.webp' }] },
 ];
 
 const ShopPage = () => {
@@ -393,7 +393,7 @@ const ShopPage = () => {
                                     <Link to={`/product/${product.slug}`} className="block relative">
                                         <div className="aspect-square bg-white p-4 sm:p-6 flex items-center justify-center overflow-hidden">
                                             <img
-                                                src={product.images?.[0]?.url || '/images/product_shower_1.png'}
+                                                src={product.images?.[0]?.url || '/images/product_shower_1.webp'}
                                                 alt={product.name}
                                                 className="w-[85%] h-[85%] object-contain transition-transform duration-700 group-hover:scale-110"
                                                 loading="lazy"
@@ -467,7 +467,7 @@ const ShopPage = () => {
                             >
                                 <Link to={`/product/${product.slug}`} className="shrink-0">
                                     <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl bg-dark-50/50 border border-dark-100/10 flex items-center justify-center overflow-hidden">
-                                        <img src={product.images?.[0]?.url || '/images/product_shower_1.png'} alt={product.name} className="w-[85%] h-[85%] object-contain group-hover:scale-110 transition-transform duration-700" />
+                                        <img src={product.images?.[0]?.url || '/images/product_shower_1.webp'} alt={product.name} className="w-[85%] h-[85%] object-contain group-hover:scale-110 transition-transform duration-700" />
                                     </div>
                                 </Link>
 

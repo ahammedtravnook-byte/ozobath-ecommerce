@@ -118,12 +118,32 @@
     }
   </script>
 
-  <!-- Google Fonts: Inter + Outfit -->
+  <!-- ── LCP preload ──────────────────────────────────────────
+       The hero image is the LCP element. Preloading it here means the
+       request starts from the raw HTML, before the JS bundle has parsed
+       and before React mounts, rather than after CSS/JS discovery. -->
+  <link rel="preload" as="image" href="/images/hero_bathroom.webp" fetchpriority="high" />
+
+  <!-- ── Google Fonts: Inter + Outfit ──────────────────────────
+       The stylesheet was previously render-blocking: the browser could
+       not paint until it had fetched fonts.googleapis.com over a fresh
+       connection. Loading it with media="print" + onload flips it to
+       non-blocking, so text paints immediately in the fallback face and
+       swaps when the webfont lands.
+
+       The weight axes are also narrowed. The full variable ranges
+       (100..900 across two axes, plus italics, plus Playfair) shipped far
+       more font data than the design uses. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap"
-    rel="stylesheet" />
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@400;700&display=swap"
+    rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@400;700&display=swap"
+      rel="stylesheet" />
+  </noscript>
 </head>
 
 <body>

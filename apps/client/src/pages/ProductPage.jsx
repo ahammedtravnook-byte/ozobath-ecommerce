@@ -100,7 +100,7 @@ const fallbackProduct = {
     category: { name: 'Shower Enclosures' }, price: 15599, compareAtPrice: 21999, avgRating: 4.7, reviewCount: 24, stock: 15,
     shortDescription: 'Transform your bathroom into a sanctuary with our premium frameless shower enclosure.',
     description: '<p>Our Premium Frameless Shower Enclosure is the epitome of modern bathroom luxury. Crafted with 10mm toughened safety glass and premium chrome-finished hardware.</p><ul><li>10mm thick toughened safety glass</li><li>Premium chrome-finished hardware</li><li>360° pivot hinge for easy access</li><li>Anti-limescale coating</li><li>5-year comprehensive warranty</li></ul>',
-    images: [{ url: '/images/product_shower_1.png' }, { url: '/images/product_shower_2.png' }],
+    images: [{ url: '/images/product_shower_1.webp' }, { url: '/images/product_shower_2.webp' }],
     specifications: [
         { key: 'Material', value: '10mm Toughened Glass' },
         { key: 'Hardware', value: 'Premium Chrome SS304' },
@@ -459,7 +459,7 @@ const ProductPage = () => {
                             <AnimatePresence mode="wait">
                                 <motion.img
                                     key={selectedImage}
-                                    src={product.images?.[selectedImage]?.url || '/images/product_shower_1.png'}
+                                    src={product.images?.[selectedImage]?.url || '/images/product_shower_1.webp'}
                                     alt={product.name}
                                     className="w-full h-full object-contain"
                                     initial={{ opacity: 0, scale: 0.97 }}
@@ -1054,7 +1054,7 @@ const ProductPage = () => {
                                         <Link to={`/product/${rp.slug}`} className="group block">
                                             <div className="bg-white rounded-2xl border border-dark-100/30 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-400">
                                                 <div className="aspect-square p-5 bg-white relative">
-                                                    <img src={rp.images?.[0]?.url || '/images/product_shower_1.png'} alt={rp.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                                                    <img src={rp.images?.[0]?.url || '/images/product_shower_1.webp'} alt={rp.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                                                     {rpDisc > 0 && (
                                                         <span className="absolute top-2.5 left-2.5 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
                                                             {rpDisc}% OFF

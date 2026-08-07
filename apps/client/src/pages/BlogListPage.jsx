@@ -8,12 +8,12 @@ import ScrollReveal, { ScrollRevealItem } from '@components/ScrollReveal';
 import SEO from '@components/SEO';
 
 const fallbackBlogs = [
-    { _id: 'b1', title: 'Modern Minimalist Bathroom Design Trends 2026', slug: 'minimalist-design-2026', category: 'Design', excerpt: 'Discover the latest trends in minimalist bathroom design that combine form and function beautifully.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-24', featuredImage: { url: '/images/promo_shower_enclosure.png' } },
-    { _id: 'b2', title: 'How to Choose the Perfect Shower Enclosure', slug: 'choose-shower-enclosure', category: 'Guide', excerpt: 'A comprehensive guide to selecting the right shower enclosure for your bathroom space and style.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-18', featuredImage: { url: '/images/promo_sliding_door.png' } },
-    { _id: 'b3', title: 'Premium Bathroom Fittings: Complete Buying Guide', slug: 'bathroom-fittings-guide', category: 'Guide', excerpt: 'Everything you need to know about choosing premium bathroom fittings that last a lifetime.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-12', featuredImage: { url: '/images/hero_bathroom.png' } },
-    { _id: 'b4', title: 'Frameless vs Semi-Frameless Shower Doors', slug: 'frameless-vs-semi', category: 'Comparison', excerpt: 'Compare frameless and semi-frameless options to find the best fit for your bathroom renovation.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-05', featuredImage: { url: '/images/sale_bathroom.png' } },
-    { _id: 'b5', title: '5 Bathroom Renovation Mistakes to Avoid', slug: 'renovation-mistakes', category: 'Tips', excerpt: 'Common pitfalls homeowners encounter during bathroom renovations and how to steer clear of them.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-01-28', featuredImage: { url: '/images/product_shower_1.png' } },
-    { _id: 'b6', title: 'The Art of Bathroom Lighting Design', slug: 'lighting-design', category: 'Design', excerpt: 'Master the art of bathroom lighting to create ambiance and highlight your shower enclosure.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-01-20', featuredImage: { url: '/images/product_shower_2.png' } },
+    { _id: 'b1', title: 'Modern Minimalist Bathroom Design Trends 2026', slug: 'minimalist-design-2026', category: 'Design', excerpt: 'Discover the latest trends in minimalist bathroom design that combine form and function beautifully.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-24', featuredImage: { url: '/images/promo_shower_enclosure.webp' } },
+    { _id: 'b2', title: 'How to Choose the Perfect Shower Enclosure', slug: 'choose-shower-enclosure', category: 'Guide', excerpt: 'A comprehensive guide to selecting the right shower enclosure for your bathroom space and style.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-18', featuredImage: { url: '/images/promo_sliding_door.webp' } },
+    { _id: 'b3', title: 'Premium Bathroom Fittings: Complete Buying Guide', slug: 'bathroom-fittings-guide', category: 'Guide', excerpt: 'Everything you need to know about choosing premium bathroom fittings that last a lifetime.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-12', featuredImage: { url: '/images/hero_bathroom.webp' } },
+    { _id: 'b4', title: 'Frameless vs Semi-Frameless Shower Doors', slug: 'frameless-vs-semi', category: 'Comparison', excerpt: 'Compare frameless and semi-frameless options to find the best fit for your bathroom renovation.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-02-05', featuredImage: { url: '/images/sale_bathroom.webp' } },
+    { _id: 'b5', title: '5 Bathroom Renovation Mistakes to Avoid', slug: 'renovation-mistakes', category: 'Tips', excerpt: 'Common pitfalls homeowners encounter during bathroom renovations and how to steer clear of them.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-01-28', featuredImage: { url: '/images/product_shower_1.webp' } },
+    { _id: 'b6', title: 'The Art of Bathroom Lighting Design', slug: 'lighting-design', category: 'Design', excerpt: 'Master the art of bathroom lighting to create ambiance and highlight your shower enclosure.', author: { name: 'OZOBATH Team' }, publishedAt: '2026-01-20', featuredImage: { url: '/images/product_shower_2.webp' } },
 ];
 
 const categories = ['All', 'Design', 'Guide', 'Tips', 'Comparison'];
@@ -108,7 +108,7 @@ const BlogListPage = () => {
                                     <div className="bg-white rounded-3xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-500 grid grid-cols-1 lg:grid-cols-2 gap-0">
                                         <div className="aspect-video lg:aspect-auto overflow-hidden">
                                             <img
-                                                src={filteredBlogs[0].featuredImage?.url || '/images/hero_bathroom.png'}
+                                                src={filteredBlogs[0].featuredImage?.url || '/images/hero_bathroom.webp'}
                                                 alt={filteredBlogs[0].title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                             />
@@ -150,7 +150,7 @@ const BlogListPage = () => {
                                         <div className="bg-white rounded-3xl overflow-hidden shadow-soft hover:shadow-xl hover:-translate-y-1 transition-all duration-500 h-full flex flex-col">
                                             <div className="aspect-video overflow-hidden relative">
                                                 <img
-                                                    src={blog.featuredImage?.url || '/images/hero_bathroom.png'}
+                                                    src={blog.featuredImage?.url || '/images/hero_bathroom.webp'}
                                                     alt={blog.title}
                                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                                 />

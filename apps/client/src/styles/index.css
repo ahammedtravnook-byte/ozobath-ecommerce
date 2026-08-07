@@ -7,8 +7,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Google Fonts ───────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+/* ─── Google Fonts ─────────────────────────
+   Loaded via <link> in index.html, not here.
+
+   A CSS @import is render-blocking and serialised: the browser must fetch
+   and parse this stylesheet before it even discovers the font request, so
+   the fonts sat behind an extra round trip. It also duplicated the <link>
+   already present in the HTML head, requesting both families twice. */
 
 /* ─── CSS Variables ──────────────────────── */
 :root {

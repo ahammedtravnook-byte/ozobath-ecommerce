@@ -144,7 +144,7 @@ const WishlistPage = () => {
                                     <div className="relative group">
                                         <Link to={`/product/${product.slug}`} className="block relative">
                                             <div className="aspect-square bg-white p-6 flex items-center justify-center overflow-hidden">
-                                                <img src={product.images?.[0]?.url || '/images/product_shower_1.png'} alt={product.name} className="w-[85%] h-[85%] object-contain transition-transform duration-700 group-hover:scale-110" />
+                                                <img src={product.images?.[0]?.url || '/images/product_shower_1.webp'} alt={product.name} className="w-[85%] h-[85%] object-contain transition-transform duration-700 group-hover:scale-110" />
                                             </div>
                                         </Link>
                                         <button

@@ -1,0 +1,46 @@
+# OzoBath
+
+> OzoBath manufactures and retails premium shower enclosures, glass partitions,
+> shower panels and designer bathroom fittings across India. Products use
+> toughened safety glass and corrosion-resistant hardware, with nationwide
+> delivery and professional installation.
+
+OzoBath is an Indian direct-to-consumer bathroomware brand. The catalogue covers
+shower enclosures (sliding, hinged, corner and custom), glass partitions, shower
+panels, basin mixers, faucets and bathroom accessories. Shower enclosures are
+made to measure, so those products are sold through a site-visit and quotation
+flow rather than direct checkout; accessories and fittings are bought online.
+
+## Products
+
+- [Shop all products](https://ozobath.in/shop): Full catalogue with category, price and finish filters.
+- [Shower enclosures](https://ozobath.in/shop?category=shower-enclosures): Made-to-measure toughened glass enclosures.
+- [Bathroom fittings](https://ozobath.in/shop?category=fittings): Mixers, faucets, showers and accessories.
+- [Shop Live](https://ozobath.in/shop-live): Guided video shopping with a product consultant.
+
+## Services
+
+- [Book a site visit](https://ozobath.in/book-site-visit): On-site measurement and quotation for enclosures.
+- [Experience Centre](https://ozobath.in/experience-centre): Visit a showroom to see products in person.
+- [B2B enquiry](https://ozobath.in/b2b-enquiry): Bulk and project pricing for builders, architects and hotels.
+- [Service request](https://ozobath.in/service-request): Installation support and after-sales service.
+- [Track an order](https://ozobath.in/track-order): Order and delivery status lookup.
+
+## Company
+
+- [About OzoBath](https://ozobath.in/about): Brand background, manufacturing and materials.
+- [Contact](https://ozobath.in/contact): Phone, email and enquiry form.
+- [Blog](https://ozobath.in/blog): Bathroom design guides, material explainers and buying advice.
+- [FAQ](https://ozobath.in/faq): Common questions on sizing, installation, delivery and care.
+
+## Policies
+
+- [Warranty](https://ozobath.in/warranty): Coverage periods and claim process.
+- [Shipping policy](https://ozobath.in/shipping-policy): Delivery timelines, charges and coverage.
+- [Terms and conditions](https://ozobath.in/terms): Terms of sale and site use.
+- [Privacy policy](https://ozobath.in/privacy): How customer data is collected and handled.
+
+## Optional
+
+- [Sitemap](https://ozobath.in/sitemap.xml): Machine-readable list of all indexable URLs.
+- [Robots](https://ozobath.in/robots.txt): Crawler directives.
