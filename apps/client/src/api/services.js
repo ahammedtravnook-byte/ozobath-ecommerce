@@ -129,6 +129,12 @@ export const paymentAPI = {
 };
 
 // ─── Reels API (Instagram) ──────────────────────
+// ─── Video Tours ─────────────────────────────────
+export const videoTourAPI = {
+  // placement defaults server-side to 'home-hero'.
+  getActive: (placement) => api.get('/video-tours', { params: placement ? { placement } : {} }),
+};
+
 export const reelAPI = {
   getActive: () => api.get('/reels'),
 };

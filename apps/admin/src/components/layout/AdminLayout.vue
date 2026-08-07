@@ -362,6 +362,7 @@ const menuGroups = computed(() => {
       label: 'Content',
       items: [
         { label: 'Banners', path: '/banners', icon: '🖼️' },
+        { label: 'Video Tours', path: '/video-tours', icon: '🎬' },
         { label: 'Blogs', path: '/blogs', icon: '📝' },
         { label: 'FAQs', path: '/faqs', icon: '❓' },
         { label: 'Testimonials', path: '/testimonials', icon: '⭐' },

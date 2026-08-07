@@ -12,7 +12,8 @@ export const authAPI = {
 
 // ─── Dashboard & Analytics ──────────────────────
 export const analyticsAPI = {
-  getDashboard: () => api.get('/analytics/dashboard'),
+  // params carries the date range; config carries the AbortController signal.
+  getDashboard: (params, config) => api.get('/analytics/dashboard', { params, ...config }),
   getSalesReport: (period) => api.get('/analytics/sales', { params: { period } }),
   // config carries the AbortController signal from useDataTable, so a
   // superseded request is cancelled instead of racing the newer one.
@@ -65,6 +66,15 @@ export const bannerAPI = {
   create: (data) => api.post('/banners', data),
   update: (id, data) => api.put(`/banners/${id}`, data),
   delete: (id) => api.delete(`/banners/${id}`),
+};
+
+// ─── Video Tours ─────────────────────────────────
+export const videoTourAPI = {
+  getAll: () => api.get('/video-tours/admin/all'),
+  create: (data) => api.post('/video-tours', data),
+  update: (id, data) => api.put(`/video-tours/${id}`, data),
+  delete: (id) => api.delete(`/video-tours/${id}`),
+  reorder: (orders) => api.patch('/video-tours/reorder', { orders }),
 };
 
 // ─── Blogs ───────────────────────────────────────

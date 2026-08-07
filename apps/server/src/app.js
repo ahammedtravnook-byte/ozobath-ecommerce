@@ -153,6 +153,7 @@ app.use('/api/v1/payment', require('./routes/payment.routes'));
 app.use('/api/v1/analytics', require('./routes/analytics.routes'));
 app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/reels', require('./routes/reel.routes'));
+app.use('/api/v1/video-tours', require('./routes/videoTour.routes'));
 app.use('/api/v1/shipping', require('./routes/shipping.routes'));
 app.use('/api/v1/notifications', require('./routes/notification.routes'));
 app.use('/api/v1/admin-notifications', require('./routes/adminNotification.routes'));
