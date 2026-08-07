@@ -40,11 +40,16 @@ const videoTourSchema = new mongoose.Schema({
   // admin to convert to seconds invites mistakes for no benefit.
   duration: { type: String, trim: true },
 
-  // Which surfaces may show this video. 'home-hero' backs the Watch Video
-  // button; more placements can be added without a schema change.
+  // Which surface shows this video.
+  //
+  // Only 'home-hero' is consumed today — it backs the storefront's "Watch
+  // Video" button. The field exists so a second surface can be added without
+  // a migration, but values are NOT offered in the admin until something
+  // actually renders them: a placement that silently shows nowhere is worse
+  // than no choice at all.
   placement: {
     type: String,
-    enum: ['home-hero', 'shop', 'about', 'experience-centre'],
+    enum: ['home-hero'],
     default: 'home-hero',
   },
 

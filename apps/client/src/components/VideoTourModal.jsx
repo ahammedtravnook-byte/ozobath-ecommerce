@@ -42,6 +42,10 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
 
   const active = videos[index] || videos[0] || null;
 
+  // A rail holding a single item is just chrome — with one video the player
+  // takes the full panel and the close control floats over it.
+  const hasPlaylist = videos.length > 1;
+
   // Reset to the requested video each time the modal opens, so reopening does
   // not resume wherever the previous session left off.
   useEffect(() => {
@@ -99,19 +103,31 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
         >
           <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" onClick={onClose} />
 
+          {/*
+            Fixed dimensions, independent of how many videos exist.
+
+            Previously the panel was only `max-w-6xl` with an auto-height
+            playlist, so the dialog grew as videos were added and shrank to a
+            letterbox with one video. The player now owns a 16:9 box and the
+            rail is a fixed 320px column that scrolls internally.
+          */}
           <motion.div
             ref={panelRef}
             tabIndex={-1}
-            className="relative w-full max-w-6xl bg-[#0d0d0f] rounded-2xl overflow-hidden shadow-2xl outline-none
-                       flex flex-col lg:flex-row max-h-[92vh]"
+            className={`relative w-full bg-[#0d0d0f] rounded-xl sm:rounded-2xl
+                       overflow-hidden shadow-2xl outline-none flex flex-col lg:flex-row
+                       max-h-[92vh] lg:h-[min(560px,85vh)]
+                       ${hasPlaylist ? 'max-w-[min(1100px,95vw)]' : 'max-w-[min(900px,95vw)]'}`}
             initial={{ scale: 0.97, y: 12 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.97, y: 12 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* ── Player ── */}
-            <div className="flex-1 min-w-0 bg-black flex items-center">
-              <div className="w-full aspect-video">
+            {/* ── Player ──
+                Height-driven on desktop so the 16:9 frame fills the fixed
+                panel; width-driven on mobile where the rail sits below. */}
+            <div className="flex-1 min-w-0 bg-black flex items-center justify-center">
+              <div className="w-full aspect-video lg:h-full lg:w-auto lg:aspect-video">
                 <iframe
                   key={active.videoId}
                   src={buildEmbedUrl(active)}
@@ -124,17 +140,29 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
               </div>
             </div>
 
+            {/* Single video: no rail to show, so the close control floats
+                over the player instead of occupying a 320px column. */}
+            {!hasPlaylist && (
+              <button
+                onClick={onClose}
+                aria-label="Close video player"
+                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80
+                           backdrop-blur-sm border border-white/15 text-white/80 hover:text-white
+                           flex items-center justify-center transition-colors"
+              >
+                <FiX className="w-4 h-4" />
+              </button>
+            )}
+
             {/* ── Playlist ── */}
             <aside
-              className="w-full lg:w-[340px] shrink-0 bg-[#141416] border-t lg:border-t-0 lg:border-l border-white/10
-                         flex flex-col max-h-[45vh] lg:max-h-none"
+              className={`w-full lg:w-[320px] shrink-0 bg-[#141416] border-t lg:border-t-0 lg:border-l border-white/10
+                         flex-col min-h-0 max-h-[38vh] lg:max-h-none lg:h-full ${hasPlaylist ? 'flex' : 'hidden'}`}
             >
-              <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 shrink-0">
+              <header className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4 border-b border-white/10 shrink-0">
                 <div className="min-w-0">
-                  <h2 className="text-white font-display text-lg leading-tight truncate">Video Tours</h2>
-                  {videos.length > 1 && (
-                    <p className="text-white/40 text-xs mt-0.5">{videos.length} videos</p>
-                  )}
+                  <h2 className="text-white font-display text-base sm:text-lg leading-tight truncate">Video Tours</h2>
+                  <p className="text-white/40 text-[11px] sm:text-xs mt-0.5">{videos.length} videos</p>
                 </div>
                 <button
                   onClick={onClose}
@@ -142,11 +170,11 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
                   aria-label="Close video player"
                 >
                   <FiX className="w-4 h-4" />
-                  Close
+                  <span className="hidden sm:inline">Close</span>
                 </button>
               </header>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-3 space-y-1.5 sm:space-y-2">
                 {videos.map((video, i) => {
                   const isActive = i === index;
                   return (
