@@ -201,6 +201,28 @@ const HomePage = () => {
     const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
     const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
+    // Hero video tours — fetched separately from the main payload below.
+    //
+    // fetchHomeData awaits products, categories, blogs and banners in series.
+    // Running this as its sixth step meant the hero's own button waited on
+    // four requests for content that is below the fold, so it popped in
+    // visibly after the page had settled. It is hero content and loads with
+    // the hero.
+    useEffect(() => {
+        let cancelled = false;
+
+        videoTourAPI
+            .getActive('home-hero')
+            .then((res) => {
+                if (cancelled) return;
+                const tours = res?.data || res || [];
+                if (Array.isArray(tours) && tours.length > 0) setVideoTours(tours);
+            })
+            .catch(() => { /* button stays hidden */ });
+
+        return () => { cancelled = true; };
+    }, []);
+
     // Fetch dynamic content
     useEffect(() => {
         const fetchHomeData = async () => {
@@ -245,16 +267,6 @@ const HomePage = () => {
                     const banners = bannerRes?.data || bannerRes || [];
                     if (banners.length > 0) setPromoBanners(banners.slice(0, 2));
                 } catch (e) { /* keep empty */ }
-
-                // 5. Fetch Video Tours
-                // Managed from Admin → Content → Video Tours. When none are
-                // configured the Watch Video button is hidden rather than
-                // opening an empty player.
-                try {
-                    const videoRes = await videoTourAPI.getActive('home-hero');
-                    const tours = videoRes?.data || videoRes || [];
-                    if (Array.isArray(tours) && tours.length > 0) setVideoTours(tours);
-                } catch (e) { /* button stays hidden */ }
 
             } catch (error) {
                 console.error("Home data fetch error:", error);

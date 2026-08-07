@@ -47,6 +47,9 @@
 
       <div v-else class="divide-y divide-slate-100">
         <div v-for="(tour, i) in tours" :key="tour._id" class="flex gap-4 p-4 items-center">
+          <!-- Position, 1-based to match the Order field -->
+          <span class="text-[12px] tabular-nums text-slate-400 w-4 shrink-0 text-right">{{ i + 1 }}</span>
+
           <!-- Thumbnail -->
           <div class="relative w-32 h-[72px] rounded overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
             <img
@@ -183,7 +186,7 @@
             </div>
             <div>
               <label class="block text-[13px] font-medium text-slate-700 mb-1">Order</label>
-              <input v-model.number="form.order" type="number" min="0" class="dt-input" />
+              <input v-model.number="form.order" type="number" min="1" class="dt-input" />
             </div>
             <div>
               <label class="block text-[13px] font-medium text-slate-700 mb-1">Status</label>
@@ -194,15 +197,10 @@
             </div>
           </div>
 
-          <div>
-            <label class="block text-[13px] font-medium text-slate-700 mb-1">Placement</label>
-            <select v-model="form.placement" class="dt-select w-full">
-              <option value="home-hero">Home — hero “Watch Video”</option>
-              <option value="shop">Shop page</option>
-              <option value="about">About page</option>
-              <option value="experience-centre">Experience Centre</option>
-            </select>
-          </div>
+          <!-- No placement selector: every video shows in the homepage hero
+               player. The field exists on the model for a future second
+               surface, but offering options that render nowhere would be a
+               setting that silently does nothing. -->
 
           <div>
             <label class="block text-[13px] font-medium text-slate-700 mb-1">
@@ -254,9 +252,11 @@ const deletingId = ref(null);
 const showModal = ref(false);
 const editing = ref(null);
 
+// Order is 1-based throughout: it is shown to and typed by an operator, and
+// "position 0" is not how anyone describes the first item in a list.
 const blankForm = () => ({
   title: '', description: '', url: '', duration: '',
-  placement: 'home-hero', order: tours.value.length, isActive: true,
+  placement: 'home-hero', order: tours.value.length + 1, isActive: true,
   thumbnail: { url: '', publicId: '' },
 });
 
@@ -386,8 +386,8 @@ const move = async (index, direction) => {
 
   try {
     reordering.value = true;
-    await videoTourAPI.reorder(next.map((t, i) => ({ id: t._id, order: i })));
-    next.forEach((t, i) => { t.order = i; });
+    await videoTourAPI.reorder(next.map((t, i) => ({ id: t._id, order: i + 1 })));
+    next.forEach((t, i) => { t.order = i + 1; });
   } catch {
     tours.value = snapshot;
     toast.error('Failed to reorder');

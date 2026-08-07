@@ -1,10 +1,15 @@
 <!--
   Primary trend chart: current period against the previous one.
 
-  Hand-drawn SVG rather than Chart.js. The dependency was declared but never
-  imported anywhere in this app, and pulling in ~70KB plus a canvas renderer
-  to draw two polylines and four gridlines is not a trade worth making. This
-  scales with the viewport, prints, and stays crisp on any DPI.
+  Built on Chart.js via vue-chartjs. The earlier version was hand-drawn SVG,
+  which was fine for a static line but had no hit-testing — so there was no
+  tooltip, no hover readout and no animation. Those need a renderer that
+  tracks pointer position against data space, and reimplementing that is
+  exactly the work a chart library exists to do.
+
+  Chart.js over ApexCharts (15MB unpacked) and ECharts (60MB): it is the
+  smallest of the three and registers piecemeal, so this pulls in the line
+  controller, the two scales and the tooltip — not a general charting engine.
 
   Metric switching is driven by the panel config, so adding a series is a
   registry change.
@@ -12,12 +17,12 @@
 <template>
   <section class="db-card">
     <header class="flex items-start justify-between gap-3 mb-4">
-      <div>
+      <div class="min-w-0">
         <h2 class="db-title">{{ activeMetric.label }} over time</h2>
         <p class="db-sub">{{ subtitle }}</p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 shrink-0">
         <div v-if="metrics.length > 1" class="flex gap-0.5 bg-slate-100 rounded-lg p-[3px]">
           <button
             v-for="m in metrics"
@@ -44,6 +49,22 @@
       </div>
     </header>
 
+    <!-- Headline for the visible window, so the period total is readable
+         without hovering any single point. -->
+    <div v-if="!loading && hasData" class="flex items-baseline gap-3 mb-3">
+      <span class="text-[24px] font-semibold tabular-nums tracking-[-0.03em] text-slate-900">
+        {{ activeMetric.format(periodTotal) }}
+      </span>
+      <span v-if="periodChange !== null" class="db-delta" :class="periodChange >= 0 ? 'db-delta-up' : 'db-delta-down'">
+        <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+          <path v-if="periodChange >= 0" d="M5 1 9 8H1z" />
+          <path v-else d="M5 9 1 2h8z" />
+        </svg>
+        {{ Math.abs(periodChange).toFixed(1) }}%
+      </span>
+      <span class="text-[12px] text-slate-400">vs previous period</span>
+    </div>
+
     <div v-if="loading" class="dt-skel h-[260px] w-full rounded-lg" />
 
     <div v-else-if="!hasData" class="dt-empty h-[260px]">
@@ -51,72 +72,38 @@
       <p class="text-[13px] text-slate-500 mt-1">Try a longer date range.</p>
     </div>
 
-    <template v-else>
-      <svg
-        :viewBox="`0 0 ${W} ${H}`"
-        preserveAspectRatio="none"
-        class="w-full h-[260px]"
-        role="img"
-        :aria-label="`${activeMetric.label} per day for the selected period${compare ? ', compared with the previous period' : ''}`"
-      >
-        <!-- Gridlines + y labels -->
-        <g v-for="(g, i) in gridLines" :key="`g-${i}`">
-          <line :x1="PL" :x2="W - PR" :y1="g.y" :y2="g.y" stroke="#E3E8EE" stroke-width="1" vector-effect="non-scaling-stroke" />
-          <text :x="PL" :y="g.y - 5" fill="#8B96A5" font-size="10">{{ g.label }}</text>
-        </g>
-
-        <!-- Previous period -->
-        <path
-          v-if="compare && previousPath"
-          :d="previousPath"
-          fill="none"
-          stroke="#CFD7E0"
-          stroke-width="2"
-          stroke-dasharray="5 4"
-          vector-effect="non-scaling-stroke"
-          stroke-linejoin="round"
-        />
-
-        <!-- Current period -->
-        <path v-if="areaPath" :d="areaPath" fill="#12596E" fill-opacity="0.06" />
-        <path
-          v-if="currentPath"
-          :d="currentPath"
-          fill="none"
-          stroke="#12596E"
-          stroke-width="2.25"
-          vector-effect="non-scaling-stroke"
-          stroke-linejoin="round"
-          stroke-linecap="round"
-        />
-        <circle v-if="lastPoint" :cx="lastPoint.x" :cy="lastPoint.y" r="3.5" fill="#12596E" />
-
-        <!-- X labels -->
-        <text
-          v-for="(l, i) in xLabels"
-          :key="`x-${i}`"
-          :x="l.x"
-          :y="H - 8"
-          fill="#8B96A5"
-          font-size="10"
-          :text-anchor="l.anchor"
-        >{{ l.label }}</text>
-      </svg>
-
-      <div class="flex gap-4 mt-3 text-[12px] text-slate-500">
-        <span class="inline-flex items-center gap-2">
-          <i class="inline-block w-4 border-t-2 border-[#12596E]" />Selected period
-        </span>
-        <span v-if="compare" class="inline-flex items-center gap-2">
-          <i class="inline-block w-4 border-t-2 border-dashed border-slate-300" />Previous period
-        </span>
-      </div>
-    </template>
+    <div v-else class="h-[260px]">
+      <Line :data="chartData" :options="chartOptions" />
+    </div>
   </section>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
+import { Line } from 'vue-chartjs';
+import {
+  Chart as ChartJS,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Filler,
+} from 'chart.js';
+
+// Registered piecemeal rather than importing the auto bundle: this pulls in
+// the line renderer, two scales, the tooltip and the area fill. No legend, no
+// title plugin, no other controllers.
+ChartJS.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Filler
+);
 
 const props = defineProps({
   series: { type: Object, default: () => ({ current: [], previous: [] }) },
@@ -125,89 +112,168 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
 });
 
-const W = 900;
-const H = 260;
-const PT = 18;
-const PB = 30;
-const PL = 8;
-const PR = 8;
+const WATER = '#12596E';
+const MUTED = '#CFD7E0';
 
 const active = ref(props.metrics[0]?.key || 'revenue');
 const compare = ref(true);
 
 const activeMetric = computed(
-  () => props.metrics.find((m) => m.key === active.value) || props.metrics[0] || { key: 'revenue', label: 'Revenue', format: (v) => v }
+  () => props.metrics.find((m) => m.key === active.value)
+    || props.metrics[0]
+    || { key: 'revenue', label: 'Revenue', format: (v) => v }
 );
 
 const currentValues = computed(() => (props.series?.current || []).map((d) => Number(d[active.value]) || 0));
 const previousValues = computed(() => (props.series?.previous || []).map((d) => Number(d[active.value]) || 0));
 
-// An all-zero series is real data (a quiet period) but has nothing to plot;
-// treat it as empty so the chart does not draw a flat line along the axis.
+// An all-zero series is real data (a quiet period) but has nothing to plot.
 const hasData = computed(() => currentValues.value.some((v) => v > 0) || previousValues.value.some((v) => v > 0));
 
-const bounds = computed(() => {
-  const all = compare.value ? [...currentValues.value, ...previousValues.value] : currentValues.value;
-  if (!all.length) return { min: 0, max: 1 };
-  let min = Math.min(...all);
-  let max = Math.max(...all);
-  const pad = (max - min) * 0.15 || Math.max(1, max * 0.15);
-  min = Math.max(0, min - pad);
-  max += pad;
-  return { min, max: max === min ? min + 1 : max };
+// AOV is an average, so summing it across days would be meaningless.
+const isAverage = computed(() => active.value === 'aov');
+
+const sum = (list) => list.reduce((a, b) => a + b, 0);
+
+const periodTotal = computed(() => {
+  const values = currentValues.value;
+  if (!values.length) return 0;
+  if (!isAverage.value) return sum(values);
+  const active = values.filter((v) => v > 0);
+  return active.length ? sum(active) / active.length : 0;
 });
 
-const toPath = (values) => {
-  if (values.length < 2) return '';
-  const { min, max } = bounds.value;
-  const iw = W - PL - PR;
-  const ih = H - PT - PB;
-  return values
-    .map((v, i) => {
-      const x = PL + (iw * i) / (values.length - 1);
-      const y = PT + ih - ((v - min) / (max - min)) * ih;
-      return `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(' ');
-};
+const previousTotal = computed(() => {
+  const values = previousValues.value;
+  if (!values.length) return 0;
+  if (!isAverage.value) return sum(values);
+  const active = values.filter((v) => v > 0);
+  return active.length ? sum(active) / active.length : 0;
+});
 
-const currentPath = computed(() => toPath(currentValues.value));
-const previousPath = computed(() => toPath(previousValues.value));
+// null when the baseline is zero — "grew from nothing" is not a percentage.
+const periodChange = computed(() => {
+  const prev = previousTotal.value;
+  if (!prev) return null;
+  return ((periodTotal.value - prev) / Math.abs(prev)) * 100;
+});
 
-const areaPath = computed(() =>
-  currentPath.value ? `${currentPath.value} L ${W - PR} ${H - PB} L ${PL} ${H - PB} Z` : ''
+const labels = computed(() =>
+  (props.series?.current || []).map((d) =>
+    new Date(d.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+  )
 );
 
-const lastPoint = computed(() => {
-  const vals = currentValues.value;
-  if (vals.length < 2) return null;
-  const { min, max } = bounds.value;
-  const ih = H - PT - PB;
-  return {
-    x: W - PR,
-    y: PT + ih - ((vals[vals.length - 1] - min) / (max - min)) * ih,
-  };
-});
+const chartData = computed(() => ({
+  labels: labels.value,
+  datasets: [
+    {
+      label: 'Selected period',
+      data: currentValues.value,
+      borderColor: WATER,
+      borderWidth: 2.25,
+      fill: true,
+      backgroundColor: (ctx) => {
+        const { chart } = ctx;
+        if (!chart.chartArea) return 'rgba(18,89,110,0.06)';
+        // Vertical gradient, so the area fades out rather than sitting as a
+        // flat block against the gridlines.
+        const g = chart.ctx.createLinearGradient(0, chart.chartArea.top, 0, chart.chartArea.bottom);
+        g.addColorStop(0, 'rgba(18,89,110,0.16)');
+        g.addColorStop(1, 'rgba(18,89,110,0.01)');
+        return g;
+      },
+      tension: 0.32,
+      // Points appear on hover only: 30 permanent dots on a 30-day series is
+      // noise, but they must exist for the tooltip to have something to hit.
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      pointBackgroundColor: '#fff',
+      pointBorderColor: WATER,
+      pointBorderWidth: 2.5,
+      pointHitRadius: 16,
+      order: 1,
+    },
+    ...(compare.value
+      ? [{
+          label: 'Previous period',
+          data: previousValues.value,
+          borderColor: MUTED,
+          borderWidth: 2,
+          borderDash: [5, 4],
+          fill: false,
+          tension: 0.32,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: MUTED,
+          pointBorderWidth: 2,
+          pointHitRadius: 16,
+          order: 2,
+        }]
+      : []),
+  ],
+}));
 
-const gridLines = computed(() => {
-  const { min, max } = bounds.value;
-  const ih = H - PT - PB;
-  const fmt = activeMetric.value.format || ((v) => Math.round(v));
-  return [0, 1, 2, 3].map((g) => ({
-    y: PT + (ih * g) / 3,
-    label: fmt(max - ((max - min) * g) / 3),
-  }));
-});
-
-const xLabels = computed(() => {
-  const days = props.series?.current || [];
-  if (days.length < 2) return [];
-  const pick = [0, Math.floor(days.length / 3), Math.floor((days.length * 2) / 3), days.length - 1];
-  const iw = W - PL - PR;
-  return pick.map((idx, i) => ({
-    x: PL + (iw * idx) / (days.length - 1),
-    label: new Date(days[idx].date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-    anchor: i === 0 ? 'start' : i === 3 ? 'end' : 'middle',
-  }));
-});
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  // Hovering anywhere in a column reads both series at that date, so the two
+  // periods can be compared without landing exactly on a point.
+  interaction: { mode: 'index', intersect: false },
+  animation: { duration: 600, easing: 'easeOutQuart' },
+  // Redrawing on a metric switch animates from the old shape rather than
+  // rebuilding, which reads as the same chart changing.
+  animations: { y: { duration: 600, easing: 'easeOutQuart' } },
+  layout: { padding: { top: 8, right: 4, bottom: 0, left: 0 } },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#111823',
+      titleColor: '#fff',
+      titleFont: { size: 12, weight: '600' },
+      bodyColor: '#CBD5E1',
+      bodyFont: { size: 12 },
+      padding: 10,
+      cornerRadius: 6,
+      displayColors: true,
+      boxWidth: 8,
+      boxHeight: 8,
+      boxPadding: 4,
+      callbacks: {
+        // Values are formatted with the metric's own formatter, so revenue
+        // reads as ₹1,234 rather than a bare number.
+        label: (ctx) => ` ${ctx.dataset.label}: ${activeMetric.value.format(ctx.parsed.y)}`,
+      },
+    },
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      border: { display: false },
+      ticks: {
+        color: '#8B96A5',
+        font: { size: 10 },
+        maxRotation: 0,
+        autoSkip: true,
+        maxTicksLimit: 6,
+      },
+    },
+    y: {
+      beginAtZero: true,
+      grid: { color: '#E3E8EE', drawTicks: false },
+      border: { display: false },
+      ticks: {
+        color: '#8B96A5',
+        font: { size: 10 },
+        padding: 8,
+        maxTicksLimit: 5,
+        // Counts are integers. The previous axis rendered 0.383 / 0.767 /
+        // 1.15 for a day with one order, which is not a possible value.
+        precision: isAverage.value || active.value === 'revenue' ? undefined : 0,
+        callback: (value) => activeMetric.value.format(value),
+      },
+    },
+  },
+}));
 </script>
