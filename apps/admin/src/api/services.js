@@ -68,6 +68,15 @@ export const bannerAPI = {
   delete: (id) => api.delete(`/banners/${id}`),
 };
 
+// ─── Video Tours ─────────────────────────────────
+export const videoTourAPI = {
+  getAll: () => api.get('/video-tours/admin/all'),
+  create: (data) => api.post('/video-tours', data),
+  update: (id, data) => api.put(`/video-tours/${id}`, data),
+  delete: (id) => api.delete(`/video-tours/${id}`),
+  reorder: (orders) => api.patch('/video-tours/reorder', { orders }),
+};
+
 // ─── Blogs ───────────────────────────────────────
 export const blogAPI = {
   getAll: () => api.get('/blogs/admin/all'),

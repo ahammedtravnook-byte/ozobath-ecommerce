@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { FiArrowRight, FiPlay, FiShoppingCart, FiStar, FiArrowUpRight, FiCheckCircle, FiTruck, FiShield, FiAward, FiChevronDown, FiHeart } from 'react-icons/fi';
-import { productAPI, categoryAPI, bannerAPI } from '@api/services';
+import { productAPI, categoryAPI, bannerAPI, videoTourAPI } from '@api/services';
+import VideoTourModal from '@components/VideoTourModal';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@context/CartContext';
@@ -188,6 +189,8 @@ const HomePage = () => {
     const [categories, setCategories] = useState([]);
     const [activeTab, setActiveTab] = useState('all');
     const [promoBanners, setPromoBanners] = useState([]);
+    const [videoTours, setVideoTours] = useState([]);
+    const [videoOpen, setVideoOpen] = useState(false);
     const [loading, setLoading] = useState(true);
 
     // Parallax for hero
@@ -243,6 +246,16 @@ const HomePage = () => {
                     if (banners.length > 0) setPromoBanners(banners.slice(0, 2));
                 } catch (e) { /* keep empty */ }
 
+                // 5. Fetch Video Tours
+                // Managed from Admin → Content → Video Tours. When none are
+                // configured the Watch Video button is hidden rather than
+                // opening an empty player.
+                try {
+                    const videoRes = await videoTourAPI.getActive('home-hero');
+                    const tours = videoRes?.data || videoRes || [];
+                    if (Array.isArray(tours) && tours.length > 0) setVideoTours(tours);
+                } catch (e) { /* button stays hidden */ }
+
             } catch (error) {
                 console.error("Home data fetch error:", error);
                 setTrending(fallbackProducts);
@@ -297,6 +310,14 @@ const HomePage = () => {
                         acceptedAnswer: { '@type': 'Answer', text: f.answer },
                     })),
                 }}
+            />
+
+            {/* Portals to document.body, so its position in this tree does
+                not matter — it is mounted here to keep it near the trigger. */}
+            <VideoTourModal
+                open={videoOpen}
+                videos={videoTours}
+                onClose={() => setVideoOpen(false)}
             />
 
             {/* ═══════════════════════════════════════════
@@ -371,12 +392,21 @@ const HomePage = () => {
                                 >
                                     Discover Now <FiArrowUpRight className="text-lg" />
                                 </Link>
-                                <button className="flex items-center gap-3 text-white/90 hover:text-white font-semibold text-sm group transition-colors">
-                                    <span className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:scale-110 transition-all duration-300">
-                                        <FiPlay className="w-4 h-4 ml-0.5" />
-                                    </span>
-                                    Watch Video
-                                </button>
+                                {/* Hidden when no tours are configured in the
+                                    admin — a play button that opens an empty
+                                    player is worse than no button. */}
+                                {videoTours.length > 0 && (
+                                    <button
+                                        onClick={() => setVideoOpen(true)}
+                                        aria-label={`Watch video: ${videoTours[0].title}`}
+                                        className="flex items-center gap-3 text-white/90 hover:text-white font-semibold text-sm group transition-colors"
+                                    >
+                                        <span className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-white/20 group-hover:scale-110 transition-all duration-300">
+                                            <FiPlay className="w-4 h-4 ml-0.5" />
+                                        </span>
+                                        Watch Video
+                                    </button>
+                                )}
                             </motion.div>
 
                             {/* Trust Stat */}
