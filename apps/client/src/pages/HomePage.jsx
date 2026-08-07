@@ -118,16 +118,16 @@ const FAQAccordionSection = () => {
 
 // ─── FALLBACK DATA ────────────────────────
 const fallbackProducts = [
-    { _id: '1', name: 'Frameless Glass Enclosure', slug: 'frameless-glass', category: { name: 'Shower Enclosures' }, price: 15599, mrp: 21999, avgRating: 5, images: [{ url: '/images/product_shower_1.png' }] },
-    { _id: '2', name: 'Sliding Door System', slug: 'sliding-door', category: { name: 'Shower Enclosures' }, price: 12499, mrp: 17999, avgRating: 4, images: [{ url: '/images/product_shower_2.png' }] },
-    { _id: '3', name: 'Corner Glass Partition', slug: 'corner-partition', category: { name: 'Shower Enclosures' }, price: 18999, mrp: 24999, avgRating: 5, images: [{ url: '/images/product_shower_1.png' }] },
-    { _id: '4', name: 'Walk-in Shower Screen', slug: 'walkin-screen', category: { name: 'Shower Enclosures' }, price: 9999, mrp: 14999, avgRating: 5, images: [{ url: '/images/product_shower_2.png' }] },
+    { _id: '1', name: 'Frameless Glass Enclosure', slug: 'frameless-glass', category: { name: 'Shower Enclosures' }, price: 15599, mrp: 21999, avgRating: 5, images: [{ url: '/images/product_shower_1.webp' }] },
+    { _id: '2', name: 'Sliding Door System', slug: 'sliding-door', category: { name: 'Shower Enclosures' }, price: 12499, mrp: 17999, avgRating: 4, images: [{ url: '/images/product_shower_2.webp' }] },
+    { _id: '3', name: 'Corner Glass Partition', slug: 'corner-partition', category: { name: 'Shower Enclosures' }, price: 18999, mrp: 24999, avgRating: 5, images: [{ url: '/images/product_shower_1.webp' }] },
+    { _id: '4', name: 'Walk-in Shower Screen', slug: 'walkin-screen', category: { name: 'Shower Enclosures' }, price: 9999, mrp: 14999, avgRating: 5, images: [{ url: '/images/product_shower_2.webp' }] },
 ];
 
 const fallbackBlogs = [
-    { _id: 'b1', title: 'Modern Minimalist Bathroom Design Trends 2026', slug: 'minimalist-design-2026', category: 'Design', customDate: 'Feb 24, 2026', featuredImage: { url: '/images/promo_shower_enclosure.png' } },
-    { _id: 'b2', title: 'How to Choose the Perfect Shower Enclosure', slug: 'choose-shower-enclosure', category: 'Guide', customDate: 'Feb 18, 2026', featuredImage: { url: '/images/promo_sliding_door.png' } },
-    { _id: 'b3', title: 'Premium Bathroom Fittings: Complete Buying Guide', slug: 'bathroom-fittings-guide', category: 'Guide', customDate: 'Feb 12, 2026', featuredImage: { url: '/images/hero_bathroom.png' } },
+    { _id: 'b1', title: 'Modern Minimalist Bathroom Design Trends 2026', slug: 'minimalist-design-2026', category: 'Design', customDate: 'Feb 24, 2026', featuredImage: { url: '/images/promo_shower_enclosure.webp' } },
+    { _id: 'b2', title: 'How to Choose the Perfect Shower Enclosure', slug: 'choose-shower-enclosure', category: 'Guide', customDate: 'Feb 18, 2026', featuredImage: { url: '/images/promo_sliding_door.webp' } },
+    { _id: 'b3', title: 'Premium Bathroom Fittings: Complete Buying Guide', slug: 'bathroom-fittings-guide', category: 'Guide', customDate: 'Feb 12, 2026', featuredImage: { url: '/images/hero_bathroom.webp' } },
 ];
 
 const fallbackTestimonials = [
@@ -336,14 +336,25 @@ const HomePage = () => {
                 1. HERO SECTION
             ═══════════════════════════════════════════ */}
             <section ref={heroRef} className="relative w-full min-h-screen flex items-center overflow-hidden pt-28 pb-16">
-                {/* Background Image with Parallax */}
+                {/* Background Image with Parallax.
+
+                    This is the LCP element. It used to be a CSS
+                    `background-image`, which the preload scanner cannot see —
+                    the browser only discovered it after CSS was parsed, so the
+                    request started late and at Low priority. A real <img> with
+                    fetchPriority="high" is discoverable in the raw HTML and
+                    starts almost immediately. */}
                 <motion.div
                     className="absolute inset-0 z-0"
                     style={{ y: heroY }}
                 >
-                    <div
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
-                        style={{ backgroundImage: `url('/images/hero_bathroom.png')` }}
+                    <img
+                        src="/images/hero_bathroom.webp"
+                        alt=""
+                        aria-hidden="true"
+                        fetchpriority="high"
+                        decoding="async"
+                        className="absolute inset-0 h-full w-full scale-110 object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-dark-950/70 via-dark-900/40 to-transparent" />
                     <div className="absolute inset-0 bg-gradient-to-t from-dark-950/30 via-transparent to-transparent" />
@@ -451,7 +462,7 @@ const HomePage = () => {
                                 <div className="glass-card p-6 rounded-3xl max-w-[280px] transform hover:scale-105 transition-all duration-500">
                                     <div className="bg-white rounded-2xl p-4 mb-4">
                                         <img
-                                            src="/images/product_shower_1.png"
+                                            src="/images/product_shower_1.webp"
                                             alt="Featured Product"
                                             className="w-full h-40 object-contain"
                                         />
@@ -562,7 +573,7 @@ const HomePage = () => {
                             </div>
                             <div className="hidden sm:flex absolute right-0 bottom-0 w-1/2 h-full items-center justify-center p-6">
                                 <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700">
-                                    <img src="/images/promo_shower_enclosure.png" alt="Shower Enclosure" className="w-full h-full object-cover" />
+                                    <img src="/images/promo_shower_enclosure.webp" alt="Shower Enclosure" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-gradient-to-tr from-accent-500/10 to-transparent" />
                                 </div>
                             </div>
@@ -596,7 +607,7 @@ const HomePage = () => {
                             </div>
                             <div className="hidden sm:flex absolute right-0 bottom-0 w-1/2 h-full items-center justify-center p-6">
                                 <div className="relative w-full h-[85%] rounded-[2.5rem] overflow-hidden shadow-2xl animate-float-premium group-hover:scale-110 transition-transform duration-700 [animation-delay:1s]">
-                                    <img src="/images/promo_sliding_door.png" alt="Bathroom Fittings" className="w-full h-full object-cover" />
+                                    <img src="/images/promo_sliding_door.webp" alt="Bathroom Fittings" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/10 to-transparent" />
                                 </div>
                             </div>
@@ -643,7 +654,7 @@ const HomePage = () => {
                                 <div className="bg-white rounded-[2rem] mb-4 relative overflow-hidden border border-dark-100/50 shadow-sm active:shadow-lg transition-all duration-300">
                                     <Link to={`/product/${item.slug}`} className="absolute inset-0 z-10" />
                                     <div className="image-fit-container rounded-[1.8rem] p-4 bg-warm-gray/30">
-                                        <img src={item.images?.[0]?.url || '/images/product_shower_1.png'} alt={item.name} className="w-full h-full object-contain" />
+                                        <img src={item.images?.[0]?.url || '/images/product_shower_1.webp'} alt={item.name} className="w-full h-full object-contain" />
                                     </div>
                                     {item.mrp > item.price && (
                                         <div className="absolute top-3 left-3 bg-accent-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent-500/20 z-20">
@@ -713,7 +724,7 @@ const HomePage = () => {
                                     {/* Image Container with "Curve Feel" */}
                                     <div className="image-fit-container rounded-[2rem] p-4 bg-warm-gray/30">
                                         <img
-                                            src={item.images?.[0]?.url || '/images/product_shower_1.png'}
+                                            src={item.images?.[0]?.url || '/images/product_shower_1.webp'}
                                             alt={item.name}
                                             className="w-full h-full object-contain"
                                         />
@@ -824,7 +835,7 @@ const HomePage = () => {
                             className="lg:w-[38%] bg-gradient-to-br from-dark-100 to-dark-50 rounded-[2.5rem] relative overflow-hidden min-h-[480px] group shadow-xl"
                         >
                             <img
-                                src="/images/sale_bathroom.png"
+                                src="/images/sale_bathroom.webp"
                                 alt="Featured Collection"
                                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                             />
@@ -864,7 +875,7 @@ const HomePage = () => {
                                                 {/* Image Container with "Curve Feel" */}
                                                 <div className="image-fit-container rounded-[1.8rem] bg-warm-gray/20">
                                                     <img
-                                                        src={item.images?.[0]?.url || '/images/product_shower_1.png'}
+                                                        src={item.images?.[0]?.url || '/images/product_shower_1.webp'}
                                                         alt={item.name}
                                                         className="w-full h-full object-contain p-4 group-hover:scale-110"
                                                     />
@@ -959,7 +970,7 @@ const HomePage = () => {
                     >
                         <div className="relative rounded-[3rem] overflow-hidden shadow-2xl shadow-dark-900/20 group-hover:scale-[1.02] transition-transform duration-700">
                             <img
-                                src="/images/sale_bathroom.png"
+                                src="/images/sale_bathroom.webp"
                                 alt="Premium Bathroom Sale"
                                 className="w-full h-auto max-h-[480px] object-cover"
                             />
@@ -1062,7 +1073,7 @@ const HomePage = () => {
                             <div className="relative aspect-[16/10] mb-6 rounded-[2.5rem] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 group-hover:-translate-y-2">
                                 <Link to={`/blog/${blog.slug}`} className="absolute inset-0 z-10" />
                                 <img
-                                    src={blog.featuredImage?.url || '/images/hero_bathroom.png'}
+                                    src={blog.featuredImage?.url || '/images/hero_bathroom.webp'}
                                     alt={blog.title}
                                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                 />

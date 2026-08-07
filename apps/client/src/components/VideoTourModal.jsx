@@ -114,7 +114,7 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
     <AnimatePresence>
       {open && active && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 lg:p-8"
+          className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-6 lg:p-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -129,38 +129,48 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
           />
 
           {/*
-            The panel is sized *from the player*, not the other way around.
+            Two genuinely different layouts, not one layout with mobile
+            patched on:
 
-            An earlier version gave the panel a fixed height and asked the
-            iframe wrapper to derive its width from `aspect-video` inside a
-            flex row — which collapses to a small centred box, leaving the
-            video floating in dead space. Here the player owns a real
-            `aspect-video` box whose width is capped so that
-            player + rail + padding still fit the viewport in both axes, and
-            the panel wraps tightly around it. No letterboxing, no dead space.
+              mobile  — a bottom sheet. Full-bleed player pinned at the top at
+                        its natural 16:9, playlist filling whatever height is
+                        left underneath and scrolling inside it.
+              desktop — a centred dialog. Player beside a fixed rail, sized so
+                        16:9 fits the viewport in both axes.
+
+            The player carries `shrink-0` so the flex column can never squeeze
+            it — an earlier version let the rail's content compress the player
+            toward zero height while `aspect-video` fought back, which is why
+            the video disappeared entirely on a phone. The rail is the only
+            flexible track, and `min-h-0` lets it actually scroll rather than
+            expanding to fit its children.
           */}
           <motion.div
             ref={panelRef}
             tabIndex={-1}
-            className="relative flex w-full flex-col overflow-hidden rounded-2xl bg-dark-950
-                       shadow-[0_30px_90px_-20px_rgba(0,0,0,0.9)] ring-1 ring-white/10
-                       outline-none max-h-[94vh] lg:w-auto lg:flex-row"
+            className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden bg-dark-950
+                       shadow-[0_30px_90px_-20px_rgba(0,0,0,0.9)] ring-1 ring-white/10 outline-none
+                       rounded-t-2xl sm:rounded-2xl lg:max-h-[90vh] lg:w-auto lg:flex-row"
             initial={{ scale: 0.96, y: 16, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, y: 16, opacity: 0 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* ── Player ──────────────────────────────────────────────
-                The player always keeps 16:9. What differs per breakpoint is
-                which axis is the binding constraint:
+            {/* Sheet grab handle — signals "this is a sheet" on mobile only. */}
+            <div className="absolute inset-x-0 top-0 z-20 flex justify-center pt-2 sm:hidden" aria-hidden="true">
+              <span className="h-1 w-9 rounded-full bg-white/30" />
+            </div>
 
-                  mobile  — width is whatever the viewport gives; the rail
-                            stacks underneath and gets the remaining 40vh.
-                  desktop — width is capped so 16:9 stays inside the viewport
-                            height *and* leaves room for the rail beside it. */}
+            {/* ── Player ── always 16:9, never compressed.
+
+                In the stacked layout the width cap is also a *height* cap: on
+                a short landscape screen a full-width 16:9 player would eat the
+                entire panel and leave the playlist with negative space, so the
+                player is additionally limited to 55dvh worth of width. */}
             <div
-              className="relative aspect-video w-full shrink-0 bg-black
-                         lg:w-[min(1280px,calc(96vw-var(--rail-w)-4rem),calc((94vh-4rem)*16/9))]"
+              className={`relative mx-auto aspect-video w-full shrink-0 bg-black
+                          lg:mx-0 lg:w-[min(1280px,calc(96vw-var(--rail-w)-4rem),calc((90vh-2rem)*16/9))]
+                          ${hasPlaylist ? 'max-w-[calc(55dvh*16/9)] lg:max-w-none' : ''}`}
               style={{ '--rail-w': hasPlaylist ? `${RAIL_WIDTH}px` : '0px' }}
             >
               <iframe
@@ -219,11 +229,14 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
             )}
 
             {/* ── Playlist ─────────────────────────────────────────────
-                Fixed column on desktop; a bounded, scrollable drawer below
-                the player on mobile. */}
+                Mobile: the only flexible track — takes the height left over
+                after the player and scrolls inside it. `min-h-0` is what
+                permits that; without it a flex child refuses to shrink below
+                its content and pushes the player off-screen instead.
+                Desktop: a fixed-width column at full panel height. */}
             <aside
-              className={`min-h-0 w-full shrink-0 flex-col border-t border-white/10 bg-dark-900
-                          max-h-[40vh] lg:max-h-none lg:w-[var(--rail-w)] lg:border-l lg:border-t-0
+              className={`min-h-0 w-full flex-1 flex-col border-t border-white/10 bg-dark-900
+                          lg:w-[var(--rail-w)] lg:flex-none lg:border-l lg:border-t-0
                           ${hasPlaylist ? 'flex' : 'hidden'}`}
               style={{ '--rail-w': `${RAIL_WIDTH}px` }}
             >
@@ -251,7 +264,10 @@ const VideoTourModal = ({ open, videos = [], initialIndex = 0, onClose }) => {
 
               <div
                 ref={railRef}
-                className="custom-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto p-2 sm:p-3"
+                className="custom-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 sm:p-3"
+                // As a bottom sheet the rail runs to the physical screen edge,
+                // so the last item would sit under the iOS home indicator.
+                style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
               >
                 {videos.map((video, i) => {
                   const isActive = i === index;

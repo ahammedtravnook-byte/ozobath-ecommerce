@@ -18,6 +18,25 @@ export default defineConfig({
       '@utils': path.resolve(__dirname, './src/utils'),
     },
   },
+  build: {
+    // The single 495 KB entry chunk meant every route paid for framer-motion,
+    // the icon set and the router before anything could render. Splitting the
+    // stable vendor code out lets it cache across deploys independently of
+    // application code, and keeps the critical entry chunk small.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-motion': ['framer-motion'],
+        },
+      },
+    },
+    // Lighthouse flagged unminified CSS/JS; esbuild handles both and is the
+    // default, but CSS minification is worth asserting explicitly.
+    cssMinify: true,
+    // The vendor chunks legitimately exceed the default 500 KB warning.
+    chunkSizeWarningLimit: 700,
+  },
   server: {
     port: 5173,
     proxy: {

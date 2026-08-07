@@ -32,7 +32,7 @@ const RegisterPage = () => {
             <div className="hidden lg:flex w-1/2 relative items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-dark-950">
                     <img 
-                        src="/images/luxury_bathroom_auth_bg_1773420543336.png" 
+                        src="/images/luxury_bathroom_auth_bg_1773420543336.webp" 
                         alt="Luxury Bathroom" 
                         className="w-full h-full object-cover opacity-60 mix-blend-overlay"
                     />

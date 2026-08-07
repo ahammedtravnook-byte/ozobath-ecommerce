@@ -273,7 +273,7 @@ const SearchOverlay = ({ onClose }) => {
                                                     >
                                                         <div className="w-12 h-12 bg-dark-50 rounded-xl shrink-0 overflow-hidden border border-dark-100/30">
                                                             <img
-                                                                src={product.images?.[0]?.url || '/images/product_shower_1.png'}
+                                                                src={product.images?.[0]?.url || '/images/product_shower_1.webp'}
                                                                 alt={product.name}
                                                                 className="w-full h-full object-cover"
                                                             />

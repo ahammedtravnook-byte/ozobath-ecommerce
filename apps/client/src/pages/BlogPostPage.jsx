@@ -13,7 +13,7 @@ const fallbackPost = {
     author: { name: 'OZOBATH Team' },
     publishedAt: '2026-02-24',
     views: 1234,
-    featuredImage: { url: '/images/hero_bathroom.png' },
+    featuredImage: { url: '/images/hero_bathroom.webp' },
     content: `<p>The world of bathroom design is evolving rapidly, with minimalist aesthetics leading the charge. In 2026, homeowners are embracing clean lines, frameless glass, and thoughtful material choices.</p>
     <h2>1. Frameless Glass Dominance</h2>
     <p>Frameless shower enclosures continue to dominate modern bathroom designs. Their seamless appearance creates an illusion of space, making even small bathrooms feel open and airy.</p>

@@ -145,7 +145,7 @@ const CartPage = () => {
                                         >
                                             <Link to={`/product/${prod.slug}`} className="shrink-0">
                                                 <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-dark-50 flex items-center justify-center overflow-hidden border border-dark-100/30 group-hover:border-accent-200 transition-colors">
-                                                    <img src={prod.images?.[0]?.url || '/images/product_shower_1.png'} alt={prod.name} className="w-[82%] h-[82%] object-contain hover:scale-105 transition-transform duration-300" />
+                                                    <img src={prod.images?.[0]?.url || '/images/product_shower_1.webp'} alt={prod.name} className="w-[82%] h-[82%] object-contain hover:scale-105 transition-transform duration-300" />
                                                 </div>
                                             </Link>
                                             <div className="flex-1 min-w-0">
